@@ -1,0 +1,157 @@
+---
+title: "Generic MIMOSA Summary"
+author: 
+date: 
+output:
+  html_notebook: 
+    df_print: kable
+  html_document:
+    df_print: kable
+    theme: flatly
+  pdf_document: default
+params:
+  run_prefix: ""
+  contribs_file: ""
+  met_file: ""
+  metadata_file: ""
+  metadata_var: ""
+---
+
+```{r, echo=F, message=F, warning=F, results = "hide"}
+options(stringsAsFactors = F, scipen = 20)
+
+library(data.table)
+library(mimosa)
+library(ggplot2)
+#library(GGally)
+library(network)
+#library(igraph)
+library(sna)
+library(cowplot)
+library(RColorBrewer)
+
+run_prefix = params$run_prefix #"" #Output prefix for MIMOSA output
+contribs_file = params$contribs_file #Species-specific function contributions file from PICRUSt
+load("mimosa/R/sysdata.rda") #Data in MIMOSA R package - Taxonomy and metabolite key
+met_file = params$met_file #File of metabolite concentrations used to run MIMOSA
+metadata_file = params$metadata_file #Metadata file that uses same sample names
+metadata_var = params$metadata_var #Column of metadata file you would like to use for enrichment analyses
+
+#Two different significance thresholds - we usually report the stricter 1% level 
+thresholds = list(c(0.01, 0.01), c(0.1, 0.1))
+prediction_colors=c("#1B9E77","lightgrey","#F46D43")
+
+#Make species genome table and taxonomy key
+species_ref = unique(fread(contribs_file)[,list(Gene,OTU)])
+setnames(species_ref, c("KO", "Species"))
+species_ref = merge(species_ref, taxonomy, by.x = "Species", by.y = "OTU", all.x = T, all.y = F)
+tax_ref = unique(species_ref[,list(Species,Taxonomy, Genus)])
+
+#Read in results and organize
+
+#Core MIMOSA results
+node_data = fread(paste0(run_prefix, "_nodes.txt"))
+#Add gene contribution results
+ko_summary = fread(paste0(run_prefix, "_geneContribCompoundSummary.txt"))
+node_data = process_metabolite_summary(node_data, thresholds, ko_summary)
+
+#Read in metabolite data
+mets = melt(fread(met_file), variable.name = "Sample")
+
+###Identify metabolites that are enriched or depleted in different groups based on selected metadata variable (using Wilcoxon rank-sum test)
+if(!is.null(metadata_file) & !is.null(metadata_var)){
+  metadata = fread(metadata_file)
+  node_data = add_metadata_to_metabolite_summary(node_data, mets, metadata, metadata_var)
+}
+
+#Species contribution results
+species_data = fread(paste0(run_prefix,"_specContrib.txt"))
+node_data_spec = make_metabolite_species_contribution_table(species_data, node_data, tax_ref)
+
+#Read in and process gene contributions
+geneContribs = fread(paste0(run_prefix,"_geneContribAnalysis.txt"))
+geneContribs = process_gene_contribs(geneContribs, node_data)
+
+gene_species = make_gene_species_contributor_table(geneContribs, species_ref, node_data_spec)
+
+#Add Dataset column for plotting
+node_data[,Dataset:=run_prefix]
+node_data_spec[,Dataset:=run_prefix]
+
+
+
+
+```
+
+## Plot of metabolites
+
+```{r, echo=F, message=F, warning=F, fig.height = 5}
+
+plot_metabolite_concentrations(mets, node_data[,compound])
+
+```
+
+
+```{r, echo=F, message=F, warning=F}
+
+summary_stats = get_summary_stats(node_data)
+
+```
+
+## MIMOSA metabolite results
+
+Overall, `r summary_stats["totConsistent"]` out of `r summary_stats["totalAnalyzed"]` metabolites were significantly (FDR 0.1) consistent with metabolic potential (`r summary_stats["percConsistent"]`%), and `r summary_stats["totContrasting"]` were significantly contrasting (`r summary_stats["percContrasting"]`%).
+
+### Metabolite Predictions by Category
+```{r, echo=F, message=F, warning=F}
+plot_metabolite_counts(node_data, variable = "SuperPath", threshold = "low")
+```
+
+### Metabolite Predictions by Disease Association (Wilcoxon rank test p < 0.1)
+```{r, echo=F, message=F, warning=F}
+if(!is.null(metadata_var)){
+  plot_metabolite_counts(node_data, variable = "Status", threshold = "low")
+}
+```
+
+### Metabolite Predictions by Reaction Basis
+```{r, echo=F, message=F, warning=F}
+plot_metabolite_counts(node_data, variable = "PrimaryMake2", threshold = "low")
+
+```
+
+### Table of metabolites consistent with metabolic potential
+Including correlation magnitude, significance, enrichment status, primary reaction basis for predictions, and taxonomic assignments of OTU contributors.
+(Scroll to see all columns)
+
+```{r, echo=F, message=F, warning=F}
+
+print_taxa_contributor_table(node_data_spec)
+
+```
+
+## Contributing OTUs for each metabolite
+
+```{r, echo=F, message=F, warning=F, fig.height = 7, fig.width=9}
+
+taxonomic_contributor_heatmap_plot_grid(node_data, node_data_spec)
+
+
+```
+
+## Metabolic network of major gene/reaction contributors
+
+```{r, echo=F, message=F, warning=F, fig.height = 5, fig.width=8}
+node_attrs = c("Correlation", "Metabolite", "PredictionType2", "SuperPath", "Status")
+edge_attrs = c("KO", "Cor", "stoichReac", "stoichProd")
+
+if(nrow(geneContribs[Contrib > 0]) > 1){
+  net1 = make_contrib_network(geneContribs[Contrib > 0], node_data, node_attrs, edge_attrs)
+  plot_contrib_net(net1, col_attr = "PredictionType2", node_size_attr = "Correlation", edge_size_attr = "Cor", node_lab = "Metabolite", edge_lab = "KO") + scale_color_manual(values = prediction_colors[c(1,3,2)])
+}
+
+
+
+```
+
+
