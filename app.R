@@ -71,7 +71,13 @@ output_settings = function(){
 run_pipeline = function(input){
   #process arguments
   species = fread(input$file1)
+  setnames(species, names(species)[1], "OTU") #First column gets renamed
   mets = fread(input$file2)
+  setnames(mets, names(mets)[1], "compound")
+  shared_samps = intersect(names(species), names(mets))
+  if(length(shared_samps) < 2) stop("Sample IDs don't match between species and metabolites")
+  species = species[,c("OTU", shared_samps), with=F]
+  mets = mets[,c("compound", shared_samps), with=F]
   if(input$specType){
     #Metagenome data
     #Implement this later
