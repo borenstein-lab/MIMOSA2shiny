@@ -1,6 +1,6 @@
 library(shiny)
-library(shinyjs)
-library(mimosa)
+library(shinyjs, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+library(mimosa, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 
 microbiome_data_upload = function(){
   fluidPage(
