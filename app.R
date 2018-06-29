@@ -42,9 +42,9 @@ network_settings = function(){
     h4("Metabolic network", id = "network"),
     radioButtons("AGORA", "Metabolic model template", choices = c("Generic PICRUST/KEGG metabolic model", "Map species to AGORA genomes and use AGORA metabolic models (recommended)")),
     disabled(radioButtons("closest", "", choices = c("Use closest AGORA species", "Use AGORA models for species within a % similarity threshold"))),
-    disabled(numericInput("simThreshold", "Similarity threshold:", value = 0.9, min=0.8, max = 1, step = 0.01)),
+    disabled(numericInput("simThreshold", "Similarity threshold:", value = 0.99, min=0.8, max = 1, step = 0.01)),
     checkboxGroupInput("netAdd", "", choices = c("Gap-fill metabolic network of each species","Add manual reactions")),
-    disabled(fileInput("rxnfile", "Upload file of reactions to add to the model (example format linked here)",
+    disabled(fileInput("rxnfile", "Upload file of reactions to add to the model (can be species-specific or generic, example format linked here)",
                        multiple = FALSE,
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
@@ -77,7 +77,9 @@ run_pipeline = function(input){
     #Implement this later
   }
   if(input$AGORA=="Generic PICRUST/KEGG metabolic model"){
-    network = build_generic_network(species, input$database)
+    network = build_generic_network(species, input$database, picrust_paths = c("../burrito/www/Data/16S_13_5_precalculated.tab.gz", "../burrito/www/Data/individual_picrust_otu_tables/",
+                                                                               "_genomic_content.tab"), kegg_paths = c("data/KEGGfiles/reaction_mapformula.lst", "data/KEGGfiles/reaction_ko.list", "data/KEGGfiles/reaction"))
+    save(network, file = "test_network.rda")
   }else{
     network = build_species_networks_w_agora(species, input$database, input$closest, input$simThreshold)
   }
@@ -178,8 +180,7 @@ server <- function(input, output) {
   #   }
   # })
   observeEvent(input$specType, {
-    # Change the following line for more examples
-    if(input$specType=="Also upload metagenome KO abundances"){
+    if(input$specType==T){
       enable("fileMet")
     } else {
       disable("fileMet")
