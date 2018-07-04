@@ -1,6 +1,8 @@
-library(shiny)
-library(shinyjs, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
-library(mimosa, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+.libPaths(c("/data/shiny-server/r-packages/","/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/"))
+library(shiny) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+library(shinyjs)#, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+library(mimosa) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+library(data.table)
 
 microbiome_data_upload = function(){
   fluidPage(
@@ -153,7 +155,7 @@ ui = fluidPage(
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
-  
+  print(sessionInfo())
   # output$type16S = renderUI({
   #   if (is.null(input$specType)|!"16S rRNA" %in% input$specType) return(
   #     fluidPage(
@@ -241,8 +243,8 @@ server <- function(input, output) {
   })
   
   observeEvent(input$goButton, {
-    req(input$file1)
-    req(input$file2)
+    #shiny::req(input$file1)
+    #shiny::req(input$file2)
     #if(error_checks){
     print(names(input))
     run_pipeline(input) #Just give it everything and go from there
