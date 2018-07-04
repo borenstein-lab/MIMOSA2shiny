@@ -76,7 +76,9 @@ run_pipeline = function(input){
   species = fread(input$file1$datapath)
   species = spec_table_fix(species)
   mets = fread(input$file2$datapath)
-  setnames(mets, names(mets)[1], "compound")
+  met_col_name = names(mets)[names(mets) %in% c("compound", "KEGG", "Compound", "metabolite", "Metabolite")]
+  if(length(met_col_name) != 1) stop("Ambiguous metabolite ID column name, must be one Compound/KEGG/Metabolite")
+  setnames(mets, met_col_name, "compound")
   shared_samps = intersect(names(species), names(mets))
   if(length(shared_samps) < 2) stop("Sample IDs don't match between species and metabolites")
   species = species[,c("OTU", shared_samps), with=F]
@@ -96,8 +98,18 @@ run_pipeline = function(input){
     network = add_rxns_to_network(network, input$rxnfile)
   }
   if(input$metType!="KEGG Compound IDs"){
+    #mets = map_to_kegg(mets)
     #Implement this later
   }
+  indiv_cmps = get_species_cmp_scores(species, network)
+  tot_cmps = indiv_cmps[,sum(value), by=list(compound, Sample)]
+  setnames(tot_cmps, "V1", "value")
+  mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
+  cmp_mods = fit_cmp_mods(tot_cmps, mets_melt)
+  indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
+  var_shares = calculate_var_shares(indiv_cmps)
+  #Send var_shares for download
+  #Generate plot of var shares
   #source(other stuff)
 }
 
