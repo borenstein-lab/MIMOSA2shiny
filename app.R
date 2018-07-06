@@ -72,9 +72,11 @@ output_settings = function(){
 
 ###### Core app function
 run_pipeline = function(input){
+  withProgress(message = "Running MIMOSA!", {
   #process arguments
   cat(input$file1$datapath)
   cat(input$file2$datapath)
+  incProgress(1/10, detail = "Reading data")
   species = fread(input$file1$datapath)
   species = spec_table_fix(species)
   mets = fread(input$file2$datapath)
@@ -89,6 +91,7 @@ run_pipeline = function(input){
     #Metagenome data
     #Implement this later
   }
+  incProgress(2/10, detail = "Building metabolic model")
   if(input$AGORA=="Generic PICRUST/KEGG metabolic model"){
     network = build_generic_network(species, input$database, picrust_paths = c("data/picrustGenomeData/16S_13_5_precalculated.tab.gz", "data/picrustGenomeData/indivGenomes/",
                                                                                "_genomic_content.tab"), kegg_paths = c("data/KEGGfiles/reaction_mapformula.lst", "data/KEGGfiles/reaction_ko.list", "data/KEGGfiles/reaction"))
@@ -96,23 +99,31 @@ run_pipeline = function(input){
   }else{
     network = build_species_networks_w_agora(species, input$database, input$closest, input$simThreshold)
   }
-  if(input$netAdd){
+  if("Add manual reactions" %in% input$netAdd){
     network = add_rxns_to_network(network, input$rxnfile)
+    #This will need to map between metabolite IDs possibly
+  }
+  if("Gap-fill metabolic network of each species" %in% input$netAdd){
+    #Do stuff
   }
   if(input$metType!="KEGG Compound IDs"){
     #mets = map_to_kegg(mets)
     #Implement this later
   }
+  incProgress(1/10, detail = "Calculating metabolic potential")
   indiv_cmps = get_species_cmp_scores(species, network)
-  tot_cmps = indiv_cmps[,sum(value), by=list(compound, Sample)]
+  tot_cmps = indiv_cmps[,sum(CMP), by=list(compound, Sample)]
   setnames(tot_cmps, "V1", "value")
   mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
   cmp_mods = fit_cmp_mods(tot_cmps, mets_melt)
   indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
+  incProgress(1/10, detail = "Calculating microbial contributions")
   var_shares = calculate_var_shares(indiv_cmps)
+  return(var_shares)
   #Send var_shares for download
   #Generate plot of var shares
   #source(other stuff)
+  })
 }
 
 ui = fluidPage(
@@ -165,9 +176,10 @@ ui = fluidPage(
     fluidRow(
       column(
         actionButton("goButton", "Run MIMOSA"),
-        tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"),
+        disabled(downloadButton("downloadData", "Download Results")),
+        tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), 
+        tags$style(type='text/css', "#downloadData { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"),
         width = 12, align = "center"
-        #downloadButton("downloadData", "Download")
       ))
     #)
   ), fluid = F)
@@ -263,24 +275,36 @@ server <- function(input, output) {
   #   }
   # })
   # 
+  datasetInput <- reactive({
+    req(input$file1)
+    req(input$file2)
+    run_pipeline(input)
+  })
+  
   observeEvent(input$goButton, {
     #shiny::req(input$file1)
     #shiny::req(input$file2)
     #if(error_checks){
     print(names(input))
-    run_pipeline(input) #Just give it everything and go from there
+    
+    datasetInput()
+    enable("downloadData")
+    #var_shares = run_pipeline(input) #Just give it everything and go from there
+    
     #}
   })
   
-  # Downloadable csv of selected dataset ----
-  # output$downloadData <- downloadHandler(
-  #   filename = function() {
-  #     paste(input$dataset, ".csv", sep = "")
-  #   },
-  #   content = function(file) {
-  #     write.csv(datasetInput(), file, row.names = FALSE)
-  #   }
-  # )
+  
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      "results.txt"
+      #paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.table(datasetInput(), file, row.names = F, sep = "\t", quote=F)
+    }
+  )
+  
 }
 
 shinyApp(ui = ui, server = server)
