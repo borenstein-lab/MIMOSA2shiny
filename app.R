@@ -1,7 +1,8 @@
-.libPaths(c("/data/shiny-server/r-packages/","/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/"))
+.libPaths(c("/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/","/data/shiny-server/r-packages/", "/data/shiny-server/app_specific_r_packages/"))
 library(shiny) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(shinyjs)#, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
-library(mimosa) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+library(mimosa, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+library(readr, lib.loc = "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(data.table)
 
 microbiome_data_upload = function(){
@@ -72,14 +73,24 @@ output_settings = function(){
 ###### Core app function
 run_pipeline = function(input){
   #process arguments
-  species = fread(input$file1)
-  mets = fread(input$file2)
+  cat(input$file1$datapath)
+  cat(input$file2$datapath)
+  species = fread(input$file1$datapath)
+  species = spec_table_fix(species)
+  mets = fread(input$file2$datapath)
+  met_col_name = names(mets)[names(mets) %in% c("compound", "KEGG", "Compound", "metabolite", "Metabolite")]
+  if(length(met_col_name) != 1) stop("Ambiguous metabolite ID column name, must be one Compound/KEGG/Metabolite")
+  setnames(mets, met_col_name, "compound")
+  shared_samps = intersect(names(species), names(mets))
+  if(length(shared_samps) < 2) stop("Sample IDs don't match between species and metabolites")
+  species = species[,c("OTU", shared_samps), with=F]
+  mets = mets[,c("compound", shared_samps), with=F]
   if(input$specType){
     #Metagenome data
     #Implement this later
   }
   if(input$AGORA=="Generic PICRUST/KEGG metabolic model"){
-    network = build_generic_network(species, input$database, picrust_paths = c("../burrito/www/Data/16S_13_5_precalculated.tab.gz", "../burrito/www/Data/individual_picrust_otu_tables/",
+    network = build_generic_network(species, input$database, picrust_paths = c("data/picrustGenomeData/16S_13_5_precalculated.tab.gz", "data/picrustGenomeData/indivGenomes/",
                                                                                "_genomic_content.tab"), kegg_paths = c("data/KEGGfiles/reaction_mapformula.lst", "data/KEGGfiles/reaction_ko.list", "data/KEGGfiles/reaction"))
     save(network, file = "test_network.rda")
   }else{
@@ -89,8 +100,18 @@ run_pipeline = function(input){
     network = add_rxns_to_network(network, input$rxnfile)
   }
   if(input$metType!="KEGG Compound IDs"){
+    #mets = map_to_kegg(mets)
     #Implement this later
   }
+  indiv_cmps = get_species_cmp_scores(species, network)
+  tot_cmps = indiv_cmps[,sum(value), by=list(compound, Sample)]
+  setnames(tot_cmps, "V1", "value")
+  mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
+  cmp_mods = fit_cmp_mods(tot_cmps, mets_melt)
+  indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
+  var_shares = calculate_var_shares(indiv_cmps)
+  #Send var_shares for download
+  #Generate plot of var shares
   #source(other stuff)
 }
 
@@ -211,37 +232,37 @@ server <- function(input, output) {
     }
   })
   
-  output$contents = renderTable({
-    
-    # input$file1 will be NULL initially. After the user selects
-    # and uploads a file, head of that data file by default,
-    # or all rows if selected, will be shown.
-    input$goButton
-    req(input$file1)
-    
-    # when reading semicolon separated files,
-    # having a comma separator causes `read.csv` to error
-    tryCatch(
-      {
-        df <- read.csv(input$file1$datapath,
-                       header = input$header,
-                       sep = input$sep,
-                       quote = input$quote)
-      },
-      error = function(e) {
-        # return a safeError if a parsing error occurs
-        stop(safeError(e))
-      }
-    )
-    
-    if(input$disp == "head") {
-      return(head(df))
-    }
-    else {
-      return(df)
-    }
-  })
-  
+  # output$contents = renderTable({
+  #   
+  #   # input$file1 will be NULL initially. After the user selects
+  #   # and uploads a file, head of that data file by default,
+  #   # or all rows if selected, will be shown.
+  #   input$goButton
+  #   req(input$file1)
+  #   
+  #   # when reading semicolon separated files,
+  #   # having a comma separator causes `read.csv` to error
+  #   tryCatch(
+  #     {
+  #       df <- read.csv(input$file1$datapath,
+  #                      header = input$header,
+  #                      sep = input$sep,
+  #                      quote = input$quote)
+  #     },
+  #     error = function(e) {
+  #       # return a safeError if a parsing error occurs
+  #       stop(safeError(e))
+  #     }
+  #   )
+  #   
+  #   if(input$disp == "head") {
+  #     return(head(df))
+  #   }
+  #   else {
+  #     return(df)
+  #   }
+  # })
+  # 
   observeEvent(input$goButton, {
     #shiny::req(input$file1)
     #shiny::req(input$file2)
