@@ -2,6 +2,8 @@ library(shiny)
 library(shinyjs) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(mimosa) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(data.table)
+library(ggplot2)
+library(viridis)
 
 microbiome_data_upload = function(){
   fluidPage(
@@ -13,7 +15,7 @@ microbiome_data_upload = function(){
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
                          ".csv")),
-    checkboxInput("specType", "Also upload metagenome KO abundances"),
+    checkboxInput("metagenome", "Also upload metagenome KO abundances"),
     #uiOutput("type16S"),
     #uiOutput("typeMetagenome")
     disabled(fileInput("fileMet", "Upload file of metagenomic KO abundances (example format linked here)",
@@ -40,30 +42,37 @@ metabolome_data_upload = function(){
 
 network_settings = function(){
   fluidPage(
-    h4("Metabolic network", id = "network"),
-    radioButtons("AGORA", "Metabolic model template", choices = c("Generic PICRUST/KEGG metabolic model", "Map species to AGORA genomes and use AGORA metabolic models (recommended)")),
-    disabled(radioButtons("closest", "", choices = c("Use closest AGORA species", "Use AGORA models for species within a % similarity threshold"))),
-    disabled(numericInput("simThreshold", "Similarity threshold:", value = 0.99, min=0.8, max = 1, step = 0.01)),
-    checkboxGroupInput("netAdd", "", choices = c("Gap-fill metabolic network of each species","Add manual reactions")),
-    disabled(fileInput("rxnfile", "Upload file of reactions to add to the model (can be species-specific or generic, example format linked here)",
+    h4("Model settings", id = "genome"),
+    radioButtons("genomeChoices", "Gene content source", choices = c("Assign KOs with PICRUSt", "Map sequences to AGORA genomes")),
+    checkboxInput("geneAdd", "Upload modifications to taxon-gene mapping"),
+    disabled(fileInput("geneAddFile", "Upload file of species-gene modifications (see examples and documentation here)",
                        multiple = FALSE,
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
-                                  ".csv")))
+                                  ".csv"))),
+    radioButtons("modelTemplate", "Metabolic model template", choices = c("Generic KEGG metabolic model", "AGORA metabolic models (recommended)")),
+    disabled(radioButtons("closest", "", choices = c("Use closest AGORA species", "Use AGORA models for species within a % similarity threshold"))),
+    disabled(numericInput("simThreshold", "Similarity threshold:", value = 0.99, min=0.8, max = 1, step = 0.01)),
+    p("\n"),
+    checkboxInput("netAdd", "Upload modifications to taxon-reaction mapping"), 
+    disabled(fileInput("netAddFile", "Upload file of species-reaction modifications (see examples and documentation here)", multiple = FALSE, accept = c("text/csv",
+                                  "text/comma-separated-values,text/plain",
+                                  ".csv"))),
+    checkboxInput("gapfill", "Gap-fill model for each species using x program")
   )
 }
 
 algorithm_settings = function(){
   fluidPage(
-    h4("Algorithm", id = "algorithm"),
+    h4("Algorithm settings", id = "algorithm"),
     radioButtons("contribType", "Metabolite statistic to analyze:", choices = c("Variance (analytically calculated)", "Differential abundance (Wilcoxon rank-sum, permutation-based)", "Paired-sample differential abundance (paired Wilcoxon rank-sum, permutation based)"))
   )
 }
 
 output_settings = function(){
   fluidPage(
-    h4("Output", id = "output"),
-    radioButtons("returnType", "Select desired output:", choices = c("Summarized contribution results", "Full verbose data output")),
+    h4("Output", id = "outputResults"),
+    #radioButtons("returnType", "Select desired output:", choices = c("Summarized contribution results", "Full verbose data output")),
     checkboxInput("netVis", "Generate interactive metabolic network visualization of results")
   )
 }
@@ -85,23 +94,36 @@ run_pipeline = function(input){
   if(length(shared_samps) < 2) stop("Sample IDs don't match between species and metabolites")
   species = species[,c("OTU", shared_samps), with=F]
   mets = mets[,c("compound", shared_samps), with=F]
-  if(input$specType){
+  if(input$metagenome){
     #Metagenome data
     #Implement this later
   }
   incProgress(2/10, detail = "Building metabolic model")
-  if(input$AGORA=="Generic PICRUST/KEGG metabolic model"){
-    network = build_generic_network(species, input$database, picrust_paths = c("data/picrustGenomeData/16S_13_5_precalculated.tab.gz", "data/picrustGenomeData/indivGenomes/",
-                                                                               "_genomic_content.tab"), kegg_paths = c("data/KEGGfiles/reaction_mapformula.lst", "data/KEGGfiles/reaction_ko.list", "data/KEGGfiles/reaction"))
+  if(input$genomeChoices=="Assign KOs with PICRUSt"){
+    if(input$database=="Sequence variants (recommended for AGORA)"){
+      seq_list = species_table[,OTU]
+      species_table = get_otus_from_seqvar(species_table[,OTU], repSeqPath = "") #Run vsearch to get gg OTUs
+    } else if(input$database != "Greengenes 13_5 or 13_8"){
+      stop("Only Greengenes currently implemented")
+    }
+    contribution_table = generate_contribution_table_using_picrust(species, picrust_norm_file = "data/picrustGenomeData/16S_13_5_precalculated.tab.gz", picrust_ko_table_directory ="data/picrustGenomeData/indivGenomes/", picrust_ko_table_suffix = "_genomic_content.tab")
+    contribution_table = contribution_table[contribution != 0]
+    if(input$geneAdd){
+      req(input$geneAddFile)
+      contribution_table = add_genes_to_contribution_table(contribution_table, input$geneAddFile)
+    }
+  } 
+  if(input$modelTemplate=="Generic KEGG metabolic model"){
+    network = build_generic_network(contribution_table, kegg_paths = c("data/KEGGfiles/reaction_mapformula.lst", "data/KEGGfiles/reaction_ko.list", "data/KEGGfiles/reaction"))
     save(network, file = "test_network.rda")
   }else{
     network = build_species_networks_w_agora(species, input$database, input$closest, input$simThreshold)
   }
-  if("Add manual reactions" %in% input$netAdd){
-    network = add_rxns_to_network(network, input$rxnfile)
+  if(input$netAdd){
+    network = add_rxns_to_network(network, input$netAddFile)
     #This will need to map between metabolite IDs possibly
   }
-  if("Gap-fill metabolic network of each species" %in% input$netAdd){
+  if(input$gapfill){
     #Do stuff
   }
   if(input$metType!="KEGG Compound IDs"){
@@ -117,7 +139,7 @@ run_pipeline = function(input){
   indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
   incProgress(1/10, detail = "Calculating microbial contributions")
   var_shares = calculate_var_shares(indiv_cmps)
-  return(var_shares)
+  return(list(varShares = var_shares, modelData = cmp_mods[[1]]))
   #Send var_shares for download
   #Generate plot of var shares
   #source(other stuff)
@@ -149,7 +171,7 @@ ui = fluidPage(
       h4("Settings"),
       fluidRow(HTML("<a href='#network'>Metabolic network settings</a>")),
       fluidRow(HTML("<a href='#algorithm'>Algorithm settings</a>")),
-      fluidRow(HTML("<a href='#output'>Output network settings</a>"))
+      fluidRow(HTML("<a href='#outputResults'>Output network settings</a>"))
       #fluidRow(actionLink("gotometabolome", "Metabolomics data upload", onclick = "fakeClick('metabolome')"))
       #fluidRow(h4("this 2nd box should lead me to tab2", onclick = "fakeClick('tab2')"))
     ),
@@ -164,67 +186,77 @@ ui = fluidPage(
     widths = 3.5
     ),
   mainPanel(
-    h3("Data Input"),
-    microbiome_data_upload(),
-    metabolome_data_upload(),
-    h3("Settings"),
-    network_settings(),
-    algorithm_settings(),
-    output_settings(),
-    fluidRow(
-      column(
-        actionButton("goButton", "Run MIMOSA"),
-        disabled(downloadButton("downloadData", "Download Results")),
-        tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), 
-        tags$style(type='text/css', "#downloadData { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"),
-        width = 12, align = "center"
-      ))
-    #)
+    uiOutput("uploadPage")
   ), fluid = F)
 
 
 
 # Define server logic required to draw a histogram ----
-server <- function(input, output) {
+server <- function(input, output, session) {
   
-  # output$type16S = renderUI({
-  #   if (is.null(input$specType)|!"16S rRNA" %in% input$specType) return(
-  #     fluidPage(
-  #       radioButtons("database", "16S format:", choices = c("Sequence variants (will map to Greengenes)", "Greengenes 13_5 or 13_8 97% OTUs", "SILVA OTUs")),
-  #       fileInput("file1", "Upload 16S rRNA abundance file (example format linked here)",
-  #                 multiple = FALSE,
-  #                 accept = c("text/csv",
-  #                            "text/comma-separated-values,text/plain",
-  #                            ".csv")),
-  #       tags$head(tags$style("#text1{color: gray;
-  #                                }"
-  #       )
-  #     )
-  #     )
-  #   ) else {
-  #     fluidPage(
-  #     radioButtons("database", "16S format:", choices = c("Sequence variants (will map to Greengenes)", "Greengenes 13_5 or 13_8 97% OTUs", "SILVA OTUs")),
-  #     fileInput("file1", "Upload 16S rRNA abundance file (example format linked here)",
-  #               multiple = FALSE,
-  #               accept = c("text/csv",
-  #                          "text/comma-separated-values,text/plain",
-  #                          ".csv"))
-  #     )
-  #   }
-  # })
-  observeEvent(input$specType, {
-    if(input$specType==T){
+  output$uploadPage = renderUI({
+    if(is.null(input$goButton)){
+      return(fluidPage(
+        h3("Data Input"),
+        microbiome_data_upload(),
+        metabolome_data_upload(),
+        h3("Settings"),
+        network_settings(),
+        algorithm_settings(),
+        output_settings(),
+        fluidRow(
+          column(
+            actionButton("goButton", "Run MIMOSA"),
+            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), 
+            width = 12, align = "center"
+          ))))
+    } else if(input$goButton==0){
+      return(fluidPage(
+        h3("Data Input"),
+        microbiome_data_upload(),
+        metabolome_data_upload(),
+        h3("Settings"),
+        network_settings(),
+        algorithm_settings(),
+        output_settings(),
+        fluidRow(
+          column(
+            actionButton("goButton", "Run MIMOSA"),
+            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), 
+            width = 12, align = "center"
+          ))))
+    } else {
+      fluidPage(
+      fluidRow(
+        column(
+      downloadButton("downloadSettings", "Download Configuration/Settings File"),
+      downloadButton("downloadData", "Download Variance Contribution Results"),
+      downloadButton("downloadModelData", "Download Model Summaries"),
+      tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), width = 12, align = "center")),
+      fluidRow(
+        #plots
+        plotOutput("contribPlots")
+      ))
+  
+    }
+
+  })
+
+  observeEvent(input$metagenome, {
+    if(input$metagenome==T){
       enable("fileMet")
     } else {
       disable("fileMet")
     }
   })
-  observeEvent(input$AGORA, {
-    if(input$AGORA=="Map species to AGORA genomes and use AGORA metabolic models (recommended)"){
+  observeEvent(input$genomeChoices, {
+    if(input$genomeChoices=="Map sequences to AGORA genomes"){
       enable("closest")
+      updateRadioButtons(session, "modelTemplate", selected = "AGORA metabolic models (recommended)")
     } else {
       disable("closest")
-    }
+      updateRadioButtons(session, "modelTemplate", selected = "Generic KEGG metabolic model")
+      }
   })
   observeEvent(input$closest, {
     # Change the following line for more examples
@@ -234,11 +266,19 @@ server <- function(input, output) {
       disable("simThreshold")
     }
   })
-  observeEvent(input$netAdd, {
-    if("Add manual reactions" %in% input$netAdd){
-      enable("rxnFile")
+  observeEvent(input$geneAdd, {
+    if(input$geneAdd==T){
+      enable("geneAddFile")
     } else {
-      disable("rxnFile")
+      disable("geneAddFile")
+    }
+  })
+  
+  observeEvent(input$netAdd, {
+    if(input$netAdd==T){
+      enable("netAddFile")
+    } else {
+      disable("netAddFile")
     }
   })
   
@@ -274,8 +314,6 @@ server <- function(input, output) {
   # })
   # 
   datasetInput <- reactive({
-    req(input$file1)
-    req(input$file2)
     run_pipeline(input)
   })
   
@@ -284,9 +322,9 @@ server <- function(input, output) {
     req(input$file2)
     #if(error_checks){
     print(names(input))
-    
     datasetInput()
     enable("downloadData")
+    enable("downloadModelData")
     #var_shares = run_pipeline(input) #Just give it everything and go from there
     
     #}
@@ -295,14 +333,28 @@ server <- function(input, output) {
   
   output$downloadData <- downloadHandler(
     filename = function() {
-      "results.txt"
+      "contributionResults.txt"
       #paste(input$dataset, ".csv", sep = "")
     },
     content = function(file) {
-      write.table(datasetInput(), file, row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$varShares, file, row.names = F, sep = "\t", quote=F)
     }
   )
-  
+  output$downloadModelData <- downloadHandler(
+    filename = function() {
+      "modelResults.txt"
+      #paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.table(datasetInput()$modelData, file, row.names = F, sep = "\t", quote=F)
+    }
+  )
+  output$contribPlots = renderPlot({
+    plotData = datasetInput()$varShares
+    met1 = plotData[1,compound]
+    #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
+    plot_contributions(plotData, metabolite = met1)
+  })
 }
 
 shinyApp(ui = ui, server = server)
