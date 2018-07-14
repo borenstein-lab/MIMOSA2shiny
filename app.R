@@ -1,6 +1,6 @@
-.libPaths(c("/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/","/data/shiny-server/r-packages/", "/data/shiny-server/app_specific_r_packages/"))
-library(shiny) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
-library(shinyjs)#, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+.libPaths(c("/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")) #,"/data/shiny-server/r-packages/", "/data/shiny-server/app_specific_r_packages/"))
+library(shiny, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
+library(shinyjs, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(mimosa, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(readr, lib.loc = "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(data.table)
@@ -8,7 +8,7 @@ library(data.table)
 microbiome_data_upload = function(){
   fluidPage(
     tags$head(tags$style("#fileMet{color: gray }")),
-    h4("Upload a tab-delimited file with a row for each species and a column for each sample."),
+    h4("Microbiome data upload: provide a tab-delimited file with a row for each species and a column for each sample."),
     radioButtons("database", "16S format:", choices = c("Sequence variants (recommended for AGORA)", "Greengenes 13_5 or 13_8", "SILVA")),
     fileInput("file1", "Upload 16S rRNA abundance file (example format linked here)",
               multiple = FALSE,
@@ -30,7 +30,7 @@ microbiome_data_upload = function(){
 }
 metabolome_data_upload = function(){
   fluidPage(
-    h4("Upload a tab-delimited file with a row for each species and a column for each sample.", id = "metabolome"),
+    h4("Metabolite data upload: provide a tab-delimited file with a row for each metabolite and a column for each sample.", id = "metabolome"),
     radioButtons("metType", label = "Compound IDs:", choices = c("KEGG Compound IDs", "MetaCyc Compound IDs", "Metabolite names (search for matching ID)"), selected = "KEGG Compound IDs"),
     fileInput("file2", "Upload metabolite file (example format linked here)",
               multiple = FALSE,
@@ -110,14 +110,14 @@ run_pipeline = function(input){
     #mets = map_to_kegg(mets)
     #Implement this later
   }
-  incProgress(1/10, detail = "Calculating metabolic potential")
+  incProgress(2/10, detail = "Calculating metabolic potential")
   indiv_cmps = get_species_cmp_scores(species, network)
   tot_cmps = indiv_cmps[,sum(CMP), by=list(compound, Sample)]
   setnames(tot_cmps, "V1", "value")
   mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
   cmp_mods = fit_cmp_mods(tot_cmps, mets_melt)
   indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
-  incProgress(1/10, detail = "Calculating microbial contributions")
+  incProgress(2/10, detail = "Calculating microbial contributions")
   var_shares = calculate_var_shares(indiv_cmps)
   return(var_shares)
   #Send var_shares for download
@@ -276,6 +276,7 @@ server <- function(input, output) {
   # })
   # 
   datasetInput <- reactive({
+  	print(.libPaths())
     req(input$file1)
     req(input$file2)
     run_pipeline(input)
