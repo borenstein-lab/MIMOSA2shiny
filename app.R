@@ -101,8 +101,8 @@ run_pipeline = function(input){
   incProgress(2/10, detail = "Building metabolic model")
   if(input$genomeChoices=="Assign KOs with PICRUSt"){
     if(input$database=="Sequence variants (recommended for AGORA)"){
-      seq_list = species_table[,OTU]
-      species_table = get_otus_from_seqvar(species_table[,OTU], repSeqPath = "") #Run vsearch to get gg OTUs
+      seq_list = species[,OTU]
+      species_table = get_otus_from_seqvar(seq_list, repSeqDir = "~/Documents/MIMOSA2shiny/data/rep_seqs/", repSeqFile = "gg_13_5.fasta.gz", add_agora_names = F, seqID = simThreshold) #Run vsearch to get gg OTUs
     } else if(input$database != "Greengenes 13_5 or 13_8"){
       stop("Only Greengenes currently implemented")
     }
