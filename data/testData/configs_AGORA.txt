@@ -1,0 +1,12 @@
+genomeChoices	Map sequences to AGORA genomes
+database	Sequence variants (recommended for AGORA)
+metagenome
+geneAdd
+geneAddFile
+modelTemplate	AGORA metabolic models (recommended)
+kegg_prefix	~/Documents/MIMOSA2shiny/data/KEGGfiles/
+netAdd
+netAddFile
+metType
+closest
+simThreshold	0.99

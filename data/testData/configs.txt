@@ -1,0 +1,12 @@
+genomeChoices	Assign KOs with PICRUSt
+database	Greengenes 13_5 or 13_8
+metagenome
+geneAdd
+geneAddFile
+modelTemplate	Generic KEGG metabolic model
+kegg_prefix	~/Documents/MIMOSA2shiny/data/KEGGfiles/
+netAdd
+netAddFile
+metType
+closest
+simThreshold	0.99
