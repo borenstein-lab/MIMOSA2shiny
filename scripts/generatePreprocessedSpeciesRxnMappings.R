@@ -33,7 +33,7 @@ if(database == "PICRUSt"){
   all_mods = get_S_mats(all_mods, otu_list, edge_list = T)
   #Should we split up? Depends how big it is.
   for(spec in otu_list){
-    write.table(all_mods[OTU==spec], file = paste0("data/AGORA/", spec, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
+    write.table(all_mods[Species==spec], file = paste0("data/AGORA/", spec, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
   }
 
 }
