@@ -4,22 +4,22 @@ library(mimosa) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library
 library(data.table)
 library(ggplot2)
 library(viridis)
-source("scripts/text_constants.R")
+#source("scripts/text_constants.R")
 
 microbiome_data_upload = function(){
   fluidPage(
     tags$head(tags$style("#fileMet{color: gray }")),
-    h4(microbiome_header),
-    radioButtons("database", "16S format:", choices = database_choices),
-    fileInput("file1", microbiome_input_title,
+    h4(get_text("microbiome_header")),
+    radioButtons("database", "16S format:", choices = get_text("database_choices")),
+    fileInput("file1", get_text("microbiome_input_title"),
               multiple = FALSE,
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
                          ".csv")),
-    checkboxInput("metagenome", metagenome_option),
+    checkboxInput("metagenome", get_text("metagenome_option")),
     #uiOutput("type16S"),
     #uiOutput("typeMetagenome")
-    disabled(fileInput("fileMet", metagenome_input_title,
+    disabled(fileInput("fileMet", get_text("metagenome_input_title"),
                        multiple = FALSE,
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
@@ -31,9 +31,9 @@ microbiome_data_upload = function(){
 }
 metabolome_data_upload = function(){
   fluidPage(
-    h4(metabolome_header, id = "metabolome"),
-    radioButtons("metType", label = met_type_title, choices = met_type_choices, selected = selected_met_type),
-    fileInput("file2", metabolome_upload_title,
+    h4(get_text("metabolome_header"), id = "metabolome"),
+    radioButtons("metType", label = get_text("met_type_title"), choices = get_text("met_type_choices"), selected = get_text("selected_met_type")),
+    fileInput("file2", get_text("metabolome_upload_title"),
               multiple = FALSE,
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
@@ -43,30 +43,30 @@ metabolome_data_upload = function(){
 
 network_settings = function(){
   fluidPage(
-    h4(network_header, id = "genome"),
-    radioButtons("genomeChoices", source_title, choices = source_choices),
-    checkboxInput("geneAdd", gene_mod_option),
-    disabled(fileInput("geneAddFile", gene_mod_input_title,
+    h4(get_text("network_header"), id = "genome"),
+    radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices")),
+    checkboxInput("geneAdd", get_text("gene_mod_option")),
+    disabled(fileInput("geneAddFile", get_text("gene_mod_input_title"),
                        multiple = FALSE,
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
                                   ".csv"))),
-    checkboxInput("netAdd", net_mod_option), 
-    disabled(fileInput("netAddFile", net_mod_input_title, multiple = FALSE, accept = c("text/csv",
+    checkboxInput("netAdd", get_text("net_mod_option")), 
+    disabled(fileInput("netAddFile", get_text("net_mod_input_title"), multiple = FALSE, accept = c("text/csv",
                                                                                                                                                          "text/comma-separated-values,text/plain",
                                                                                                                                                          ".csv"))),
     # radioButtons("modelTemplate", "Metabolic model template", choices = c("Generic KEGG metabolic model", "AGORA metabolic models (recommended)")),
-    disabled(radioButtons("closest", closest_title, choices = closest_options)),
-    disabled(numericInput("simThreshold", sim_title, value = 0.99, min=0.8, max = 1, step = 0.01)),
+    disabled(radioButtons("closest", get_text("closest_title"), choices = get_text("closest_options"))),
+    disabled(numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01)),
     p("\n"),
-    checkboxInput("gapfill", gapfill_option)
+    checkboxInput("gapfill", get_text("gapfill_option"))
   )
 }
 
 algorithm_settings = function(){
   fluidPage(
-    h4(algorithm_header, id = "algorithm"),
-    radioButtons("contribType", stat_title, choices = stat_choices)
+    h4(get_text("algorithm_header"), id = "algorithm"),
+    radioButtons("contribType", get_text("stat_title"), choices = get_text("stat_choices"))
   )
 }
 
@@ -90,6 +90,9 @@ run_pipeline = function(input){
   mets = fread(input$file2$datapath)
   met_nonzero_filt = 5
   mets = met_table_fix(mets, met_nonzero_filt)
+  #Filter species using default abundance values
+  species = filter_species_abunds(species, filter_type = "fracNonzero")
+  species = filter_species_abunds(species, filter_type = "mean")
   shared_samps = intersect(names(species), names(mets))
   if(length(shared_samps) < 2) stop("Sample IDs don't match between species and metabolites")
   species = species[,c("OTU", shared_samps), with=F]
@@ -99,26 +102,27 @@ run_pipeline = function(input){
     #Implement this later
   }
   incProgress(2/10, detail = "Building metabolic model")
-  if(input$genomeChoices==source_choices[1]){
-    if(input$database==database_choices[1]){
+  if(input$genomeChoices==get_text("source_choices")[1]){
+    if(input$database==get_text("database_choices")[1]){
       seq_list = species[,OTU]
       incProgress(1/10, detail = "Assigning sequences to greengenes OTUs")
       species_table = get_otus_from_seqvar(seq_list, repSeqDir = "~/Documents/MIMOSA2shiny/data/rep_seqs/", repSeqFile = "gg_13_5.fasta.gz", add_agora_names = F, seqID = 0.97) #Run vsearch to get gg OTUs
-    } else if(input$database != database_choices[2]){
+    } else if(input$database != get_text("database_choices")[2]){
       stop("Only Greengenes currently implemented")
     }
     if(input$geneAdd){
       req(input$geneAddFile)
       contribution_table = generate_contribution_table_using_picrust(species, picrust_norm_file = "data/picrustGenomeData/16S_13_5_precalculated.tab.gz", picrust_ko_table_directory ="data/picrustGenomeData/indivGenomes/", picrust_ko_table_suffix = "_genomic_content.tab")
-      contribution_table = contribution_table[contribution != 0]
       contribution_table = add_genes_to_contribution_table(contribution_table, input$geneAddFile)
       network = build_generic_network(contribution_table, kegg_paths = c("data/KEGGfiles/reaction_mapformula.lst", "data/KEGGfiles/reaction_ko.list", "data/KEGGfiles/reaction"))
     } else { #Just load in preprocessed
-      network = load_kegg_network(species, net_path = "data/picrustGenomeData/indivModels/")
+      network = get_kegg_network(species, net_path = "data/picrustGenomeData/indivModels/")
     }
-  } else if(input$genomeChoices==source_choices[2]){
-    network = build_species_networks_w_agora(species, input$database, input$closest, input$simThreshold)
-    save(network, file = "test_network.rda")
+  } else if(input$genomeChoices==get_text("source_choices")[2]){
+    network_results = build_species_networks_w_agora(species, input$database, input$closest, input$simThreshold)
+    species = network_results[[1]]
+    network = network_results[[2]]
+    species = species[OTU %in% network[,OTU]]
   }
   if(input$netAdd){
     network = add_rxns_to_network(network, input$netAddFile)
@@ -133,6 +137,12 @@ run_pipeline = function(input){
   }
   incProgress(1/10, detail = "Calculating metabolic potential")
   indiv_cmps = get_species_cmp_scores(species, network)
+  if(input$genomeChoices==get_text("source_choices")[2]){ #Switch to KEGG IDs at this point
+    indiv_cmps[,KEGG:=agora_kegg_mets(compound)]
+    indiv_cmps = indiv_cmps[,sum(CMP), by=list(Species, KEGG, Sample)] #Check that this makes sense
+    #separate internal/external?
+    setnames(indiv_cmps, c("KEGG", "V1"), c("compound", "CMP"))
+  }
   mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
   cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt)
   indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
@@ -249,7 +259,7 @@ server <- function(input, output, session) {
     }
   })
   observeEvent(input$genomeChoices, {
-    if(input$genomeChoices=="Map sequences to AGORA genomes and models"){
+    if(input$genomeChoices==get_text("source_choices")[2]){
       enable("closest")
     } else {
       disable("closest")
@@ -257,7 +267,7 @@ server <- function(input, output, session) {
   })
   observeEvent(input$closest, {
     # Change the following line for more examples
-    if(input$closest=="Use AGORA models for species within a % similarity threshold"){
+    if(input$closest==get_text("closest_options")[2]){
       enable("simThreshold")
     } else {
       disable("simThreshold")
