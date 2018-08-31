@@ -4,13 +4,14 @@ library(mimosa) #, lib.loc="/data/shiny-server/R/x86_64-redhat-linux-gnu-library
 library(data.table)
 library(ggplot2)
 library(viridis)
+options(datatable.webSafeMode = TRUE)
 #source("scripts/text_constants.R")
 
 microbiome_data_upload = function(){
   fluidPage(
     tags$head(tags$style("#fileMet{color: gray }")),
     h4(get_text("microbiome_header")),
-    radioButtons("database", "16S format:", choices = get_text("database_choices")),
+    radioButtons("database", "Microbiome data format:", choices = get_text("database_choices")),
     fileInput("file1", get_text("microbiome_input_title"),
               multiple = FALSE,
               accept = c("text/csv",
@@ -24,7 +25,9 @@ microbiome_data_upload = function(){
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
                                   ".csv") #,
-    )
+    ),
+    disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
+                  ))
     )
   )
   
@@ -85,8 +88,10 @@ run_pipeline = function(input){
   cat(input$file1$datapath)
   cat(input$file2$datapath)
   incProgress(1/10, detail = "Reading data")
-  species = fread(input$file1$datapath)
-  species = spec_table_fix(species)
+  if(!input$metagenome_use){
+    species = fread(input$file1$datapath)
+    species = spec_table_fix(species)
+  } 
   mets = fread(input$file2$datapath)
   met_nonzero_filt = 5
   mets = met_table_fix(mets, met_nonzero_filt)
@@ -98,8 +103,11 @@ run_pipeline = function(input){
   species = species[,c("OTU", shared_samps), with=F]
   mets = mets[,c("compound", shared_samps), with=F]
   if(input$metagenome){
+    metagenome = fread(input$fileMet$datapath)
     #Metagenome data
     #Implement this later
+    species2 = species_from_metagenome(metagenome)
+    network = network_from_metagenome(metagenome)
   }
   incProgress(2/10, detail = "Building metabolic model")
   if(input$genomeChoices==get_text("source_choices")[1]){
@@ -358,9 +366,9 @@ server <- function(input, output, session) {
   )
   output$contribPlots = renderPlot({
     plotData = datasetInput()$varShares
-    met1 = plotData[1,compound]
+    ##met1 = plotData[1,compound]
     #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
-    plot_contributions(plotData, metabolite = met1)
+    plot_summary_contributions(plotData)
   })
 }
 
