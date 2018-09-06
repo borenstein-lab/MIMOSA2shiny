@@ -49,7 +49,7 @@ metabolome_data_upload = function(){
 network_settings = function(){
   fluidPage(
     h4(get_text("network_header"), id = "genome"),
-    radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices")),
+    radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2]),
     checkboxInput("geneAdd", get_text("gene_mod_option")),
     disabled(fileInput("geneAddFile", get_text("gene_mod_input_title"),
                        multiple = FALSE,
@@ -84,9 +84,11 @@ output_settings = function(){
 }
 
 ###### Core app function
-run_pipeline = function(configTable){
+run_pipeline = function(input_data, configTable){
   withProgress(message = "Running MIMOSA!", {
   #process arguments
+  species = input_data$species
+  mets = input_data$mets
   print(configTable)
   print(configTable[V1=="file1", V2])
   configTable[,V2:=as.character(V2)]
@@ -97,19 +99,19 @@ run_pipeline = function(configTable){
   #cat(input$file2$datapath)
   #run_mimosa2(configTable)
   incProgress(1/10, detail = "Reading data")
-  data_inputs = read_mimosa2_files(configTable)
-  species = data_inputs[[1]]
-  mets = data_inputs[[2]]
-  
-  if(configTable[V1=="metagenome", V2 != FALSE]){
-    metagenome_data = species_network_from_metagenome(configTable[V1=="fileMet", V2])
-    species2 = metagenome_data[[1]]
-    metagenome_network = metagenome_data[[2]]
+
+  if(!is.null(input_data$metagenome)){
+    #metagenome_data = species_network_from_metagenome(input_data$metagenome)
+    species = get_species_from_metagenome(input_data$metagenome)
+    #metagenome_network = metagenome_data[[2]]
   }
   incProgress(2/10, detail = "Building metabolic model")
-  network = build_metabolic_model(species, configTable)
-
+  network_results = build_metabolic_model(species, configTable, input_data$geneAdd, input_data$netAdd)
+  network = network_results[[1]]
+  species = network_results[[2]] #Allow for modifying this for AGORA
   incProgress(1/10, detail = "Calculating metabolic potential")
+  print(network)
+  print(species)
   indiv_cmps = get_species_cmp_scores(species, network)
   mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
   cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt)
@@ -212,7 +214,10 @@ server <- function(input, output, session) {
       tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), width = 12, align = "center")),
       fluidRow(
         #plots
-        plotOutput("contribPlots", click = "plot_click")
+        plotOutput("contribPlots", click = "plot_click", hover = "plot_hover")
+      ),
+      fluidRow(
+        tableOutput("indivCellInfo")
       ),
       fluidRow(
         plotOutput("indivPlots")
@@ -221,7 +226,13 @@ server <- function(input, output, session) {
     }
 
   })
-
+  observeEvent(input$database, {
+    if(input$database==get_text("database_choices")[1]){
+      updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[2])
+    } else {
+      updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[1])
+    }
+  })
   observeEvent(input$metagenome, {
     if(input$metagenome==T){
       enable("fileMet")
@@ -292,26 +303,30 @@ server <- function(input, output, session) {
   # })
   # 
   config_table = reactive({
-    initial_inputs = c("closest", "contribType", "database", "file1", "file2", "fileMet", "gapfill", "geneAdd", "geneAddFile", "genomeChoices", "metagenome", "metagenome_use", 
-                       "metType", "netAdd", "netAddFile") #Check that this is all of them
+    initial_inputs = c("closest", "contribType", "database","gapfill", "geneAdd", "genomeChoices", "metagenome_use", 
+                       "metType", "netAdd") #Check that this is all of them
     inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
-    values_provided = sapply(inputs_provided, function(x){ return(ifelse("datapath" %in% names(x), input[[x]]$datapath, input[[x]]))})
+    values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
     print(file.exists(input$file1$datapath))
     print(inputs_provided)
     return(data.table(V1 = inputs_provided, V2 = values_provided))
   })
   
   datasetInput <- reactive({
-    config_table()
-    run_pipeline(config_table())
+    file_list1 = list(input$file1, input$file2, input$metagenome, input$geneAddFile, input$netAddFile)
+    names(file_list1) = c("file1","file2", "metagenome", "geneAddFile", "netAddFile")
+    print(file_list1$file1)
+    print(config_table())
+    input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
+    print(input_data)
+    run_pipeline(input_data, config_table())
   })
   
   
   observeEvent(input$goButton, {
-    req(input$file1)
+    #req(input$file1)
     req(input$file2)
     #if(error_checks){
-    print(names(input))
     config_table()
     datasetInput()
     enable("downloadSettings")
@@ -356,12 +371,24 @@ server <- function(input, output, session) {
     #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
     plot_summary_contributions(plotData, include_zeros = T)
   })
+  output$indivCellInfo = renderTable({
+    plotData = datasetInput()$varShares
+    if(!is.null(input$plot_hover)){
+      met_of_interest = plotData[,sort(unique(metID))][round(input$plot_click$x)] #Plot in alphabetical/numeric order
+      print(met_of_interest)
+      spec_of_interest = plotData[,sort(unique(Species))][round(input$plot_click$y)]
+      print(spec_of_interest)
+      return(plotData[Species==spec_of_interest & metID==met_of_interest])
+    } else {
+      return(plotData[1])
+    }
+  })
   output$indivPlots = renderPlot({
     plotData = datasetInput()$varShares
     print(input$plot_click)
     #levels(x)[input$plot_click[x]] #etc
     if(!is.null(input$plot_click)){
-      met_of_interest = plotData[,unique(metID)][round(input$plot_click$x)]
+      met_of_interest = plotData[,sort(unique(metID))][round(input$plot_click$x)] #Plot in alphabetical/numeric order
       print(met_of_interest)
       plot_contributions(plotData, metabolite = met_of_interest, include_zeros = F)
     }
