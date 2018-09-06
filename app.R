@@ -30,11 +30,10 @@ microbiome_data_upload = function(){
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
                                   ".csv") #,
-    ),
-    disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
+    )),
+    disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option")
                   ))
-    )
-  )
+                  )
   
 }
 metabolome_data_upload = function(){
@@ -316,12 +315,7 @@ server <- function(input, output, session) {
   })
   
   datasetInput <- reactive({
-<<<<<<< HEAD
   	shinyjs::logjs(.libPaths())
-    #req(input$file1)
-    #req(input$file2)
-    run_pipeline(input)
-=======
     file_list1 = list(input$file1, input$file2, input$metagenome, input$geneAddFile, input$netAddFile)
     names(file_list1) = c("file1","file2", "metagenome", "geneAddFile", "netAddFile")
     print(file_list1$file1)
@@ -329,18 +323,11 @@ server <- function(input, output, session) {
     input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
     print(input_data)
     run_pipeline(input_data, config_table())
->>>>>>> ea4670bd5be7171bebad4ca970364a0da18fa71d
   })
   
   
   observeEvent(input$goButton, {
-<<<<<<< HEAD
-    #shiny::req(input$file1)
-    #shiny::req(input$file2)
-=======
-    #req(input$file1)
     req(input$file2)
->>>>>>> ea4670bd5be7171bebad4ca970364a0da18fa71d
     #if(error_checks){
     config_table()
     datasetInput()
