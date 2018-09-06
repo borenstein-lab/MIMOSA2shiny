@@ -1,9 +1,5 @@
 .libPaths(c("/data/shiny-server/r-packages/", "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")) #, "/data/shiny-server/app_specific_r_packages/"))
-#detach("package:httpuv", unload = T)
 library(Rcpp, lib.loc = "/data/shiny-server/r-packages/")
-#library(httpuv, lib.loc = "/usr/lib64/R/library/")
-#library(shiny, lib.loc ="/data/shiny-server/r-packages/")
-#library(shiny)
 library(shiny)
 library(shinyjs)
 library(mimosa, lib.loc ="/data/shiny-server/r-packages/")
@@ -11,15 +7,16 @@ library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-li
 library(readr)
 library(ggplot2)
 library(viridis, lib.loc = "/data/shiny-server/r-packages")
-#source("scripts/text_constants.R")
-#cat(file=stderr(), unlist(sessionInfo()$otherPkgs$shiny))
+library(RColorBrewer)
+options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F)
+
 
 
 microbiome_data_upload = function(){
   fluidPage(
     tags$head(tags$style("#fileMet{color: gray }")),
     h4(get_text("microbiome_header")),
-    radioButtons("database", "16S format:", choices = get_text("database_choices")),
+    radioButtons("database", "Microbiome data format:", choices = get_text("database_choices")),
     fileInput("file1", get_text("microbiome_input_title"),
               multiple = FALSE,
               accept = c("text/csv",
@@ -33,7 +30,9 @@ microbiome_data_upload = function(){
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
                                   ".csv") #,
-    )
+    ),
+    disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
+                  ))
     )
   )
   
@@ -53,7 +52,7 @@ metabolome_data_upload = function(){
 network_settings = function(){
   fluidPage(
     h4(get_text("network_header"), id = "genome"),
-    radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices")),
+    radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2]),
     checkboxInput("geneAdd", get_text("gene_mod_option")),
     disabled(fileInput("geneAddFile", get_text("gene_mod_input_title"),
                        multiple = FALSE,
@@ -88,70 +87,35 @@ output_settings = function(){
 }
 
 ###### Core app function
-run_pipeline = function(input){
+run_pipeline = function(input_data, configTable){
   withProgress(message = "Running MIMOSA!", {
   #process arguments
-  cat(input$file1$datapath)
-  cat(input$file2$datapath)
+  species = input_data$species
+  mets = input_data$mets
+  print(configTable)
+  print(configTable[V1=="file1", V2])
+  configTable[,V2:=as.character(V2)]
+  print(file.exists(configTable[V1=="file1", V2]))
+  print(configTable)
+  print(configTable[V1=="file1", V2])
+    #cat(input$file1$datapath)
+  #cat(input$file2$datapath)
+  #run_mimosa2(configTable)
   incProgress(1/10, detail = "Reading data")
-  species = fread(input$file1$datapath)
-  species = spec_table_fix(species)
-  mets = fread(input$file2$datapath)
-  met_nonzero_filt = 5
-  mets = met_table_fix(mets, met_nonzero_filt)
-  #Filter species using default abundance values
-  species = filter_species_abunds(species, filter_type = "fracNonzero")
-  species = filter_species_abunds(species, filter_type = "mean")
-  shared_samps = intersect(names(species), names(mets))
-  if(length(shared_samps) < 2) stop("Sample IDs don't match between species and metabolites")
-  species = species[,c("OTU", shared_samps), with=F]
-  mets = mets[,c("compound", shared_samps), with=F]
-  if(input$metagenome){
-    #Metagenome data
-    #Implement this later
+
+  if(!is.null(input_data$metagenome)){
+    #metagenome_data = species_network_from_metagenome(input_data$metagenome)
+    species = get_species_from_metagenome(input_data$metagenome)
+    #metagenome_network = metagenome_data[[2]]
   }
   incProgress(2/10, detail = "Building metabolic model")
-  if(input$genomeChoices==get_text("source_choices")[1]){
-    if(input$database==get_text("database_choices")[1]){
-      seq_list = species[,OTU]
-      incProgress(1/10, detail = "Assigning sequences to greengenes OTUs")
-      species_table = get_otus_from_seqvar(seq_list, repSeqDir = "~/Documents/MIMOSA2shiny/data/rep_seqs/", repSeqFile = "gg_13_5.fasta.gz", add_agora_names = F, seqID = 0.97) #Run vsearch to get gg OTUs
-    } else if(input$database != get_text("database_choices")[2]){
-      stop("Only Greengenes currently implemented")
-    }
-    if(input$geneAdd){
-      req(input$geneAddFile)
-      contribution_table = generate_contribution_table_using_picrust(species, picrust_norm_file = "data/picrustGenomeData/16S_13_5_precalculated.tab.gz", picrust_ko_table_directory ="data/picrustGenomeData/indivGenomes/", picrust_ko_table_suffix = "_genomic_content.tab")
-      contribution_table = add_genes_to_contribution_table(contribution_table, input$geneAddFile)
-      network = build_generic_network(contribution_table, kegg_paths = c("data/KEGGfiles/reaction_mapformula.lst", "data/KEGGfiles/reaction_ko.list", "data/KEGGfiles/reaction"))
-    } else { #Just load in preprocessed
-      network = get_kegg_network(species, net_path = "data/picrustGenomeData/indivModels/")
-    }
-  } else if(input$genomeChoices==get_text("source_choices")[2]){
-    network_results = build_species_networks_w_agora(species, input$database, input$closest, input$simThreshold)
-    species = network_results[[1]]
-    network = network_results[[2]]
-    species = species[OTU %in% network[,OTU]]
-  }
-  if(input$netAdd){
-    network = add_rxns_to_network(network, input$netAddFile)
-    #This will need to map between metabolite IDs possibly
-  }
-  if(input$gapfill){
-    #Do stuff
-  }
-  if(input$metType!="KEGG Compound IDs"){
-    #mets = map_to_kegg(mets)
-    #Implement this later
-  }
-  incProgress(2/10, detail = "Calculating metabolic potential")
+  network_results = build_metabolic_model(species, configTable, input_data$geneAdd, input_data$netAdd)
+  network = network_results[[1]]
+  species = network_results[[2]] #Allow for modifying this for AGORA
+  incProgress(1/10, detail = "Calculating metabolic potential")
+  print(network)
+  print(species)
   indiv_cmps = get_species_cmp_scores(species, network)
-  if(input$genomeChoices==get_text("source_choices")[2]){ #Switch to KEGG IDs at this point
-    indiv_cmps[,KEGG:=agora_kegg_mets(compound)]
-    indiv_cmps = indiv_cmps[,sum(CMP), by=list(Species, KEGG, Sample)] #Check that this makes sense
-    #separate internal/external?
-    setnames(indiv_cmps, c("KEGG", "V1"), c("compound", "CMP"))
-  }
   mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
   cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt)
   indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
@@ -210,11 +174,7 @@ ui = fluidPage(
 
 
 server <- function(input, output, session) {
-  shinyjs::logjs(.libPaths(.libPaths()))
   shinyjs::logjs(sessionInfo())
-  shinyjs::logjs(getwd())
-  shinyjs::logjs(library(help = shiny, lib.loc = "/data/shiny-server/r-packages"))
-  shinyjs::logjs(library(help = shiny))
 
   output$uploadPage = renderUI({
     if(is.null(input$goButton)){
@@ -251,19 +211,31 @@ server <- function(input, output, session) {
       fluidPage(
       fluidRow(
         column(
-      downloadButton("downloadSettings", "Download Configuration/Settings File"),
+      downloadButton("downloadSettings", "Download Record of Configuration Settings"),
       downloadButton("downloadData", "Download Variance Contribution Results"),
       downloadButton("downloadModelData", "Download Model Summaries"),
       tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), width = 12, align = "center")),
       fluidRow(
         #plots
-        plotOutput("contribPlots")
+        plotOutput("contribPlots", click = "plot_click", hover = "plot_hover")
+      ),
+      fluidRow(
+        tableOutput("indivCellInfo")
+      ),
+      fluidRow(
+        plotOutput("indivPlots")
       ))
   
     }
 
   })
-
+  observeEvent(input$database, {
+    if(input$database==get_text("database_choices")[1]){
+      updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[2])
+    } else {
+      updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[1])
+    }
+  })
   observeEvent(input$metagenome, {
     if(input$metagenome==T){
       enable("fileMet")
@@ -333,19 +305,46 @@ server <- function(input, output, session) {
   #   }
   # })
   # 
+  config_table = reactive({
+    initial_inputs = c("closest", "contribType", "database","gapfill", "geneAdd", "genomeChoices", "metagenome_use", 
+                       "metType", "netAdd") #Check that this is all of them
+    inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
+    values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
+    print(file.exists(input$file1$datapath))
+    print(inputs_provided)
+    return(data.table(V1 = inputs_provided, V2 = values_provided))
+  })
+  
   datasetInput <- reactive({
+<<<<<<< HEAD
   	shinyjs::logjs(.libPaths())
     #req(input$file1)
     #req(input$file2)
     run_pipeline(input)
+=======
+    file_list1 = list(input$file1, input$file2, input$metagenome, input$geneAddFile, input$netAddFile)
+    names(file_list1) = c("file1","file2", "metagenome", "geneAddFile", "netAddFile")
+    print(file_list1$file1)
+    print(config_table())
+    input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
+    print(input_data)
+    run_pipeline(input_data, config_table())
+>>>>>>> ea4670bd5be7171bebad4ca970364a0da18fa71d
   })
   
+  
   observeEvent(input$goButton, {
+<<<<<<< HEAD
     #shiny::req(input$file1)
     #shiny::req(input$file2)
+=======
+    #req(input$file1)
+    req(input$file2)
+>>>>>>> ea4670bd5be7171bebad4ca970364a0da18fa71d
     #if(error_checks){
-    print(names(input))
+    config_table()
     datasetInput()
+    enable("downloadSettings")
     enable("downloadData")
     enable("downloadModelData")
     #var_shares = run_pipeline(input) #Just give it everything and go from there
@@ -353,7 +352,15 @@ server <- function(input, output, session) {
     #}
   })
   
-  
+  output$downloadSettings <- downloadHandler(
+    filename = function() {
+      "configSettings.txt"
+      #paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.table(datasetInput()$configs, file, row.names = F, sep = "\t", quote=F)
+    }
+  )
   output$downloadData <- downloadHandler(
     filename = function() {
       "contributionResults.txt"
@@ -374,9 +381,32 @@ server <- function(input, output, session) {
   )
   output$contribPlots = renderPlot({
     plotData = datasetInput()$varShares
-    met1 = plotData[1,compound]
+    print(plotData)
+    ##met1 = plotData[1,compound]
     #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
-    plot_contributions(plotData, metabolite = met1)
+    plot_summary_contributions(plotData, include_zeros = T)
+  })
+  output$indivCellInfo = renderTable({
+    plotData = datasetInput()$varShares
+    if(!is.null(input$plot_hover)){
+      met_of_interest = plotData[,sort(unique(metID))][round(input$plot_click$x)] #Plot in alphabetical/numeric order
+      print(met_of_interest)
+      spec_of_interest = plotData[,sort(unique(Species))][round(input$plot_click$y)]
+      print(spec_of_interest)
+      return(plotData[Species==spec_of_interest & metID==met_of_interest])
+    } else {
+      return(plotData[1])
+    }
+  })
+  output$indivPlots = renderPlot({
+    plotData = datasetInput()$varShares
+    print(input$plot_click)
+    #levels(x)[input$plot_click[x]] #etc
+    if(!is.null(input$plot_click)){
+      met_of_interest = plotData[,sort(unique(metID))][round(input$plot_click$x)] #Plot in alphabetical/numeric order
+      print(met_of_interest)
+      plot_contributions(plotData, metabolite = met_of_interest, include_zeros = F)
+    }
   })
 }
 
