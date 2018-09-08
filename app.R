@@ -61,8 +61,8 @@ network_settings = function(){
                                                                                                                                                          "text/comma-separated-values,text/plain",
                                                                                                                                                          ".csv"))),
     # radioButtons("modelTemplate", "Metabolic model template", choices = c("Generic KEGG metabolic model", "AGORA metabolic models (recommended)")),
-    disabled(radioButtons("closest", get_text("closest_title"), choices = get_text("closest_options"))),
-    disabled(numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01)),
+    #disabled(radioButtons("closest", get_text("closest_title"), choices = get_text("closest_options"))),
+    numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.75, max = 1, step = 0.01),
     p("\n"),
     checkboxInput("gapfill", get_text("gapfill_option"))
   )
@@ -86,42 +86,43 @@ output_settings = function(){
 ###### Core app function
 run_pipeline = function(input_data, configTable){
   withProgress(message = "Running MIMOSA!", {
-  #process arguments
-  species = input_data$species
-  mets = input_data$mets
-  print(configTable)
-  print(configTable[V1=="file1", V2])
-  configTable[,V2:=as.character(V2)]
-  print(file.exists(configTable[V1=="file1", V2]))
-  print(configTable)
-  print(configTable[V1=="file1", V2])
+    #process arguments
+    species = input_data$species
+    mets = input_data$mets
+    print(configTable)
+    print(configTable[V1=="file1", V2])
+    configTable[,V2:=as.character(V2)]
+    print(file.exists(configTable[V1=="file1", V2]))
+    print(configTable)
+    print(configTable[V1=="file1", V2])
     #cat(input$file1$datapath)
-  #cat(input$file2$datapath)
-  #run_mimosa2(configTable)
-  incProgress(1/10, detail = "Reading data")
-
-  if(!is.null(input_data$metagenome)){
-    #metagenome_data = species_network_from_metagenome(input_data$metagenome)
-    species = get_species_from_metagenome(input_data$metagenome)
-    #metagenome_network = metagenome_data[[2]]
-  }
-  incProgress(2/10, detail = "Building metabolic model")
-  network_results = build_metabolic_model(species, configTable, input_data$geneAdd, input_data$netAdd)
-  network = network_results[[1]]
-  species = network_results[[2]] #Allow for modifying this for AGORA
-  incProgress(1/10, detail = "Calculating metabolic potential")
-  print(network)
-  print(species)
-  indiv_cmps = get_species_cmp_scores(species, network)
-  mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
-  cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt)
-  indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
-  incProgress(1/10, detail = "Calculating microbial contributions")
-  var_shares = calculate_var_shares(indiv_cmps)
-  return(list(varShares = var_shares, modelData = cmp_mods[[1]]))
-  #Send var_shares for download
-  #Generate plot of var shares
-  #source(other stuff)
+    #cat(input$file2$datapath)
+    #run_mimosa2(configTable)
+    incProgress(1/10, detail = "Reading data")
+    
+    if(!is.null(input_data$metagenome)){
+      #metagenome_data = species_network_from_metagenome(input_data$metagenome)
+      species = get_species_from_metagenome(input_data$metagenome)
+      #metagenome_network = metagenome_data[[2]]
+    }
+    incProgress(2/10, detail = "Building metabolic model")
+    network_results = build_metabolic_model(species, configTable, input_data$geneAdd, input_data$netAdd)
+    network = network_results[[1]]
+    species = network_results[[2]] #Allow for modifying this for AGORA
+    incProgress(1/10, detail = "Calculating metabolic potential")
+    print(network)
+    print(species)
+    indiv_cmps = get_species_cmp_scores(species, network)
+    mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
+    cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt)
+    indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
+    incProgress(2/10, detail = "Calculating microbial contributions")
+    var_shares = calculate_var_shares(indiv_cmps)
+    shinyjs::logjs(devtools::session_info())
+    return(list(varShares = var_shares, modelData = cmp_mods[[1]]))
+    #Send var_shares for download
+    #Generate plot of var shares
+    #source(other stuff)
   })
 }
 
@@ -242,19 +243,19 @@ server <- function(input, output, session) {
   })
   observeEvent(input$genomeChoices, {
     if(input$genomeChoices==get_text("source_choices")[2]){
-      enable("closest")
-    } else {
-      disable("closest")
-      }
-  })
-  observeEvent(input$closest, {
-    # Change the following line for more examples
-    if(input$closest==get_text("closest_options")[2]){
       enable("simThreshold")
     } else {
       disable("simThreshold")
-    }
+      }
   })
+  # observeEvent(input$closest, {
+  #   # Change the following line for more examples
+  #   if(input$closest==get_text("closest_options")[2]){
+  #     enable("simThreshold")
+  #   } else {
+  #     disable("simThreshold")
+  #   }
+  # })
   observeEvent(input$geneAdd, {
     if(input$geneAdd==T){
       enable("geneAddFile")

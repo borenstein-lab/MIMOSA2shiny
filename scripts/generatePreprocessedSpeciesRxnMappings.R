@@ -40,5 +40,6 @@ if(database == "PICRUSt"){
   for(spec in otu_list){
     write.table(all_mods[Species==spec], file = paste0("data/AGORA/", spec, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
   }
+  ##Read back in and add copy number info????
 
 }
