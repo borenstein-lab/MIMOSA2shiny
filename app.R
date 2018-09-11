@@ -1,15 +1,16 @@
 .libPaths(c("/data/shiny-server/r-packages/", "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")) #, "/data/shiny-server/app_specific_r_packages/"))
 library(Rcpp, lib.loc = "/data/shiny-server/r-packages/")
+library(Cairo, lib.loc = "/data/shiny-server/r-packages/")
 library(shiny)
 library(shinyjs)
 library(mimosa, lib.loc ="/data/shiny-server/r-packages/")
 library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(readr)
-library(ggplot2)
+library(ggplot2, lib.loc = "/data/shiny-server/r-packages")
 library(viridis, lib.loc = "/data/shiny-server/r-packages")
 library(RColorBrewer)
-options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F)
-
+options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F)
+theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
 
 
 microbiome_data_upload = function(){
@@ -120,6 +121,7 @@ run_pipeline = function(input_data, configTable){
   indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
   incProgress(2/10, detail = "Calculating microbial contributions")
   var_shares = calculate_var_shares(indiv_cmps)
+  shinyjs::logjs(devtools::session_info())
   return(list(varShares = var_shares, modelData = cmp_mods[[1]]))
   #Send var_shares for download
   #Generate plot of var shares
@@ -174,6 +176,8 @@ ui = fluidPage(
 
 server <- function(input, output, session) {
   shinyjs::logjs(sessionInfo())
+  shinyjs::logjs(devtools::session_info())
+  shinyjs::logjs(Cairo.capabilities())
 
   output$uploadPage = renderUI({
     if(is.null(input$goButton)){
@@ -216,7 +220,7 @@ server <- function(input, output, session) {
       tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), width = 12, align = "center")),
       fluidRow(
         #plots
-        plotOutput("contribPlots", click = "plot_click", hover = "plot_hover")
+        plotOutput("contribPlots") #, click = "plot_click", hover = "plot_hover")
       ),
       fluidRow(
         tableOutput("indivCellInfo")
@@ -371,8 +375,9 @@ server <- function(input, output, session) {
     print(plotData)
     ##met1 = plotData[1,compound]
     #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
-    plot_summary_contributions(plotData, include_zeros = T)
-  })
+    #plotData[,hist(V1)]
+    return(plot_summary_contributions(plotData, include_zeros = T))
+  }, res = 100)
   output$indivCellInfo = renderTable({
     plotData = datasetInput()$varShares
     if(!is.null(input$plot_hover)){
@@ -392,9 +397,11 @@ server <- function(input, output, session) {
     if(!is.null(input$plot_click)){
       met_of_interest = plotData[,sort(unique(metID))][round(input$plot_click$x)] #Plot in alphabetical/numeric order
       print(met_of_interest)
-      plot_contributions(plotData, metabolite = met_of_interest, include_zeros = F)
+    } else {
+      met_of_interest = plotData[1,metID]      
     }
-  })
+   	return(plot_contributions(plotData, metabolite = met_of_interest, include_zeros = F))
+  }, res = 100)
 }
 
 shinyApp(ui = ui, server = server)
