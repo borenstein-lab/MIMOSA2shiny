@@ -1,0 +1,15 @@
+file1	
+file2	~/Documents/MIMOSA2shiny/data/testData/BV_mets_good.txt
+genomeChoices	Assign KOs with PICRUSt and use KEGG metabolic model
+database	Greengenes 13_5 or 13_8
+metagenome	~/Documents/MIMOSA2shiny/data/testData/BV_metagenomes_good.txt
+metagenome_use	TRUE
+geneAdd
+geneAddFile
+kegg_prefix	~/Documents/MIMOSA2shiny/data/KEGGfiles/
+netAdd
+netAddFile
+metType
+closest
+simThreshold
+gapfill

@@ -19,18 +19,18 @@ microbiome_data_upload = function(){
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
                          ".csv")),
-    checkboxInput("metagenome", get_text("metagenome_option")),
+    checkboxInput("metagenomeOpt", get_text("metagenome_option")),
     #uiOutput("type16S"),
     #uiOutput("typeMetagenome")
-    disabled(fileInput("fileMet", get_text("metagenome_input_title"),
+    disabled(fileInput("metagenome", get_text("metagenome_input_title"),
                        multiple = FALSE,
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
                                   ".csv") #,
-    ),
-    disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
-                  ))
-    )
+    ) )#,
+    # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
+    #               ))
+    
   )
   
 }
@@ -50,19 +50,19 @@ network_settings = function(){
   fluidPage(
     h4(get_text("network_header"), id = "genome"),
     radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2]),
-    checkboxInput("geneAdd", get_text("gene_mod_option")),
-    disabled(fileInput("geneAddFile", get_text("gene_mod_input_title"),
-                       multiple = FALSE,
-                       accept = c("text/csv",
-                                  "text/comma-separated-values,text/plain",
-                                  ".csv"))),
+    # checkboxInput("geneAdd", get_text("gene_mod_option")),
+    # disabled(fileInput("geneAddFile", get_text("gene_mod_input_title"),
+    #                    multiple = FALSE,
+    #                    accept = c("text/csv",
+    #                               "text/comma-separated-values,text/plain",
+    #                               ".csv"))),
     checkboxInput("netAdd", get_text("net_mod_option")), 
     disabled(fileInput("netAddFile", get_text("net_mod_input_title"), multiple = FALSE, accept = c("text/csv",
                                                                                                                                                          "text/comma-separated-values,text/plain",
                                                                                                                                                          ".csv"))),
     # radioButtons("modelTemplate", "Metabolic model template", choices = c("Generic KEGG metabolic model", "AGORA metabolic models (recommended)")),
     #disabled(radioButtons("closest", get_text("closest_title"), choices = get_text("closest_options"))),
-    numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.75, max = 1, step = 0.01),
+    numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01),
     p("\n"),
     checkboxInput("gapfill", get_text("gapfill_option"))
   )
@@ -98,27 +98,36 @@ run_pipeline = function(input_data, configTable){
     #cat(input$file1$datapath)
     #cat(input$file2$datapath)
     #run_mimosa2(configTable)
-    incProgress(1/10, detail = "Reading data")
-    
-    if(!is.null(input_data$metagenome)){
-      #metagenome_data = species_network_from_metagenome(input_data$metagenome)
-      species = get_species_from_metagenome(input_data$metagenome)
-      #metagenome_network = metagenome_data[[2]]
-    }
+
     incProgress(2/10, detail = "Building metabolic model")
-    network_results = build_metabolic_model(species, configTable, input_data$geneAdd, input_data$netAdd)
+    network_results = build_metabolic_model(species, configTable) #, input_data$netAdd) #input_data$geneAdd, 
     network = network_results[[1]]
     species = network_results[[2]] #Allow for modifying this for AGORA
-    incProgress(1/10, detail = "Calculating metabolic potential")
-    print(network)
-    print(species)
-    indiv_cmps = get_species_cmp_scores(species, network)
+    if(!is.null(input_data$metagenome) & configTable[V1=="database", V2==get_text("database_choices")[4]]){
+      #If we are doing a comparison of the species network and the metagenome network
+      #Metagenome data
+      #Implement doing stuff with this later
+      metagenome_network = build_metabolic_model(input_data$metagenome, configTable)
+      # species2 = metagenome_data[[1]]
+      # metagenome_network = metagenome_data[[2]]
+    }
+    if(configTable[V1=="metType", V2 !=get_text("met_type_choices")[1]]){
+      #mets = map_to_kegg(mets)
+    }
+    incProgress(1/10, detail = "Calculating metabolic potential and fitting metabolite concentration model")
+    if(configTable[V1=="database", V2==get_text("database_choices")[4]]){
+      indiv_cmps = get_cmp_scores_kos(species, network) #Use KO abundances instead of species abundances to get cmps
+    } else {
+      indiv_cmps = get_species_cmp_scores(species, network)
+    }
     mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
     cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt)
     indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
     incProgress(2/10, detail = "Calculating microbial contributions")
     var_shares = calculate_var_shares(indiv_cmps)
     shinyjs::logjs(devtools::session_info())
+    #Order dataset for plotting
+    
     return(list(varShares = var_shares, modelData = cmp_mods[[1]]))
     #Send var_shares for download
     #Generate plot of var shares
@@ -144,13 +153,13 @@ ui = fluidPage(
                                };
                                '))),
     fluidPage(
-      h4("Data input"),
+      #h4("Data input"),
       fluidRow(HTML("<a href='#microbiome'>Microbiome data upload</a>")),
       #actionLink("gotomicrobiome", "Microbiome data upload", onclick = "fakeClick('microbiome')")),
-      fluidRow(HTML("<a href='#metabolome'>Metabolome data upload</a>")),
-      h4("Settings"),
+      #h4("Settings"),
       fluidRow(HTML("<a href='#network'>Metabolic model settings</a>")),
-      fluidRow(HTML("<a href='#algorithm'>Algorithm settings</a>")) #,
+      fluidRow(HTML("<a href='#metabolome'>Metabolome data upload</a>")) #,
+      #fluidRow(HTML("<a href='#algorithm'>Algorithm settings</a>")) #,
       #fluidRow(HTML("<a href='#outputResults'>Output network settings</a>"))
       #fluidRow(actionLink("gotometabolome", "Metabolomics data upload", onclick = "fakeClick('metabolome')"))
       #fluidRow(h4("this 2nd box should lead me to tab2", onclick = "fakeClick('tab2')"))
@@ -179,10 +188,10 @@ server <- function(input, output, session) {
       return(fluidPage(
         h3("Data Input"),
         microbiome_data_upload(),
-        metabolome_data_upload(),
-        h3("Settings"),
         network_settings(),
-        algorithm_settings(),
+        metabolome_data_upload(),
+        #h3("Settings"),
+        #algorithm_settings(),
         #output_settings(),
         fluidRow(
           column(
@@ -194,10 +203,10 @@ server <- function(input, output, session) {
       return(fluidPage(
         h3("Data Input"),
         microbiome_data_upload(),
-        metabolome_data_upload(),
-        h3("Settings"),
         network_settings(),
-        algorithm_settings(),
+        metabolome_data_upload(),
+        #h3("Settings"),
+        #algorithm_settings(),
         #output_settings(),
         fluidRow(
           column(
@@ -233,16 +242,23 @@ server <- function(input, output, session) {
     } else {
       updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[1])
     }
-  })
-  observeEvent(input$metagenome, {
-    if(input$metagenome==T){
-      enable("fileMet")
+    if(input$database==get_text("database_choices")[4]){
+      updateCheckboxInput(session, "metagenomeOpt", value = T)
+      disable("file1")
     } else {
-      disable("fileMet")
+      updateCheckboxInput(session, "metagenomeOpt", value = F)
+      enable("file1")
+    }
+  })
+  observeEvent(input$metagenomeOpt, {
+    if(input$metagenomeOpt==T){
+      enable("metagenome")
+    } else {
+      disable("metagenome")
     }
   })
   observeEvent(input$genomeChoices, {
-    if(input$genomeChoices==get_text("source_choices")[2]){
+    if(input$genomeChoices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
       enable("simThreshold")
     } else {
       disable("simThreshold")
@@ -256,13 +272,13 @@ server <- function(input, output, session) {
   #     disable("simThreshold")
   #   }
   # })
-  observeEvent(input$geneAdd, {
-    if(input$geneAdd==T){
-      enable("geneAddFile")
-    } else {
-      disable("geneAddFile")
-    }
-  })
+  # observeEvent(input$geneAdd, {
+  #   if(input$geneAdd==T){
+  #     enable("geneAddFile")
+  #   } else {
+  #     disable("geneAddFile")
+  #   }
+  # })
   
   observeEvent(input$netAdd, {
     if(input$netAdd==T){
@@ -304,19 +320,23 @@ server <- function(input, output, session) {
   # })
   # 
   config_table = reactive({
-    initial_inputs = c("closest", "contribType", "database","gapfill", "geneAdd", "genomeChoices", "metagenome_use", 
-                       "metType", "netAdd") #Check that this is all of them
+    initial_inputs = c("closest", "contribType", "database","gapfill", "genomeChoices",  #"geneAdd", 
+                       "metType", "netAdd", "simThreshold") #Check that this is all of them
     inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
     values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
-    print(file.exists(input$file1$datapath))
+    inputs_provided = c(inputs_provided, "kegg_prefix")
+    values_provided = c(values_provided, "data/KEGGfiles/")
+    #print(file.exists(input$file1$datapath))
     print(inputs_provided)
+    print(values_provided)
     return(data.table(V1 = inputs_provided, V2 = values_provided))
   })
   
   datasetInput <- reactive({
-    file_list1 = list(input$file1, input$file2, input$metagenome, input$geneAddFile, input$netAddFile)
-    names(file_list1) = c("file1","file2", "metagenome", "geneAddFile", "netAddFile")
+    file_list1 = list(input$file1, input$file2, input$metagenome, input$netAddFile) # input$geneAddFile,
+    names(file_list1) = c("file1","file2", "metagenome","netAddFile") # "geneAddFile", 
     print(file_list1$file1)
+    print(file_list1$metagenome)
     print(config_table())
     input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
     print(input_data)
@@ -375,9 +395,9 @@ server <- function(input, output, session) {
   output$indivCellInfo = renderTable({
     plotData = datasetInput()$varShares
     if(!is.null(input$plot_hover)){
-      met_of_interest = plotData[,sort(unique(metID))][round(input$plot_click$x)] #Plot in alphabetical/numeric order
+      met_of_interest = plotData[,levels(metID)][round(input$plot_click$x)] #Plot in alphabetical/numeric order
       print(met_of_interest)
-      spec_of_interest = plotData[,sort(unique(Species))][round(input$plot_click$y)]
+      spec_of_interest = plotData[,levels(Species)][round(input$plot_click$y)]
       print(spec_of_interest)
       return(plotData[Species==spec_of_interest & metID==met_of_interest])
     } else {
@@ -389,7 +409,7 @@ server <- function(input, output, session) {
     print(input$plot_click)
     #levels(x)[input$plot_click[x]] #etc
     if(!is.null(input$plot_click)){
-      met_of_interest = plotData[,sort(unique(metID))][round(input$plot_click$x)] #Plot in alphabetical/numeric order
+      met_of_interest = plotData[,levels(metID)][round(input$plot_click$x)] #Plot in alphabetical/numeric order
       print(met_of_interest)
       plot_contributions(plotData, metabolite = met_of_interest, include_zeros = F)
     }
