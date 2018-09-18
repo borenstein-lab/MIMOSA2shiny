@@ -13,20 +13,20 @@ microbiome_data_upload = function(){
   fluidPage(
     tags$head(tags$style("#fileMet{color: gray }")),
     h4(get_text("microbiome_header")),
-    radioButtons("database", "Microbiome data format:", choices = get_text("database_choices")),
+    radioButtons("database", "Microbiome data format:", choices = get_text("database_choices"), width = '100%'),
     fileInput("file1", get_text("microbiome_input_title"),
               multiple = FALSE,
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
-                         ".csv")),
-    checkboxInput("metagenomeOpt", get_text("metagenome_option")),
+                         ".csv"), width = '100%'),
+    checkboxInput("metagenomeOpt", get_text("metagenome_option"), width = '100%'),
     #uiOutput("type16S"),
     #uiOutput("typeMetagenome")
     disabled(fileInput("metagenome", get_text("metagenome_input_title"),
                        multiple = FALSE,
                        accept = c("text/csv",
                                   "text/comma-separated-values,text/plain",
-                                  ".csv") #,
+                                  ".csv"), width = '100%' #,
     ) )#,
     # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
     #               ))
@@ -37,34 +37,34 @@ microbiome_data_upload = function(){
 metabolome_data_upload = function(){
   fluidPage(
     h4(get_text("metabolome_header"), id = "metabolome"),
-    radioButtons("metType", label = get_text("met_type_title"), choices = get_text("met_type_choices"), selected = get_text("selected_met_type")),
+    radioButtons("metType", label = get_text("met_type_title"), choices = get_text("met_type_choices"), selected = get_text("selected_met_type"), width = '100%'),
     fileInput("file2", get_text("metabolome_upload_title"),
               multiple = FALSE,
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
-                         ".csv"))
+                         ".csv"), width = '100%')
   )
 }
 
 network_settings = function(){
   fluidPage(
     h4(get_text("network_header"), id = "genome"),
-    radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2]),
+    radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2], width = '100%'),
     # checkboxInput("geneAdd", get_text("gene_mod_option")),
     # disabled(fileInput("geneAddFile", get_text("gene_mod_input_title"),
     #                    multiple = FALSE,
     #                    accept = c("text/csv",
     #                               "text/comma-separated-values,text/plain",
     #                               ".csv"))),
-    checkboxInput("netAdd", get_text("net_mod_option")), 
+    checkboxInput("netAdd", get_text("net_mod_option"), width = '100%'), 
     disabled(fileInput("netAddFile", get_text("net_mod_input_title"), multiple = FALSE, accept = c("text/csv",
                                                                                                                                                          "text/comma-separated-values,text/plain",
-                                                                                                                                                         ".csv"))),
+                                                                                                                                                         ".csv"), width = '100%')),
     # radioButtons("modelTemplate", "Metabolic model template", choices = c("Generic KEGG metabolic model", "AGORA metabolic models (recommended)")),
     #disabled(radioButtons("closest", get_text("closest_title"), choices = get_text("closest_options"))),
-    numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01),
+    numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01, width = '100%'),
     p("\n"),
-    checkboxInput("gapfill", get_text("gapfill_option"))
+    checkboxInput("gapfill", get_text("gapfill_option"), width = '100%')
   )
 }
 
@@ -139,44 +139,44 @@ ui = fluidPage(
   useShinyjs(),
   titlePanel("MIMOSA"),
   #sidebarLayout(
-  sidebarPanel(
-    tags$head(tags$script(HTML('
-                               var fakeClick = function(tabName) {
-                               var dropdownList = document.getElementsByTagName("a");
-                               console.log(dropdownList);
-                               for (var i = 0; i < dropdownList.length; i++) {
-                               var link = dropdownList[i];
-                               if(link.getAttribute("id") == tabName) {
-                               link.click();
-                               };
-                               }
-                               };
-                               '))),
-    fluidPage(
-      #h4("Data input"),
-      fluidRow(HTML("<a href='#microbiome'>Microbiome data upload</a>")),
-      #actionLink("gotomicrobiome", "Microbiome data upload", onclick = "fakeClick('microbiome')")),
-      #h4("Settings"),
-      fluidRow(HTML("<a href='#network'>Metabolic model settings</a>")),
-      fluidRow(HTML("<a href='#metabolome'>Metabolome data upload</a>")) #,
-      #fluidRow(HTML("<a href='#algorithm'>Algorithm settings</a>")) #,
-      #fluidRow(HTML("<a href='#outputResults'>Output network settings</a>"))
-      #fluidRow(actionLink("gotometabolome", "Metabolomics data upload", onclick = "fakeClick('metabolome')"))
-      #fluidRow(h4("this 2nd box should lead me to tab2", onclick = "fakeClick('tab2')"))
-    ),
-    #"Data Input",
-    # tabPanel("Microbiome data upload", microbiome_data_upload()),
-    # tabPanel("Metabolomics data upload", metabolome_data_upload()),
-    # "Settings",
-    # tabPanel("Metabolic model settings", network_settings()),
-    # tabPanel("Algorithm settings", algorithm_settings()),
-    # tabPanel("Output settings", output_settings()),
-    # widths = c(4,8)
-    widths = 3.5
-    ),
+  # sidebarPanel(
+  #   tags$head(tags$script(HTML('
+  #                              var fakeClick = function(tabName) {
+  #                              var dropdownList = document.getElementsByTagName("a");
+  #                              console.log(dropdownList);
+  #                              for (var i = 0; i < dropdownList.length; i++) {
+  #                              var link = dropdownList[i];
+  #                              if(link.getAttribute("id") == tabName) {
+  #                              link.click();
+  #                              };
+  #                              }
+  #                              };
+  #                              '))),
+  #   fluidPage(
+  #     #h4("Data input"),
+  #     fluidRow(HTML("<a href='#microbiome'>Microbiome data upload</a>")),
+  #     #actionLink("gotomicrobiome", "Microbiome data upload", onclick = "fakeClick('microbiome')")),
+  #     #h4("Settings"),
+  #     fluidRow(HTML("<a href='#network'>Metabolic model settings</a>")),
+  #     fluidRow(HTML("<a href='#metabolome'>Metabolome data upload</a>")) #,
+  #     #fluidRow(HTML("<a href='#algorithm'>Algorithm settings</a>")) #,
+  #     #fluidRow(HTML("<a href='#outputResults'>Output network settings</a>"))
+  #     #fluidRow(actionLink("gotometabolome", "Metabolomics data upload", onclick = "fakeClick('metabolome')"))
+  #     #fluidRow(h4("this 2nd box should lead me to tab2", onclick = "fakeClick('tab2')"))
+  #   ),
+  #   #"Data Input",
+  #   # tabPanel("Microbiome data upload", microbiome_data_upload()),
+  #   # tabPanel("Metabolomics data upload", metabolome_data_upload()),
+  #   # "Settings",
+  #   # tabPanel("Metabolic model settings", network_settings()),
+  #   # tabPanel("Algorithm settings", algorithm_settings()),
+  #   # tabPanel("Output settings", output_settings()),
+  #   # widths = c(4,8)
+  #   widths = 3.5
+  #   ),
   mainPanel(
     uiOutput("uploadPage")
-  ), fluid = F)
+  ))
 
 
 

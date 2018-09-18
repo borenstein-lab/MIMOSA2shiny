@@ -10,7 +10,7 @@ microbiome_header = "Upload a tab-delimited file with a row for each species and
 database_title = "16S rRNA data format:"
 database_choices = c("Sequence variants", "Greengenes 13_5 or 13_8", "SILVA", "No 16S rRNA data: use functional data only (upload below)")
 microbiome_input_title = "Upload 16S rRNA abundance file (example format linked here)"
-metagenome_option = "Also upload metagenome KO abundances"
+metagenome_option = "Upload metagenome KO abundances"
 metagenome_input_title = "Upload file of metagenomic KO abundances (example format linked here)"
 #metagenome_use_option = "Use metagenome for core analysis instead of 16S rRNA data (see documentation)"
 
