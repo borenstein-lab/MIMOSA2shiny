@@ -1,12 +1,15 @@
-genomeChoices	Map sequences to AGORA genomes
-database	Sequence variants (recommended for AGORA)
-metagenome
+file1	~/Documents/MIMOSA2shiny/data/testData/miceASD_deblur_table_fixedSamps.txt
+file2	~/Documents/MIMOSA2shiny/data/testData/metsNMR_kegg.txt
+genomeChoices	Map sequences to AGORA genomes and models
+database	Sequence variants
+metagenome_use
 geneAdd
 geneAddFile
-modelTemplate	AGORA metabolic models (recommended)
+modelTemplate	AGORA metabolic models
 kegg_prefix	~/Documents/MIMOSA2shiny/data/KEGGfiles/
 netAdd
 netAddFile
 metType
 closest
-simThreshold	0.99
+simThreshold	0.95
+gapfill

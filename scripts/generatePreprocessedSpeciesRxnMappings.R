@@ -36,8 +36,9 @@ if(database == "PICRUSt"){
       write.table(spec_mod, file = paste0("data/picrustGenomeData/indivModels/", x, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
   }
 } else { #AGORA
-  otu_list = list.files(path = "data/AGORA/", pattern = ".mat")
+  otu_list = list.files(path = "data/AGORA/", pattern = ".mat$")
   otu_list = gsub(".mat$", "", otu_list)
+  print(otu_list)
   all_mods = load_agora_models(otu_list)
   all_mods = get_S_mats(all_mods, otu_list, edge_list = T)
   ##Read back in and add copy number info????

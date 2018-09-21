@@ -1,12 +1,14 @@
+file1	~/Documents/MIMOSA2shiny/data/testData/miceASD_otus_test.txt
+file2	~/Documents/MIMOSA2shiny/data/testData/metsNMR_kegg.txt
 genomeChoices	Assign KOs with PICRUSt and use KEGG metabolic model
 database	Greengenes 13_5 or 13_8
-metagenome
+metagenome_use
 geneAdd
 geneAddFile
-modelTemplate	Generic KEGG metabolic model
 kegg_prefix	~/Documents/MIMOSA2shiny/data/KEGGfiles/
 netAdd
 netAddFile
 metType
 closest
-simThreshold	0.99
+simThreshold	0.95
+gapfill
