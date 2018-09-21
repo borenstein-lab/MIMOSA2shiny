@@ -12,25 +12,29 @@ options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F)
 microbiome_data_upload = function(){
   fluidPage(
     tags$head(tags$style("#fileMet{color: gray }")),
-    h4(get_text("microbiome_header")),
-    radioButtons("database", "Microbiome data format:", choices = get_text("database_choices"), width = '100%'),
-    fileInput("file1", get_text("microbiome_input_title"),
-              multiple = FALSE,
-              accept = c("text/csv",
-                         "text/comma-separated-values,text/plain",
-                         ".csv"), width = '100%'),
-    checkboxInput("metagenomeOpt", get_text("metagenome_option"), width = '100%'),
-    #uiOutput("type16S"),
-    #uiOutput("typeMetagenome")
-    disabled(fileInput("metagenome", get_text("metagenome_input_title"),
-                       multiple = FALSE,
-                       accept = c("text/csv",
-                                  "text/comma-separated-values,text/plain",
-                                  ".csv"), width = '100%' #,
-    ) )#,
-    # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
-    #               ))
-    
+    tags$tr(class = "mainContainer", 
+      tags$td(
+      h4(get_text("microbiome_header")),
+      radioButtons("database", "Microbiome data format:", choices = get_text("database_choices"), width = '100%'),
+      fileInput("file1", get_text("microbiome_input_title"),
+                multiple = FALSE,
+                accept = c("text/csv",
+                           "text/comma-separated-values,text/plain",
+                           ".csv"), width = '100%'),
+      checkboxInput("metagenomeOpt", get_text("metagenome_option"), width = '100%'),
+      #uiOutput("type16S"),
+      #uiOutput("typeMetagenome")
+      disabled(fileInput("metagenome", get_text("metagenome_input_title"),
+                         multiple = FALSE,
+                         accept = c("text/csv",
+                                    "text/comma-separated-values,text/plain",
+                                    ".csv"), width = '100%' #,
+      ) )#,
+      # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
+      #               ))
+
+      )
+  )
   )
   
 }
@@ -137,6 +141,13 @@ run_pipeline = function(input_data, configTable){
 
 ui = fluidPage(
   useShinyjs(),
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "lab_styles.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "shiny-alt.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "software.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "burritostyle.css")
+  ),
+  tags$img(src = "title_lab_800.jpg", border = 0), #Borenstein lab img
   titlePanel("MIMOSA"),
   #sidebarLayout(
   # sidebarPanel(
@@ -186,7 +197,7 @@ server <- function(input, output, session) {
   output$uploadPage = renderUI({
     if(is.null(input$goButton)){
       return(fluidPage(
-        h3("Data Input"),
+        #h3("Data Input"),
         microbiome_data_upload(),
         network_settings(),
         metabolome_data_upload(),
@@ -196,12 +207,12 @@ server <- function(input, output, session) {
         fluidRow(
           column(
             actionButton("goButton", "Run MIMOSA"),
-            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), 
+            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: middle; font-size: 22px; color: #3CB371}"), 
             width = 12, align = "center"
           ))))
     } else if(input$goButton==0){
       return(fluidPage(
-        h3("Data Input"),
+        #h3("Data Input"),
         microbiome_data_upload(),
         network_settings(),
         metabolome_data_upload(),

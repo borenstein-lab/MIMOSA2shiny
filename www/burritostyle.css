@@ -1,0 +1,277 @@
+/*
+
+body{ 
+	width:100%;
+	margin:100px auto;
+	overflow: hidden;
+}
+svg text{
+	font-size:8pt;
+}
+rect{
+	shape-rendering:crispEdges;
+}
+
+.brush .extent {
+  fill-opacity: .1;
+  stroke: #fff;
+  shape-rendering: crispEdges;
+}
+*/
+body {
+/*	width:100%;
+	height:100%; */
+//	overflow: hidden;
+	//font-family: "Verdana", Verdana, sans-serif;
+    font-family: arial;
+	font-size:12px;
+}
+
+body.svgBody {
+	overflow: hidden;
+}
+svg text {
+	font-family: arial;
+}
+.node circle {
+   cursor: pointer;
+   fill: #fff;
+   stroke: grey;
+   stroke-width: 1.5px;
+}
+.node rect {
+   cursor: pointer;
+}
+.node text {
+   font-size: 11px;
+}
+.edge {
+	cursor: pointer;
+	opacity: 0;
+} 
+.mainbars {
+	cursor: pointer;
+}
+path.link {
+   fill: none;
+   stroke: #ccc;
+   stroke-width: 1.5px;
+}
+
+/*.svg_pattern {
+    display:inline-block;
+    width: 30%;
+    padding: 10px;
+    background-color: "yellow";
+    border: 1px solid #ddd;
+ }
+*/
+.error {
+	background-color="FF0000";
+}
+.crosshatch {
+  background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSc4JyBoZWlnaHQ9JzgnPgogIDxyZWN0IHdpZHRoPSc4JyBoZWlnaHQ9JzgnIGZpbGw9JyNmZmYnLz4KICA8cGF0aCBkPSdNMCAwTDggOFpNOCAwTDAgOFonIHN0cm9rZS13aWR0aD0nMC41JyBzdHJva2U9JyNhYWEnLz4KPC9zdmc+Cg==");
+  background-repeat: repeat;
+}
+#csvdata {
+   display: none;
+}
+#taxTree{
+	float:left;
+}
+#bpGraph{
+	float:left;
+}
+#funcTree{
+	float:left;
+}
+#navgraph{
+	float:top;
+}
+#mainplot{
+	width:100%;
+	height:100%;
+	vertical-align:top;
+	//font-family: "Verdana", Verdana, sans-serif;
+}
+#mainsvg {
+	position:fixed;
+	top:0;
+	left:0;
+	height:100%;
+	width:100%;
+	background-color:white;
+	//font-family: "Verdana", Verdana, sans-serif;
+}
+#plots_svg {
+	position:fixed;
+	top:0;
+	left:0;
+	height:100%;
+	width:100%;
+	background-color:white;
+	//font-family: "Verdana", Verdana, sans-serif;
+}
+#taxa_bar {
+	background-color:white;
+	//font-family: "Verdana", Verdana, sans-serif;
+}
+#func_bar {
+	background-color:white;
+	//font-family: "Verdana", Verdana, sans-serif;
+}
+#sidebar {
+	z-index:5;
+}
+.noselect {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	//cursor:default;
+}
+#sidebar_hide:hover {
+	stroke:black;
+	cursor:pointer;
+}
+#sidebar_hide {
+	stroke:none;
+	stroke-width:2;
+	pointer-events: all;
+}
+table.ExampleTable {
+	border: 1px solid black;
+	border-collapse: collapse;
+	margin-top: 1em;
+	margin-left: 1em;
+	margin-bottom: 1em;
+	margin-right: 1em;
+	font-size: 10px;
+}
+table.ExampleTable th, table.ExampleTable td {
+	border: 1px solid black;
+	padding: 4px;
+}
+div#SaveInputDiv * {
+	line-height: 100%;
+	margin: 3px 0;
+//	-webkit-margin-after: 0em;
+//	-webkit-margin-before: 0em;
+}
+#saveFileNameInput {
+	border: 2px solid black;
+	border-radius: 2px;
+	padding-left: 5px;
+}
+.hidexp {
+	display:none;
+}
+.inputSelectorB {
+	width: 100%;
+	height: 60px;
+}
+#mainthing {
+	width: 1200px;
+	margin: 0 auto;
+}
+.menuEl {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+h2 {
+	text-align: center;
+}
+.uploadtable td {
+	border-bottom: 1px solid #202020;
+}
+.btn-primary {
+	width: 200px;
+	height: 40px;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: #ff6666;
+}
+.btn-preview{
+	//width: 135px;
+	height: 25px;
+/* 	display: block; */
+	margin-left: auto;
+	margin-right: auto;
+	background-color: #FFD700;
+}
+
+#tooLongTableDiv {
+	position:relative;
+	width: 500px;
+}
+#tooLongTable {
+	width:100%;
+	overflow:auto;
+}
+#help_button {
+	cursor:default;
+}
+#help_background {
+	pointer-events:none;
+}
+#help_items {
+	pointer-events:none;
+}
+.func_column rect {
+	shape-rendering: crispEdges;
+}
+.bar_group_divider {
+	stroke: #444444;
+	stroke-width: 2;
+	stroke-dasharray: 5,5;
+}
+input {
+	autocomplete: off;
+}
+#gearg path {
+	fill: black;
+	stroke: none;
+	pointer-events: none;
+	opacity: 0.6;
+}
+#sidebar_hide:hover + #gearg path {
+	opacity: 1;
+}
+.help_text {
+	font-size: 15;
+}
+#PNGoptionsel {
+	padding-right: 20px;
+}
+#SaveInputDiv button {
+	width: 120px;
+}
+.g {
+	cursor: pointer;
+}
+#sidebar_svg {
+	pointer-events: none;
+}
+#saveInputDiv {
+	pointer-events: all;
+}
+white-space: pre-line;
+
+.sample_type_label {
+	text-anchor: middle;
+	font-size: 10;
+}
+
+.sidebardivline {
+	stroke: #666666;
+	stroke-width: 1;
+}
+.sidetitle {
+	text-align: center;
+	font-weight: bold;
+	text-decoration: underline;
+}
