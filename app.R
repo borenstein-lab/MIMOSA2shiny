@@ -16,65 +16,64 @@ theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
 microbiome_data_upload = function(){
   fluidPage(
     tags$head(tags$style("#fileMet{color: gray }")),
-    h4(get_text("microbiome_header"), width='100%'),
-    fluidRow(
-  #  column(width = 6, 
-    radioButtons("database", "Microbiome data format:", choices = get_text("database_choices"), width = '100%'),
-    fileInput("file1", get_text("microbiome_input_title"),
-              multiple = FALSE,
-              accept = c("text/csv",
-                         "text/comma-separated-values,text/plain",
-                         ".csv")), 
-   #                      ),
-    #column(width = 6,
-        checkboxInput("metagenomeOpt", get_text("metagenome_option"), width = '100%'),
-    #uiOutput("type16S"),
-    #uiOutput("typeMetagenome")
-    disabled(fileInput("metagenome", get_text("metagenome_input_title"),
-                       multiple = FALSE,
-                       accept = c("text/csv",
-                                  "text/comma-separated-values,text/plain",
-                                  ".csv") #, width = '100%'#,
-    ) )#,
 
-    #)
-    # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
-    #               ))
-    
-  ))
+    tags$tr(class = "mainContainer", 
+      tags$td(
+      h4(get_text("microbiome_header") ,tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), width = '100%'),
+      radioButtons("database", get_text("database_title"), choices = get_text("database_choices"), width = '100%'),
+      fluidRow(
+      column(fileInput("file1", get_text("microbiome_input_title"),
+                multiple = FALSE,
+                accept = c("text/csv",
+                           "text/comma-separated-values,text/plain",
+                           ".csv"), width = '400px'), width = 8),
+        column(tags$a(tags$img(src = "example.png", border = 0), href = "test_seqs.txt", target = "_blank"), width = 4)),
+   #   checkboxInput("metagenomeOpt", label=get_text("metagenome_option"), width = '100%'),
+   	fluidRow(
+   		column(      fileInput("metagenome", get_text("metagenome_input_title"),
+                         multiple = FALSE,
+                         accept = c("text/csv",
+                                    "text/comma-separated-values,text/plain",
+                                    ".csv"), width = '400px'), width = 8),
+    	column(tags$a(tags$img(src = "example.png", border = 0), href = "test_metagenome.txt", target = "_blank"), width = 4))
+      #) )#,
+      # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
+      #               ))
+
+      )
+  ),
+  id = "microbiome_section" #tags$style(".mainContainer { border: 2px black; }"), 
+  )
 }
 
 metabolome_data_upload = function(){
   fluidPage(
-    h4(get_text("metabolome_header"), id = "metabolome", width='100%'),
+    h4(get_text("metabolome_header"), tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "metabolome", width='100%'),
     radioButtons("metType", label = get_text("met_type_title"), choices = get_text("met_type_choices"), selected = get_text("selected_met_type"), width = '100%'),
-    fileInput("file2", get_text("metabolome_upload_title"),
+	fluidRow(
+   		column(fileInput("file2", get_text("metabolome_upload_title"),
               multiple = FALSE,
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
-                         ".csv")) #, width = '100%')
-  )
+                         ".csv"), width = '400px'), width = 8),
+    	column(tags$a(tags$img(src = "example.png", border = 0), href = "test_mets.txt", target = "_blank"), width = 4)), id = "metabolome_section")
 }
 
 network_settings = function(){
   fluidPage(
-    h4(get_text("network_header"), id = "genome", width='100%'),
-    radioButtons("genomeChoices", get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2], width = '100%'),
-    # checkboxInput("geneAdd", get_text("gene_mod_option")),
-    # disabled(fileInput("geneAddFile", get_text("gene_mod_input_title"),
-    #                    multiple = FALSE,
-    #                    accept = c("text/csv",
-    #                               "text/comma-separated-values,text/plain",
-    #                               ".csv"))),
-    checkboxInput("netAdd", get_text("net_mod_option"), width = '100%'), 
-    disabled(fileInput("netAddFile", get_text("net_mod_input_title"), multiple = FALSE, accept = c("text/csv",
-                                                                                                                                                         "text/comma-separated-values,text/plain",
-                                                                                                                                                         ".csv"))), #, width = '100%')),
+    h4(get_text("network_header"), tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "genome", width='100%'),
+    radioButtons("genomeChoices", label = get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2], width = '100%'), # width = 7),
+	numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01), #, width = '100%'),
+    fluidRow(
+   		column(fileInput("netAdd", get_text("net_mod_input_title"), multiple = FALSE, accept = c("text/csv",
+                                 "text/comma-separated-values,text/plain",".csv"),  width = '400px'), width = 8), #,  #, width = '100%') #,
+                                     column(tags$a(tags$img(src = "example.png", border = 0), href = "test_netAdd.txt", target = "_blank"), width = 4)
+    )
+
     # radioButtons("modelTemplate", "Metabolic model template", choices = c("Generic KEGG metabolic model", "AGORA metabolic models (recommended)")),
     #disabled(radioButtons("closest", get_text("closest_title"), choices = get_text("closest_options"))),
-    numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01), #, width = '100%'),
-    p("\n"),
-    checkboxInput("gapfill", get_text("gapfill_option"), width = '100%')
+    #checkboxInput("gapfill", get_text("gapfill_option"), width = '100%')
+    , id = "network_section"
   )
 }
 
@@ -147,7 +146,19 @@ run_pipeline = function(input_data, configTable){
 
 ui = fluidPage(
   useShinyjs(),
+  tags$head(
+    #tags$link(rel = "stylesheet", type = "text/css", href = "lab_styles.css"),
+    #tags$link(rel = "stylesheet", type = "text/css", href = "shiny-alt.css"),
+    #tags$link(rel = "stylesheet", type = "text/css", href = "software.css"),
+    tags$link(rel = "stylesheet", type = "text/css", href = "burritostyle.css")
+  ),
+  tags$img(src = "title_lab_800.jpg", border = 0), #Borenstein lab img
   titlePanel("MIMOSA"),
+  tags$style(type = "text/css", "#title { color: #3CB371; horizontal-align: left; }"  ),
+  mainPanel(
+    uiOutput("uploadPage")
+  ), width='100%')
+
   #sidebarLayout(
 #  sidebarPanel(
 #    tags$head(tags$script(HTML('
@@ -184,9 +195,6 @@ ui = fluidPage(
     # widths = c(4,8)
   #  widths = 3.5
   #  ),
-  mainPanel(
-    uiOutput("uploadPage")
-  ), fluid = F)
 
 
 
@@ -198,9 +206,13 @@ server <- function(input, output, session) {
   output$uploadPage = renderUI({
     if(is.null(input$goButton)){
       return(fluidPage(
-        h3("Data Input"),
+        #h3("Data Input"),
         microbiome_data_upload(),
+#        tags$td(
+#        tags$img(border="0", src="pixel.gif", width='100%', height="10", hspace="0", vspace="0"),
+#        bgcolor="#EBEAE1"),
         network_settings(),
+#        tags$img(border="0", src="pixel.gif", width='100%', height="10", hspace="0", vspace="0"),
         metabolome_data_upload(),
         #h3("Settings"),
         #algorithm_settings(),
@@ -208,12 +220,12 @@ server <- function(input, output, session) {
         fluidRow(
           column(
             actionButton("goButton", "Run MIMOSA"),
-            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), 
+            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: middle; font-size: 22px; background-color: #3CB371}"), 
             width = 12, align = "center"
           ))))
     } else if(input$goButton==0){
       return(fluidPage(
-        h3("Data Input"),
+        #h3("Data Input"),
         microbiome_data_upload(),
         network_settings(),
         metabolome_data_upload(),
@@ -223,7 +235,7 @@ server <- function(input, output, session) {
         fluidRow(
           column(
             actionButton("goButton", "Run MIMOSA"),
-            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), 
+            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; background-color: #3CB371}"), 
             width = 12, align = "center"
           ))))
     } else {
@@ -233,7 +245,7 @@ server <- function(input, output, session) {
       downloadButton("downloadSettings", "Download Record of Configuration Settings"),
       downloadButton("downloadData", "Download Variance Contribution Results"),
       downloadButton("downloadModelData", "Download Model Summaries"),
-      tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; color: #3CB371}"), width = 12, align = "center")),
+      tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; background-color: #3CB371}"), width = 12, align = "center")),
       fluidRow(
         #plots
         plotOutput("contribPlots") #, click = "plot_click", hover = "plot_hover")
@@ -255,20 +267,20 @@ server <- function(input, output, session) {
       updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[1])
     }
     if(input$database==get_text("database_choices")[4]){
-      updateCheckboxInput(session, "metagenomeOpt", value = T)
+      #updateCheckboxInput(session, "metagenomeOpt", value = T)
       disable("file1")
     } else {
-      updateCheckboxInput(session, "metagenomeOpt", value = F)
+      #updateCheckboxInput(session, "metagenomeOpt", value = F)
       enable("file1")
     }
   })
-  observeEvent(input$metagenomeOpt, {
-    if(input$metagenomeOpt==T){
-      enable("metagenome")
-    } else {
-      disable("metagenome")
-    }
-  })
+#  observeEvent(input$metagenomeOpt, {
+#    if(input$metagenomeOpt==T){
+#      enable("metagenome")
+#    } else {
+#      disable("metagenome")
+#    }
+#  })
   observeEvent(input$genomeChoices, {
     if(input$genomeChoices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
       enable("simThreshold")
@@ -292,13 +304,13 @@ server <- function(input, output, session) {
   #   }
   # })
   
-  observeEvent(input$netAdd, {
-    if(input$netAdd==T){
-      enable("netAddFile")
-    } else {
-      disable("netAddFile")
-    }
-  })
+#  observeEvent(input$netAdd, {
+#    if(input$netAdd==T){
+#      enable("netAddFile")
+#    } else {
+#      disable("netAddFile")
+#    }
+#  })
   
   # output$contents = renderTable({
   #   
@@ -333,7 +345,7 @@ server <- function(input, output, session) {
   # 
   config_table = reactive({
     initial_inputs = c("closest", "contribType", "database","gapfill", "genomeChoices",  #"geneAdd", 
-                       "metType", "netAdd", "simThreshold") #Check that this is all of them
+                       "metType", "simThreshold") #Check that this is all of them
     inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
     values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
     inputs_provided = c(inputs_provided, "kegg_prefix")
@@ -346,10 +358,11 @@ server <- function(input, output, session) {
   
   datasetInput <- reactive({
     file_list1 = list(input$file1, input$file2, input$metagenome, input$netAddFile) # input$geneAddFile,
-    names(file_list1) = c("file1","file2", "metagenome","netAddFile") # "geneAddFile", 
+    names(file_list1) = c("file1","file2", "metagenome","netAdd") # "geneAddFile", 
     print(file_list1$file1)
     print(file_list1$metagenome)
     print(config_table())
+    logjs(config_table())
     input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
     print(input_data)
     run_pipeline(input_data, config_table())

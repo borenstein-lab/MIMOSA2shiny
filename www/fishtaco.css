@@ -1,0 +1,20 @@
+
+/* Limit the width of inputs in the general case. */
+.radio-boxes {
+  width: 270px !important;
+}
+
+input[type="number"]{
+   width:40px;
+}
+
+.error-message {
+  color: red;
+  text-align: center;
+  font-size: 20px;
+}
+
+.label-checkbox {
+  font-family: arial;
+  font-size: 15px;
+}
