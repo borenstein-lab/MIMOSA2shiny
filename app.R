@@ -1,8 +1,9 @@
 .libPaths(c("/data/shiny-server/r-packages/", "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")) #, "/data/shiny-server/app_specific_r_packages/"))
+library(shinyjs)
+logjs(sessionInfo())
 library(Rcpp, lib.loc = "/data/shiny-server/r-packages/")
 library(Cairo, lib.loc = "/data/shiny-server/r-packages/")
 library(shiny)
-library(shinyjs)
 library(mimosa, lib.loc ="/data/shiny-server/r-packages/")
 library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(readr)
@@ -104,9 +105,6 @@ run_pipeline = function(input_data, configTable){
     print(file.exists(configTable[V1=="file1", V2]))
     print(configTable)
     print(configTable[V1=="file1", V2])
-    #cat(input$file1$datapath)
-    #cat(input$file2$datapath)
-    #run_mimosa2(configTable)
 
     incProgress(2/10, detail = "Building metabolic model")
     network_results = build_metabolic_model(species, configTable) #, input_data$netAdd) #input_data$geneAdd, 
@@ -120,8 +118,8 @@ run_pipeline = function(input_data, configTable){
       # species2 = metagenome_data[[1]]
       # metagenome_network = metagenome_data[[2]]
     }
-    if(configTable[V1=="metType", V2 !=get_text("met_type_choices")[1]]){
-      #mets = map_to_kegg(mets)
+    if(configTable[V1=="metType", V2 ==get_text("met_type_choices")[2]]){
+      mets = map_to_kegg(mets)
     }
     incProgress(1/10, detail = "Calculating metabolic potential and fitting metabolite concentration model")
     if(configTable[V1=="database", V2==get_text("database_choices")[4]]){
@@ -137,7 +135,7 @@ run_pipeline = function(input_data, configTable){
     shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
     
-    return(list(varShares = var_shares, modelData = cmp_mods[[1]]))
+    return(list(varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1)]))
     #Send var_shares for download
     #Generate plot of var shares
     #source(other stuff)
@@ -204,26 +202,21 @@ server <- function(input, output, session) {
   shinyjs::logjs(Cairo.capabilities())
 
   output$uploadPage = renderUI({
-    if(is.null(input$goButton)){
+    if(is.null(input$goButton) & is.null(input$exampleButton)){
       return(fluidPage(
         #h3("Data Input"),
         microbiome_data_upload(),
-#        tags$td(
-#        tags$img(border="0", src="pixel.gif", width='100%', height="10", hspace="0", vspace="0"),
-#        bgcolor="#EBEAE1"),
         network_settings(),
-#        tags$img(border="0", src="pixel.gif", width='100%', height="10", hspace="0", vspace="0"),
         metabolome_data_upload(),
-        #h3("Settings"),
-        #algorithm_settings(),
-        #output_settings(),
         fluidRow(
           column(
-            actionButton("goButton", "Run MIMOSA"),
-            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: middle; font-size: 22px; background-color: #3CB371}"), 
+            actionButton("goButton", " Run MIMOSA "),
+            actionButton("exampleButton", "Show results for example dataset"),
+            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: middle; font-size: 22px; background-color: #3CBCDB; padding: 5px;}"), 
+        	tags$style(type='text/css', "#exampleButton { vertical-align: middle; horizontal-align: middle; font-size: 14px; background-color: #C3D2D5}"), 
             width = 12, align = "center"
           ))))
-    } else if(input$goButton==0){
+    } else if(input$goButton==0 & input$exampleButton == 0){
       return(fluidPage(
         #h3("Data Input"),
         microbiome_data_upload(),
@@ -234,8 +227,10 @@ server <- function(input, output, session) {
         #output_settings(),
         fluidRow(
           column(
-            actionButton("goButton", "Run MIMOSA"),
-            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: center; font-size: 22px; background-color: #3CB371}"), 
+            actionButton("goButton", " Run MIMOSA "),
+             actionButton("exampleButton", "Show results for example dataset"),
+            tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: middle; font-size: 22px; background-color: #3CBCDB; padding: 5px;}"), 
+            tags$style(type='text/css', "#exampleButton { vertical-align: middle; horizontal-align: center; font-size: 14px; background-color: #C3D2D5}"), 
             width = 12, align = "center"
           ))))
     } else {
@@ -274,13 +269,6 @@ server <- function(input, output, session) {
       enable("file1")
     }
   })
-#  observeEvent(input$metagenomeOpt, {
-#    if(input$metagenomeOpt==T){
-#      enable("metagenome")
-#    } else {
-#      disable("metagenome")
-#    }
-#  })
   observeEvent(input$genomeChoices, {
     if(input$genomeChoices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
       enable("simThreshold")
@@ -288,84 +276,38 @@ server <- function(input, output, session) {
       disable("simThreshold")
       }
   })
-  # observeEvent(input$closest, {
-  #   # Change the following line for more examples
-  #   if(input$closest==get_text("closest_options")[2]){
-  #     enable("simThreshold")
-  #   } else {
-  #     disable("simThreshold")
-  #   }
-  # })
-  # observeEvent(input$geneAdd, {
-  #   if(input$geneAdd==T){
-  #     enable("geneAddFile")
-  #   } else {
-  #     disable("geneAddFile")
-  #   }
-  # })
-  
-#  observeEvent(input$netAdd, {
-#    if(input$netAdd==T){
-#      enable("netAddFile")
-#    } else {
-#      disable("netAddFile")
-#    }
-#  })
-  
-  # output$contents = renderTable({
-  #   
-  #   # input$file1 will be NULL initially. After the user selects
-  #   # and uploads a file, head of that data file by default,
-  #   # or all rows if selected, will be shown.
-  #   input$goButton
-  #   req(input$file1)
-  #   
-  #   # when reading semicolon separated files,
-  #   # having a comma separator causes `read.csv` to error
-  #   tryCatch(
-  #     {
-  #       df <- read.csv(input$file1$datapath,
-  #                      header = input$header,
-  #                      sep = input$sep,
-  #                      quote = input$quote)
-  #     },
-  #     error = function(e) {
-  #       # return a safeError if a parsing error occurs
-  #       stop(safeError(e))
-  #     }
-  #   )
-  #   
-  #   if(input$disp == "head") {
-  #     return(head(df))
-  #   }
-  #   else {
-  #     return(df)
-  #   }
-  # })
-  # 
+
   config_table = reactive({
-    initial_inputs = c("closest", "contribType", "database","gapfill", "genomeChoices",  #"geneAdd", 
+  	if(is.null(input$exampleButton)|input$exampleButton==0){
+  	    initial_inputs = c("closest", "contribType", "database","gapfill", "genomeChoices",  #"geneAdd", 
                        "metType", "simThreshold") #Check that this is all of them
     inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
     values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
-    inputs_provided = c(inputs_provided, "kegg_prefix")
-    values_provided = c(values_provided, "data/KEGGfiles/")
+    inputs_provided = c(inputs_provided, "kegg_prefix", "data_prefix")
+    values_provided = c(values_provided, "data/KEGGfiles/", "data/")
     #print(file.exists(input$file1$datapath))
     print(inputs_provided)
     print(values_provided)
     return(data.table(V1 = inputs_provided, V2 = values_provided))
+  	} else {
+  		return(fread("data/exampleData/configs_example_clean.txt", header = T))
+  	}
   })
   
   datasetInput <- reactive({
+    if(is.null(input$exampleButton)|input$exampleButton==0){
     file_list1 = list(input$file1, input$file2, input$metagenome, input$netAddFile) # input$geneAddFile,
     names(file_list1) = c("file1","file2", "metagenome","netAdd") # "geneAddFile", 
-    print(file_list1$file1)
-    print(file_list1$metagenome)
-    print(config_table())
     logjs(config_table())
     input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
-    print(input_data)
     run_pipeline(input_data, config_table())
+    } else {
+    	logjs("Reading example data")
+    	config = config_table()
+    	varShares = fread("data/exampleData/varSharesExample.txt")
+    	modResults = fread("data/exampleData/modelResultsExample.txt")
+    	return(list(varShares = varShares, modelData = modResults, configs = config))
+    }
   })
   
   
@@ -381,7 +323,15 @@ server <- function(input, output, session) {
     
     #}
   })
-  
+
+  observeEvent(input$exampleButton, {
+    config_table()
+    datasetInput()
+    enable("downloadSettings")
+    enable("downloadData")
+    enable("downloadModelData")
+  })
+    
   output$downloadSettings <- downloadHandler(
     filename = function() {
       "configSettings.txt"
@@ -417,6 +367,7 @@ server <- function(input, output, session) {
     #plotData[,hist(V1)]
     return(plot_summary_contributions(plotData, include_zeros = T))
   }, res = 100)
+  
   output$indivCellInfo = renderTable({
     plotData = datasetInput()$varShares
     if(!is.null(input$plot_hover)){
