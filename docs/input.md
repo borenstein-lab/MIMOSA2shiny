@@ -4,7 +4,7 @@ layout: default
 ---
 # Input data options for the main MIMOSA analysis
 
-BURRITO has several options for uploading and viewing datasets. Each data file must be formatted as shown in the examples linked below.
+MIMOSA has several options for uploading and viewing datasets. Each data file must be formatted as shown in the examples linked below.
 
 <h2 id="taxonomy">Microbiome Data</h2>
 
