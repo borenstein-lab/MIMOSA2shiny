@@ -1,6 +1,6 @@
 ##### Make processed species-reaction mappings for both AGORA and PICRUSt
 library(data.table)
-library(mimosa)
+library(mimosa, lib = "/data/shiny-server/r-packages/")
 
 args = commandArgs(trailingOnly = T)
 database = args[1]

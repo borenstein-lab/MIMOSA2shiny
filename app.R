@@ -1,14 +1,15 @@
-.libPaths(c("/data/shiny-server/r-packages/", "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")) #, "/data/shiny-server/app_specific_r_packages/"))
-library(shinyjs)
-logjs(sessionInfo())
-library(Rcpp, lib.loc = "/data/shiny-server/r-packages/")
-library(Cairo, lib.loc = "/data/shiny-server/r-packages/")
+#.libPaths(c("/data/shiny-server/r-packages/", "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")) #, "/data/shiny-server/app_specific_r_packages/"))
+#library(Rcpp, lib.loc = "/data/shiny-server/r-packages/")
+#library(Cairo, lib.loc = "/data/shiny-server/r-packages/")
 library(shiny)
-library(mimosa, lib.loc ="/data/shiny-server/r-packages/")
+library(shinyjs)
+#logjs(sessionInfo())
+
+library(mimosa) #, lib.loc ="/data/shiny-server/r-packages/")
 library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(readr)
-library(ggplot2, lib.loc = "/data/shiny-server/r-packages")
-library(viridis, lib.loc = "/data/shiny-server/r-packages")
+library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
+library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(RColorBrewer)
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F)
 theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
@@ -132,7 +133,7 @@ run_pipeline = function(input_data, configTable){
     indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
     incProgress(2/10, detail = "Calculating microbial contributions")
     var_shares = calculate_var_shares(indiv_cmps)
-    shinyjs::logjs(devtools::session_info())
+    #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
     
     return(list(varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1)]))
@@ -197,9 +198,9 @@ ui = fluidPage(
 
 
 server <- function(input, output, session) {
-  shinyjs::logjs(sessionInfo())
-  shinyjs::logjs(devtools::session_info())
-  shinyjs::logjs(Cairo.capabilities())
+  #shinyjs::logjs(sessionInfo())
+  #shinyjs::logjs(devtools::session_info())
+  #shinyjs::logjs(Cairo.capabilities())
 
   output$uploadPage = renderUI({
     if(is.null(input$goButton) & is.null(input$exampleButton)){
@@ -243,13 +244,13 @@ server <- function(input, output, session) {
       tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; background-color: #3CB371}"), width = 12, align = "center")),
       fluidRow(
         #plots
-        plotOutput("contribPlots") #, click = "plot_click", hover = "plot_hover")
+        plotOutput("contribPlots", height = "650px", click = "plot_click") #, click = "plot_click", hover = "plot_hover")
       ),
       fluidRow(
         tableOutput("indivCellInfo")
       ),
       fluidRow(
-        plotOutput("indivPlots")
+        plotOutput("indivPlots", height = "600px")
       ))
   
     }
@@ -298,11 +299,11 @@ server <- function(input, output, session) {
     if(is.null(input$exampleButton)|input$exampleButton==0){
     file_list1 = list(input$file1, input$file2, input$metagenome, input$netAddFile) # input$geneAddFile,
     names(file_list1) = c("file1","file2", "metagenome","netAdd") # "geneAddFile", 
-    logjs(config_table())
+    #logjs(config_table())
     input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
     run_pipeline(input_data, config_table())
     } else {
-    	logjs("Reading example data")
+    	#logjs("Reading example data")
     	config = config_table()
     	varShares = fread("data/exampleData/varSharesExample.txt")
     	modResults = fread("data/exampleData/modelResultsExample.txt")
@@ -369,13 +370,18 @@ server <- function(input, output, session) {
   }, res = 100)
   
   output$indivCellInfo = renderTable({
-    plotData = datasetInput()$varShares
-    if(!is.null(input$plot_hover)){
-      met_of_interest = plotData[,levels(metID)][round(input$plot_click$x)] #Plot in alphabetical/numeric order
+    plotData = datasetInput()$varShares[,list(metID, compound, Species, Var, VarShare)]
+    setnames(plotData, c("Metabolite", "KEGG ID", "Taxon", "Total Variance", "Variance Contribution"))
+    spec_order = plotData[Taxon != "Residual",length(`Variance Contribution`[abs(`Variance Contribution`) > 0.05]), by=Taxon][order(V1, decreasing = T), Taxon]
+    spec_order = c("Residual", spec_order)
+    
+    if(!is.null(input$plot_click)){
+      met_of_interest = plotData[,levels(Metabolite)][round(input$plot_click$x)] 
       print(met_of_interest)
-      spec_of_interest = plotData[,levels(Species)][round(input$plot_click$y)]
-      print(spec_of_interest)
-      return(plotData[Species==spec_of_interest & metID==met_of_interest])
+      spec_of_interest = spec_order[round(input$plot_click$y)]
+      if(length(spec_of_interest)==1 & length(met_of_interest)==1){
+        return(plotData[Taxon==spec_of_interest & Metabolite==met_of_interest])
+      }
     } else {
       return(plotData[1])
     }
@@ -385,7 +391,7 @@ server <- function(input, output, session) {
     print(input$plot_click)
     #levels(x)[input$plot_click[x]] #etc
     if(!is.null(input$plot_click)){
-      met_of_interest = plotData[,levels(metID)][round(input$plot_click$x)] #Plot in alphabetical/numeric order
+      met_of_interest = plotData[,levels(metID)][round(input$plot_click$x)] 
       print(met_of_interest)
     } else {
       met_of_interest = plotData[1,metID]      
