@@ -69,7 +69,7 @@ network_settings = function(){
     fluidRow(
    		column(fileInput("netAdd", get_text("net_mod_input_title"), multiple = FALSE, accept = c("text/csv",
                                  "text/comma-separated-values,text/plain",".csv"),  width = '400px'), width = 8), #,  #, width = '100%') #,
-                                     column(tags$a(tags$img(src = "example.png", border = 0), href = "test_netAdd.txt", target = "_blank"), width = 4)
+                                     column(tags$a(tags$img(src = "example.png", border = 0), href = "test_netAdd_species_rxns_KEGG_clean.txt", target = "_blank"), width = 4)
     )
 
     # radioButtons("modelTemplate", "Metabolic model template", choices = c("Generic KEGG metabolic model", "AGORA metabolic models (recommended)")),
@@ -106,7 +106,8 @@ run_pipeline = function(input_data, configTable){
     print(file.exists(configTable[V1=="file1", V2]))
     print(configTable)
     print(configTable[V1=="file1", V2])
-
+	configTable = check_config_table(configTable, app = T)
+	
     incProgress(2/10, detail = "Building metabolic model")
     network_results = build_metabolic_model(species, configTable) #, input_data$netAdd) #input_data$geneAdd, 
     network = network_results[[1]]
@@ -271,7 +272,7 @@ server <- function(input, output, session) {
     }
   })
   observeEvent(input$genomeChoices, {
-    if(input$genomeChoices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
+    if(input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
       enable("simThreshold")
     } else {
       disable("simThreshold")
@@ -284,9 +285,8 @@ server <- function(input, output, session) {
                        "metType", "simThreshold") #Check that this is all of them
     inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
     values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
-    inputs_provided = c(inputs_provided, "kegg_prefix", "data_prefix")
-    values_provided = c(values_provided, "data/KEGGfiles/", "data/")
-    #print(file.exists(input$file1$datapath))
+	inputs_provided = c(inputs_provided, "kegg_prefix", "data_prefix", "vsearch_path")
+	values_provided = c(values_provided, "data/KEGGfiles/", "data/", "bin/vsearch")    #print(file.exists(input$file1$datapath))
     print(inputs_provided)
     print(values_provided)
     return(data.table(V1 = inputs_provided, V2 = values_provided))
@@ -386,17 +386,17 @@ server <- function(input, output, session) {
       return(plotData[1])
     }
   })
+  met_of_interest = reactive({
+  	 plotData = datasetInput()$varShares
+  	 if(is.null(input$plot_click$x)){
+  	 	return(plotData[1, metID])
+  	 } else {
+  	 	return(plotData[,levels(metID)][round(input$plot_click$x)]) 
+  	 }
+  })
   output$indivPlots = renderPlot({
     plotData = datasetInput()$varShares
-    print(input$plot_click)
-    #levels(x)[input$plot_click[x]] #etc
-    if(!is.null(input$plot_click)){
-      met_of_interest = plotData[,levels(metID)][round(input$plot_click$x)] 
-      print(met_of_interest)
-    } else {
-      met_of_interest = plotData[1,metID]      
-    }
-   	return(plot_contributions(plotData, metabolite = met_of_interest, include_zeros = F))
+   	return(plot_contributions(plotData, metabolite = met_of_interest(), include_zeros = F))
   }, res = 100)
 }
 
