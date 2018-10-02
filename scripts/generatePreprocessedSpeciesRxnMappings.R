@@ -39,16 +39,17 @@ if(database == "PICRUSt"){
   otu_list = list.files(path = "data/AGORA/", pattern = ".mat$")
   otu_list = gsub(".mat$", "", otu_list)
   print(otu_list)
-  all_mods = load_agora_models(otu_list)
-  all_mods = get_S_mats(all_mods, otu_list, edge_list = T)
-  ##Read back in and add copy number info????
-  genome_info = fread("data/blastDB/agora_NCBItax_processed_nodups.txt")
-  all_mods[,copy_number:=1]
-  all_mods = merge(all_mods, genome_info[,list(AGORA_ID, CopyNum)], all.x = T, by.x = "Species", by.y = "AGORA_ID")
-  all_mods[,normalized_copy_number:=ifelse(is.na(CopyNum), 1, copy_number/CopyNum)]
-  all_mods = all_mods[,list(Species, KO, Reac, Prod, stoichReac, stoichProd, normalized_copy_number)]
+  genome_info = fread("data/blastDB/AGORA_full_genome_info.txt")
   for(spec in otu_list){
-    write.table(all_mods[Species==spec], file = paste0("data/AGORA/", spec, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
+    mod1 = load_agora_models(spec)
+    mod1 = get_S_mats(mod1, spec, edge_list = T)
+    ##Read back in and add copy number info????
+    print(spec)
+    mod1[,copy_number:=1]
+    mod1 = merge(mod1, genome_info[,list(ModelAGORA, CopyNum)], all.x = T, by.x = "Species", by.y = "ModelAGORA")
+    mod1[,normalized_copy_number:=ifelse(CopyNum==0|is.na(CopyNum), 1, copy_number/CopyNum)]
+    mod1 = mod1[,list(Species, KO, Reac, Prod, stoichReac, stoichProd, normalized_copy_number)]
+    write.table(mod1, file = paste0("data/AGORA/", spec, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
   }
 
 }

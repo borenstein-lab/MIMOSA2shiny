@@ -13,7 +13,7 @@ library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(RColorBrewer)
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F)
 theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
-
+library(shinyBS)
 
 microbiome_data_upload = function(){
   fluidPage(
@@ -21,7 +21,8 @@ microbiome_data_upload = function(){
 
     tags$tr(class = "mainContainer", 
       tags$td(
-      h4(get_text("microbiome_header") ,tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), width = '100%'),
+      h4(get_text("microbiome_header"),tipify(tags$img(src = "help.png", border = 0), title = "Upload a taxonomic abundance dataset and select its format. Optionally provide metagenomic functional abundances instead or in addition.", placement = "right"), width='100%'),
+  #,tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), width = '100%')
       radioButtons("database", get_text("database_title"), choices = get_text("database_choices"), width = '100%'),
       fluidRow(
       column(fileInput("file1", get_text("microbiome_input_title"),
@@ -50,7 +51,8 @@ microbiome_data_upload = function(){
 
 metabolome_data_upload = function(){
   fluidPage(
-    h4(get_text("metabolome_header"), tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "metabolome", width='100%'),
+    h4(get_text("metabolome_header"), tipify(tags$img(src = "help.png", border = 0), title = "Upload a metabolite concentration table and select its metabolite ID format.", placement = "right"), width='100%'),
+    #tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "metabolome", width='100%')
     radioButtons("metType", label = get_text("met_type_title"), choices = get_text("met_type_choices"), selected = get_text("selected_met_type"), width = '100%'),
 	fluidRow(
    		column(fileInput("file2", get_text("metabolome_upload_title"),
@@ -63,7 +65,8 @@ metabolome_data_upload = function(){
 
 network_settings = function(){
   fluidPage(
-    h4(get_text("network_header"), tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "genome", width='100%'),
+    h4(get_text("network_header"),  tipify(tags$img(src = "help.png", border = 0), title = "Choose a source metabolic model template. If providing 16S sequence variants, choose a mapping threshold. Optionally provide modifications to the metabolic model template.", placement = "right"), width='100%'),
+       #tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "genome", width='100%'),
     radioButtons("genomeChoices", label = get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2], width = '100%'), # width = 7),
 	numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01), #, width = '100%'),
     fluidRow(
@@ -154,6 +157,7 @@ ui = fluidPage(
   ),
   tags$img(src = "title_lab_800.jpg", border = 0), #Borenstein lab img
   titlePanel("MIMOSA"),
+  mainPanel(fluidPage(p("MIMOSA is a tool for metabolic model-based evaluation of paired microbiome and metabolomics datasets. For more information, see the ", tags$a("manual.", href = "https://cnoecker.github.io/MIMOSA2shiny", target = "_blank"))), id="description"),
   tags$style(type = "text/css", "#title { color: #3CB371; horizontal-align: left; }"  ),
   mainPanel(
     uiOutput("uploadPage")
