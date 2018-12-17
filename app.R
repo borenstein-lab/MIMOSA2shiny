@@ -21,9 +21,11 @@ microbiome_data_upload = function(){
 
     tags$tr(class = "mainContainer", 
       tags$td(
-      h4(get_text("microbiome_header"),tipify(tags$img(src = "help.png", border = 0), title = "Upload a taxonomic abundance dataset and select its format. Optionally provide metagenomic functional abundances instead or in addition.", placement = "right"), width='100%'),
+      h4(get_text("microbiome_header"), width='100%'),
   #,tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), width = '100%')
-      radioButtons("database", get_text("database_title"), choices = get_text("database_choices"), width = '100%'),
+      p(get_text("microbiome_description")),
+      column(radioButtons("database", get_text("database_title"), choices = get_text("database_choices"), width = '100%'), width = 8),
+      column(tipify(tags$img(src = "help.png", border = 0), title = get_text("microbiome_tooltip"), placement = "right"), width = 4),
       fluidRow(
       column(fileInput("file1", get_text("microbiome_input_title"),
                 multiple = FALSE,
@@ -51,8 +53,9 @@ microbiome_data_upload = function(){
 
 metabolome_data_upload = function(){
   fluidPage(
-    h4(get_text("metabolome_header"), tipify(tags$img(src = "help.png", border = 0), title = "Upload a metabolite concentration table and select its metabolite ID format.", placement = "right"), width='100%'),
+    h4(get_text("metabolome_header"), tipify(tags$img(src = "help.png", border = 0), title = get_text("metabolome_tooltip"), placement = "right"), width='100%'),
     #tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "metabolome", width='100%')
+    p(get_text("metabolome_description")),
     radioButtons("metType", label = get_text("met_type_title"), choices = get_text("met_type_choices"), selected = get_text("selected_met_type"), width = '100%'),
 	fluidRow(
    		column(fileInput("file2", get_text("metabolome_upload_title"),
@@ -65,8 +68,9 @@ metabolome_data_upload = function(){
 
 network_settings = function(){
   fluidPage(
-    h4(get_text("network_header"),  tipify(tags$img(src = "help.png", border = 0), title = "Choose a source metabolic model template. If providing 16S sequence variants, choose a mapping threshold. Optionally provide modifications to the metabolic model template.", placement = "right"), width='100%'),
+    h4(get_text("network_header"),  tipify(tags$img(src = "help.png", border = 0), title = get_text("network_tooltip"), placement = "right"), width='100%'),
        #tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "genome", width='100%'),
+    p(get_text("network_description")),
     radioButtons("genomeChoices", label = get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2], width = '100%'), # width = 7),
 	numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01), #, width = '100%'),
     fluidRow(
@@ -248,7 +252,8 @@ server <- function(input, output, session) {
       tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; background-color: #3CB371}"), width = 12, align = "center")),
       fluidRow(
         #plots
-        plotOutput("contribPlots", height = "650px", click = "plot_click") #, click = "plot_click", hover = "plot_hover")
+        #plotOutput("residPlot", height = "100px", click = "plot_click"),
+        plotOutput("contribPlots", height = "650px", click = "plot_click", hover = "plot_hover") #, click = "plot_click", hover = "plot_hover")
       ),
       fluidRow(
         tableOutput("indivCellInfo")
@@ -262,9 +267,9 @@ server <- function(input, output, session) {
   })
   observeEvent(input$database, {
     if(input$database==get_text("database_choices")[1]){
-      updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[2])
+      #updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[2])
     } else {
-      updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[1])
+      #updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[1])
     }
     if(input$database==get_text("database_choices")[4]){
       #updateCheckboxInput(session, "metagenomeOpt", value = T)
@@ -275,11 +280,11 @@ server <- function(input, output, session) {
     }
   })
   observeEvent(input$genomeChoices, {
-    if(input$genomeChoices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
-      enable("simThreshold")
-    } else {
-      disable("simThreshold")
-      }
+    # if(input$genomeChoices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
+    #   enable("simThreshold")
+    # } else {
+    #   disable("simThreshold")
+    #   }
   })
 
   config_table = reactive({
@@ -366,11 +371,11 @@ server <- function(input, output, session) {
   )
   output$contribPlots = renderPlot({
     plotData = datasetInput()$varShares
-    print(plotData)
+    #print(plotData)
     ##met1 = plotData[1,compound]
     #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
     #plotData[,hist(V1)]
-    return(plot_summary_contributions(plotData, include_zeros = T))
+    return(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = T))
   }, res = 100)
   
   output$indivCellInfo = renderTable({
@@ -392,11 +397,13 @@ server <- function(input, output, session) {
   })
   output$indivPlots = renderPlot({
     plotData = datasetInput()$varShares
-    print(input$plot_click)
-    #levels(x)[input$plot_click[x]] #etc
+    #print(input$plot_click)
+    #print(levels(x)[input$plot_click[x]]) #etc
     if(!is.null(input$plot_click)){
+      print(input$plot_click$x)
+      print(plotData[,levels(metID)])
       met_of_interest = plotData[,levels(metID)][round(input$plot_click$x)] 
-      print(met_of_interest)
+      #print(met_of_interest)
     } else {
       met_of_interest = plotData[1,metID]      
     }

@@ -14,18 +14,25 @@ microbiome_input_title = "Upload 16S rRNA abundance file"
 metagenome_option = "Metagenome KO abundances"
 metagenome_input_title = "Upload file of metagenomic KO abundances"
 #metagenome_use_option = "Use metagenome for core analysis instead of 16S rRNA data (see documentation)"
+microbiome_tooltip = "Help"
+microbiome_description = "Upload a taxonomic abundance dataset and select its format. Optionally provide metagenomic functional abundances instead or in addition."
 
 metabolome_header = "Metabolome data"
 met_type_title = "Compound ID type"
 met_type_choices = c("KEGG Compound IDs", "Metabolite names (search for matching ID)") #"MetaCyc Compound IDs",
 selected_met_type = "KEGG Compound IDs"
 metabolome_upload_title = "Upload metabolite abundance file"
+metabolome_tooltip = "Stuff."
+metabolome_description = "Upload a metabolite concentration table and select its metabolite ID format."
 
 network_header = "Model settings"
 source_title = "Gene content and metabolic model source"
-source_choices = c("Assign KOs with PICRUSt and use KEGG metabolic model", "Map sequences to AGORA genomes and models")
+source_choices = c("Assign KOs with PICRUSt and use KEGG metabolic model (recommended for Greengenes input)", "Map sequences to AGORA genomes and models (recommended for sequence variant input)")
 net_mod_option = "Upload modifications to metabolic models"
 net_mod_input_title = "Upload file of modifications at the species, gene, and/or reaction levels (optional)"
+network_tooltip = ""
+network_description = "Choose a source metabolic model template. If providing 16S rRNA sequence variants, choose a mapping threshold. Optionally, provide modifications to the metabolic model template - see the documentation for examples."
+
 #closest_title = ""
 #closest_options = c("Use closest AGORA species", "Use AGORA models for species within a % similarity threshold")
 sim_title = "Similarity threshold"
