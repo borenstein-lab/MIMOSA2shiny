@@ -29,7 +29,7 @@ microbiome_data_upload = function(){
                 multiple = FALSE,
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
-                           ".csv"), width = '400px'), width = 8),
+                           ".csv"), width = '430px'), width = 8),
         column(tags$a(tags$img(src = "example.png", border = 0), href = "test_seqs.txt", target = "_blank"), width = 4)),
    #   checkboxInput("metagenomeOpt", label=get_text("metagenome_option"), width = '100%'),
    	fluidRow(
@@ -37,7 +37,7 @@ microbiome_data_upload = function(){
                          multiple = FALSE,
                          accept = c("text/csv",
                                     "text/comma-separated-values,text/plain",
-                                    ".csv"), width = '400px'), width = 8),
+                                    ".csv"), width = '430px'), width = 8),
     	column(tags$a(tags$img(src = "example.png", border = 0), href = "test_metagenome.txt", target = "_blank"), width = 4))
       #) )#,
       # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
@@ -59,7 +59,7 @@ metabolome_data_upload = function(){
               multiple = FALSE,
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
-                         ".csv"), width = '400px'), width = 8),
+                         ".csv"), width = '430px'), width = 8),
     	column(tags$a(tags$img(src = "example.png", border = 0), href = "test_mets.txt", target = "_blank"), width = 4)), id = "metabolome_section")
 }
 
@@ -68,10 +68,10 @@ network_settings = function(){
     h4(get_text("network_header"),  tipify(tags$img(src = "help.png", border = 0), title = "Choose a source metabolic model template. If providing 16S sequence variants, choose a mapping threshold. Optionally provide modifications to the metabolic model template.", placement = "right"), width='100%'),
        #tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "genome", width='100%'),
     radioButtons("genomeChoices", label = get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2], width = '100%'), # width = 7),
-	numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01), #, width = '100%'),
+	numericInput("simThreshold", get_text("sim_title"), value = 0.99, min=0.8, max = 1, step = 0.01, width='430px'), #, width = '100%'),
     fluidRow(
    		column(fileInput("netAdd", get_text("net_mod_input_title"), multiple = FALSE, accept = c("text/csv",
-                                 "text/comma-separated-values,text/plain",".csv"),  width = '400px'), width = 8), #,  #, width = '100%') #,
+                                 "text/comma-separated-values,text/plain",".csv"),  width = '430px'), width = 8), #,  #, width = '100%') #,
                                      column(tags$a(tags$img(src = "example.png", border = 0), href = "test_netAdd_species_rxns_KEGG_clean.txt", target = "_blank"), width = 4)
     )
 
@@ -140,7 +140,7 @@ run_pipeline = function(input_data, configTable){
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
     
-    return(list(varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1)]))
+    return(list(varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1)], networkData = network))
     #Send var_shares for download
     #Generate plot of var shares
     #source(other stuff)
@@ -218,6 +218,8 @@ server <- function(input, output, session) {
           column(
             actionButton("goButton", " Run MIMOSA "),
             actionButton("exampleButton", "Show results for example dataset"),
+             br(),
+             br(),
             tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: middle; font-size: 22px; background-color: #3CBCDB; padding: 5px;}"), 
         	tags$style(type='text/css', "#exampleButton { vertical-align: middle; horizontal-align: middle; font-size: 14px; background-color: #C3D2D5}"), 
             width = 12, align = "center"
@@ -235,6 +237,8 @@ server <- function(input, output, session) {
           column(
             actionButton("goButton", " Run MIMOSA "),
              actionButton("exampleButton", "Show results for example dataset"),
+             br(),
+             br(),
             tags$style(type='text/css', "#goButton { vertical-align: middle; horizontal-align: middle; font-size: 22px; background-color: #3CBCDB; padding: 5px;}"), 
             tags$style(type='text/css', "#exampleButton { vertical-align: middle; horizontal-align: center; font-size: 14px; background-color: #C3D2D5}"), 
             width = 12, align = "center"
@@ -244,6 +248,7 @@ server <- function(input, output, session) {
       fluidRow(
         column(
       downloadButton("downloadSettings", "Download Record of Configuration Settings"),
+      downloadButton("downloadNetworkData", "Download Community Metabolic Network Models"),
       downloadButton("downloadData", "Download Variance Contribution Results"),
       downloadButton("downloadModelData", "Download Model Summaries"),
       tags$style(type='text/css', ".downloadButton { vertical-align: middle; horizontal-align: center; font-size: 22px; background-color: #3CB371}"), width = 12, align = "center")),
@@ -311,6 +316,7 @@ server <- function(input, output, session) {
     	config = config_table()
     	varShares = fread("data/exampleData/varSharesExample.txt")
     	modResults = fread("data/exampleData/modelResultsExample.txt")
+    	networkData = fread("data/exampleData/communityNetworkModelsExample.txt")
     	return(list(varShares = varShares, modelData = modResults, configs = config))
     }
   })
@@ -363,6 +369,14 @@ server <- function(input, output, session) {
     content = function(file) {
       write.table(datasetInput()$modelData, file, row.names = F, sep = "\t", quote=F)
     }
+  )
+  output$downloadNetworkData = downloadHandler(
+  	filename = function(){
+  		"communityNetworkModels.txt"
+  	},
+  	content = function(file) {
+  		write.table(datasetInput()$networkData, file, row.names = F, sep = "\t", quote=F)
+  	}
   )
   output$contribPlots = renderPlot({
     plotData = datasetInput()$varShares
