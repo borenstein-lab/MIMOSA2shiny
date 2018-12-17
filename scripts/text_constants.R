@@ -27,7 +27,7 @@ metabolome_description = "Upload a metabolite concentration table and select its
 
 network_header = "Model settings"
 source_title = "Gene content and metabolic model source"
-source_choices = c("Assign KOs with PICRUSt and use KEGG metabolic model (recommended for Greengenes input)", "Map sequences to AGORA genomes and models (recommended for sequence variant input)")
+source_choices = c("PICRUSt KO genomes and KEGG metabolic model", "AGORA genomes and models")
 net_mod_option = "Upload modifications to metabolic models"
 net_mod_input_title = "Upload file of modifications at the species, gene, and/or reaction levels (optional)"
 network_tooltip = ""
@@ -35,7 +35,7 @@ network_description = "Choose a source metabolic model template. If providing 16
 
 #closest_title = ""
 #closest_options = c("Use closest AGORA species", "Use AGORA models for species within a % similarity threshold")
-sim_title = "Similarity threshold"
+sim_title = "Minimum similarity threshold for mapping sequence variants"
 gapfill_option = "Gap-fill model for each species using x program"
 algorithm_header = "Algorithm settings"
 stat_title = "Metabolite statistic to analyze:"
