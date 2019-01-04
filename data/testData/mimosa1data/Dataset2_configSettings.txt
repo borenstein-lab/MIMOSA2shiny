@@ -1,0 +1,10 @@
+V1	V2
+database	Greengenes 13_5 or 13_8
+genomeChoices	PICRUSt KO genomes and KEGG metabolic model
+metType	KEGG Compound IDs
+simThreshold	0.99
+vsearch_path	bin/vsearch
+metagenome	FALSE
+contribType	FALSE
+gapfill	FALSE
+netAdd	FALSE

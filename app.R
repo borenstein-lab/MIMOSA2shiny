@@ -11,7 +11,7 @@ library(readr)
 library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
 library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(RColorBrewer)
-options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F)
+options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=30*1024^2)
 theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
 library(shinyBS)
 
@@ -113,7 +113,7 @@ run_pipeline = function(input_data, configTable){
     print(file.exists(configTable[V1=="file1", V2]))
     print(configTable)
     print(configTable[V1=="file1", V2])
-	configTable = check_config_table(configTable, app = T)
+	  configTable = check_config_table(configTable, app = T)
 	
     incProgress(2/10, detail = "Building metabolic model")
     network_results = build_metabolic_model(species, configTable) #, input_data$netAdd) #input_data$geneAdd, 
