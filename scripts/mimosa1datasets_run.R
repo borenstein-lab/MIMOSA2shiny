@@ -1,6 +1,7 @@
 #Run MIMOSA2 on MIMOSA1 datasets
 
 library(data.table)
+library(seqsetvis)
 datadir = "data/testData/mimosa1data/"
 
 run_mimosa1 = function(genefile, metfile, contribfile, file_prefix, kegg_file){
@@ -58,16 +59,16 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = "", simul
     mets = datafiles[[2]]
     
     ### MIMOSA2 
-    results_kegg = run_mimosa2(config_table)
+    results_kegg = run_mimosa2(config_table, species = species, mets = mets)
     if(is.null(config_table)){
       config_table[V1=="genomeChoices", V2:=get_text("source_choices")[2]]
     } else {
       config_table = config_table_list[[2]]
     }
-    results_agora = run_mimosa2(config_table)
+    results_agora = run_mimosa2(config_table, species = species, mets = mets) #Figure out what the hell build_metabolic_network is doing
     
     ### MIMOSA 1
-    contrib_table = generate_contribution_table_using_picrust(species, "data/picrustGenomeData/16S_13_5_precalculated.tab.gz", "data/picrustGenomeData/indivGenomes/", "_genomic_content.tab")
+    contrib_table = generate_contribution_table_using_picrust(species, "~/Documents/Cecilia_server/MIMOSA2shiny/data/picrustGenomeData/16S_13_5_precalculated.tab.gz", "~/Documents/Cecilia_server/MIMOSA2shiny/data/picrustGenomeData/indivGenomes/", "_genomic_content.tab")
     genes = contrib_table[,sum(contribution), by=list(Sample, Gene)]
     genes = dcast(genes, Gene~Sample, value.var = "V1")
     setnames(genes, "Gene", "KO")
@@ -81,6 +82,9 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = "", simul
     load(paste0(file_prefix, "_out.rda"))
     spec_contribs = get_spec_contribs(contribs_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, comparison = "cmps") 
     spec_contribs2 = get_spec_contribs(contribs_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, comparison = "mets") 
+    spec_contribs3 = get_spec_contribs(contribs_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, var_share = T)
+    spec_contribs4 = get_spec_contribs(contribs_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, cov_share = T)
+    #spec_contribs4 #Varshares of cov
     
         #Gene contribs
     load(paste0(file_prefix, "_out.rda"))
@@ -103,9 +107,26 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = "", simul
     
     ##Make venn diagrams of shared consistent metabolites and key contributors?? I think this would be good
   } else {
+    source("FBA_functions.R")
+    #Run on simulation data
+    #Get S matrix
+    species = fread(species_file)
+    mets = fread(met_file)
+    met_fluxes = fread()
+    contribs = getContributions()
+    
+    mods = build_model_components() # Make minimal, working version of this function
+    run_all_metabolites_FBA()
+    
     
   }
+  
+  consistent_mets = list(node_data[QValPos < 0.01 & PValPos < 0.01, compound], )
+  venn_consistent_mets = ssvFeatureVenn
+  
+  spec_contrib_compare_set = list()
 }
+
 
 #Also try comparing Mantel test with species var share contributions
 species_file1 = paste0(datadir, "Dataset2_otu_table.txt")
