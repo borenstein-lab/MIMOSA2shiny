@@ -34,6 +34,8 @@ microbiome_data_upload = function(){
                            ".csv"), width = '430px'), width = 8),
         column(tags$a(tags$img(src = "example.png", border = 0), href = "test_seqs.txt", target = "_blank"), width = 4)),
    #   checkboxInput("metagenomeOpt", label=get_text("metagenome_option"), width = '100%'),
+    #p(get_text("metagenome_description")),
+    column(radioButtons("metagenome_format", get_text("metagenome_title"), choices = get_text("metagenome_options"), width = '100%'), width = 8),
    	fluidRow(
    		column(      fileInput("metagenome", get_text("metagenome_input_title"),
                          multiple = FALSE,
@@ -122,17 +124,18 @@ run_pipeline = function(input_data, configTable){
     if(!is.null(input_data$metagenome) & configTable[V1=="database", V2==get_text("database_choices")[4]]){
       #If we are doing a comparison of the species network and the metagenome network
       #Metagenome data
-      #Implement doing stuff with this later
       metagenome_network = build_metabolic_model(input_data$metagenome, configTable)
-      # species2 = metagenome_data[[1]]
-      # metagenome_network = metagenome_data[[2]]
     }
     if(configTable[V1=="metType", V2 ==get_text("met_type_choices")[2]]){
       mets = map_to_kegg(mets)
     }
     incProgress(1/10, detail = "Calculating metabolic potential and fitting metabolite concentration model")
     if(configTable[V1=="database", V2==get_text("database_choices")[4]]){
-      indiv_cmps = get_cmp_scores_kos(species, network) #Use KO abundances instead of species abundances to get cmps
+      if(configTable[V1=="metagenome_format", V2==get_text("metagenome_options")[2]]){
+        indiv_cmps = get_species_cmp_scores(species, network, humann2 = T)
+      } else {
+        indiv_cmps = get_cmp_scores_kos(species, network) #Use KO abundances instead of species abundances to get cmps
+      }
     } else {
       indiv_cmps = get_species_cmp_scores(species, network)
     }
@@ -295,7 +298,7 @@ server <- function(input, output, session) {
 
   config_table = reactive({
   	if(is.null(input$exampleButton)|input$exampleButton==0){
-  	    initial_inputs = c("closest", "contribType", "database","gapfill", "genomeChoices",  #"geneAdd", 
+  	    initial_inputs = c("closest", "contribType", "database", "metagenome_format", "gapfill", "genomeChoices",  #"geneAdd", 
                        "metType", "simThreshold") #Check that this is all of them
     inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
     values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
