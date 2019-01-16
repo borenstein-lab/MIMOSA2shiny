@@ -51,7 +51,7 @@ if(database == "PICRUSt"){
     mod1[,copy_number:=1]
     mod1 = merge(mod1, genome_info[,list(ModelAGORA, CopyNum)], all.x = T, by.x = "Species", by.y = "ModelAGORA")
     mod1[,normalized_copy_number:=ifelse(CopyNum==0|is.na(CopyNum), 1, copy_number/CopyNum)]
-    mod1 = mod1[,list(Species, KO, Reac, Prod, stoichReac, stoichProd, normalized_copy_number)]
+    mod1 = mod1[,list(Species, KO, Reac, Prod, stoichReac, stoichProd, normalized_copy_number, LB, UB, Rev)]
     write.table(mod1, file = paste0(dat_path, spec, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
   }
 
@@ -101,20 +101,20 @@ if(database == "PICRUSt"){
 # }
 
 ## DEbugging European constraints
-spec1 = "Abiotrophia_defectiva_ATCC_49176"
-otu_list = list.files(path = "data/AGORA/", pattern = ".txt$")
-otu_list = gsub("_rxns.txt$", "", otu_list)
-spec2 = sample(otu_list, 1)
-
-mod1 = load_agora_models(spec2, agora_path = "../Cecilia_server/MIMOSA2shiny/data/AGORA/")[[1]]
-mod1c = load_agora_models(spec2, agora_path = "data/AGORA_EuropeanConstrained/")[[1]]
-table(mod1$lb)
-table(mod1c$lb < 0) #Ok, slightly more informative
-table(mod1c$lb)
-table(mod1$ub)
-table(mod1c$ub)
-edge_list = get_S_mats(list(mod1), spec1, edge_list = T)
-edge_list2 = get_S_mats(list(mod1c), spec1, edge_list = T) #Ok, identical
+# spec1 = "Abiotrophia_defectiva_ATCC_49176"
+# otu_list = list.files(path = "data/AGORA/", pattern = ".txt$")
+# otu_list = gsub("_rxns.txt$", "", otu_list)
+# spec2 = sample(otu_list, 1)
+# 
+# mod1 = load_agora_models(spec2, agora_path = "../Cecilia_server/MIMOSA2shiny/data/AGORA/")[[1]]
+# mod1c = load_agora_models(spec2, agora_path = "data/AGORA_EuropeanConstrained/")[[1]]
+# table(mod1$lb)
+# table(mod1c$lb < 0) #Ok, slightly more informative
+# table(mod1c$lb)
+# table(mod1$ub)
+# table(mod1c$ub)
+# edge_list = get_S_mats(list(mod1), spec1, edge_list = T)
+# edge_list2 = get_S_mats(list(mod1c), spec1, edge_list = T) #Ok, identical
 #We have just been assuming everything is not reversible, I guess
 #Need to use lb and ub
 #think about other ways to use constraints - specifically, lower bounds 
