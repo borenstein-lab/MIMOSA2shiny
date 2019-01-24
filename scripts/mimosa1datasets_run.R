@@ -2,7 +2,9 @@
 
 library(data.table)
 library(seqsetvis)
-datadir = "data/testData/mimosa1data/"
+library(mimosa)
+library(cowplot)
+library(pROC)
 
 run_mimosa1 = function(genefile, metfile, contribfile, file_prefix, kegg_file){
   datasets = read_files(genefile, metfile)
@@ -38,21 +40,78 @@ run_mimosa1 = function(genefile, metfile, contribfile, file_prefix, kegg_file){
   
 }
 
-compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = "", simulated = F, config_table_list = NULL){ #Set up with default then add options
+clean_spec_contribs = function(spec_contribs, node_data, threshold = 0.1, varShare = F, threshold2 = 0.2, return_all = F){
+  spec_contribs = merge(spec_contribs, node_data, by ="compound")
+  if(varShare == T){
+    spec_contribs[,Pass:=ifelse(!is.na(VarShare) & VarShare > threshold2, 1, 0)]
+  }
+  if(return_all == F){
+    spec_contribs_good = spec_contribs[Pass==1 & QValPos < threshold]
+  } else {
+    spec_contribs_good = spec_contribs
+    spec_contribs_good[,VarShare2:=ifelse(QValPos < threshold, 0, VarShare)]
+    spec_contribs_good[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
+  }
+  spec_contribs_good[,ContribPair:=paste0(compound, "_", Species)]
+  return(spec_contribs_good)
+}
+
+get_overlaps = function(set_list){
+  num_types = length(set_list)
+  overlaps = data.table(expand.grid(names(set_list), names(set_list)))
+  overlaps = overlaps[Var1 != Var2]
+  overlaps[,NumShared:=sapply(1:nrow(overlaps), function(x){
+    length(intersect(set_list[[overlaps[x,Var1]]], set_list[[overlaps[x,Var2]]]))
+  })]
+  overlaps[,NumVar1:=sapply(Var1, function(x){
+    length(set_list[[x]])
+  })]
+  overlaps[,NumVar2:=sapply(Var2, function(x){
+    length(set_list[[x]])
+  })]
+  return(overlaps)
+}
+
+get_overlaps_grid = function(set_list, all_features = NULL, melt = T){
+  if(is.null(all_features)){
+    all_features = unique(unlist(set_list)) #all mets or contribs
+  }
+  overlaps = data.table(ID = all_features)
+  for(j in 1:length(names(set_list))){
+    overlaps[,names(set_list)[j] := ifelse(ID %in% set_list[[j]], 1, 0)]
+  }
+  if(melt){
+    overlaps = melt(overlaps, id.var = "ID", variable.name = "Method")
+    ##Remove ones that are 0 for everything
+    bad_mets = overlaps[,sum(value), by=ID][V1==0, ID]
+    overlaps = overlaps[!ID %in% bad_mets]
+  } else {
+    overlaps = overlaps[rowSums(overlaps[,2:ncol(overlaps), with=F]) != 0]
+  }
+  return(overlaps)
+}
+
+
+compare_all_continuous = function(contrib_list){
+  true_contribs = contrib_list[[1]]
+  all_contribs = merge(true_contribs)
+}
+
+compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, fluxes_file = NULL, simulated = F, config_table_list = NULL, consist_threshold = 0.05, corr_threshold = 0.01, varShare_threshold = 0.2, varShare_threshold_met = 0.1){ #Set up with default then add options
   if(!simulated){
     #Set up
-    if(kos_file==""){
+    if(is.null(kos_file)){
       filelist1 =  c(species_file, met_file)
       names(filelist1) = c("file1", "file2")
     } else {
       filelist1 = c(species_file, met_file, kos_file)
       names(filelist1) = c("file1", "file2", "metagenome")
     }
-    if(is.null(config_table)){
-      config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path"), 
-                                V2 = c("Greengenes 13_5 or 13_8", "PICRUSt KO genomes and KEGG metabolic model", "KEGG Compound IDs", "data/KEGGfiles/", "data/", "bin/vsearch"))
-    } else {
-      config_table = config_table_list[[1]]
+    if(is.null(config_table_list)){ #IF specific set of configs is not supplied, will follow a set ordering of main options
+      config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "metagenome_format"), 
+                                V2 = c("Greengenes 13_5 or 13_8", "PICRUSt KO genomes and KEGG metabolic model", "KEGG Compound IDs", "data/KEGGfiles/", "data/", "bin/vsearch", F))
+    } else { #Otherwise can also do custom config
+      config_table = config_table_list[[1]] 
     }
     datafiles = read_mimosa2_files(file_list = filelist1, configTable = config_table, app =F)
     species = datafiles[[1]]
@@ -60,33 +119,47 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = "", simul
     
     ### MIMOSA2 
     results_kegg = run_mimosa2(config_table, species = species, mets = mets)
-    if(is.null(config_table)){
+    if(is.null(config_table_list)){
       config_table[V1=="genomeChoices", V2:=get_text("source_choices")[2]]
     } else {
       config_table = config_table_list[[2]]
     }
-    results_agora = run_mimosa2(config_table, species = species, mets = mets) #Figure out what the hell build_metabolic_network is doing
+    results_agora_noRev = run_mimosa2(config_table, species = species, mets = mets) 
+    
+    config_table = rbind(config_table, data.table(V1 = "revRxns", V2 = T))
+    
+    results_agora = run_mimosa2(config_table, species = species, mets = mets) 
+      
+    config_table = rbind(config_table, data.table(V1 = c( "rxnEdit"), V2 = T))
+    mimosa2_results_edit_agora = run_mimosa2(config_table, species = species, mets = mets)
+    
+    config_table[V1=="genomeChoices", V2:=get_text("source_choices")[1]]
+    config_table = config_table[V1 != "revRxns"] #Don't add rev rxns for KEGG, already accounted for
+    mimosa2_results_edit_kegg = run_mimosa2(config_table, species = species, mets = mets)
     
     ### MIMOSA 1
-    contrib_table = generate_contribution_table_using_picrust(species, "~/Documents/Cecilia_server/MIMOSA2shiny/data/picrustGenomeData/16S_13_5_precalculated.tab.gz", "~/Documents/Cecilia_server/MIMOSA2shiny/data/picrustGenomeData/indivGenomes/", "_genomic_content.tab")
+    contrib_table = generate_contribution_table_using_picrust(species, "data/picrustGenomeData/16S_13_5_precalculated.tab.gz", "../vol2_server/MIMOSA2shiny/data/picrustGenomeData/indivGenomes/", "_genomic_content.tab", copynum_column = T)
     genes = contrib_table[,sum(contribution), by=list(Sample, Gene)]
-    genes = dcast(genes, Gene~Sample, value.var = "V1")
+    genes = dcast(genes, Gene~Sample, value.var = "V1", fill = 0)
     setnames(genes, "Gene", "KO")
     setnames(mets, "compound", "KEGG")
     setkey(mets, "KEGG")
-    file_prefix = "mimosa1"
+    setnames(contrib_table, c("contribution", "copy_number"), c("CountContributedByOTU", "GeneCountPerGenome"))
+    file_id = gsub(".txt", "", basename(species_file))
+
+    file_prefix = file_id
     rxn_table = fread("data/KEGGfiles/full_rxn_table.txt")
     run_all_metabolites(genes, mets, file_prefix = file_prefix, id_met = F, met_id_file = NULL,
                         net_method = "KeggTemplate", net_file = NULL, rxn_table_source = rxn_table,
                         correction = "fdr", degree_filter = 30, minpath_file = NULL, cor_method = "spearman", nperm = 1000, nonzero_filter = 4)
     load(paste0(file_prefix, "_out.rda"))
-    spec_contribs = get_spec_contribs(contribs_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, comparison = "cmps") 
-    spec_contribs2 = get_spec_contribs(contribs_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, comparison = "mets") 
-    spec_contribs3 = get_spec_contribs(contribs_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, var_share = T)
-    spec_contribs4 = get_spec_contribs(contribs_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, cov_share = T)
-    #spec_contribs4 #Varshares of cov
+    spec_contribs = get_spec_contribs(contrib_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, comparison = "cmps") 
+    spec_contribs2 = get_spec_contribs(contrib_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, comparison = "mets", met_data = mets) 
+    spec_contribs3 = get_spec_contribs(contrib_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, var_share = T)
+    spec_contribs4 = get_spec_contribs(contrib_table, data_dir = getwd(), results_file = paste0(file_prefix, "_out.rda"), out_prefix = file_prefix, otu_id = "all", valueVar = "singleMusicc", sum_to_genus = F, write_out = F, taxonomy_file = NULL, cov_share = T, met_data = mets)
+    #Varshares of cov
     
-        #Gene contribs
+    #Gene contribs
     load(paste0(file_prefix, "_out.rda"))
     good_mets = node_data[,compound]
     subjects = names(mets)[names(mets) != "KEGG"]
@@ -101,72 +174,282 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = "", simul
     ## Correlations
     species_melt = melt(species, id.var = "OTU", variable.name = "Sample")
     setnames(species_melt, "OTU", "Species")
-    mets_melt = melt(mets, id.var = "KEGG", variable.name = "Sample")
-    setnames(mets_melt, "KEGG", "compound")
+    if("KEGG" %in% names(mets)) setnames(mets, "KEGG", "compound")
+    mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
     spec_met_corrs = basic_correlation_matrix(species_melt, mets_melt, method="spearman")
+    spec_met_corrs[,Qval:=p.adjust(p.value, method="fdr")]
+    ##Also do correlation plus gene presence-absence
+    #Need species-specific net
+    setkey(contrib_table, NULL)
+    spec_met_links = unique(merge(contrib_table, ko_net[[3]], by.x = "Gene",by.y = "KO", all.x = T, allow.cartesian = T)[,list(OTU, Reac, Prod)])
+    network_links = melt(spec_met_links[,list(OTU, Reac, Prod)], id.var = "OTU", value.name = "compound")
+    spec_met_corrs[,GeneNum:=sapply(1:nrow(spec_met_corrs), function(x){
+      return(nrow(network_links[OTU==spec_met_corrs[x,Species] & compound==spec_met_corrs[x,compound]]))
+    })]
+    spec_met_corrs[,hasGene:=ifelse(GeneNum > 0, 1, 0)]
     
     ##Make venn diagrams of shared consistent metabolites and key contributors?? I think this would be good
+    consist_mets = node_data[QValPos < consist_threshold, compound]
+    contrast_mets = node_data[QValNeg < consist_threshold, compound]
+    m2kegg_mets = results_kegg[[2]][Rsq > varShare_threshold_met, compound]
+    m2agora_mets = results_agora[[2]][Rsq > varShare_threshold_met, compound]
+    m2agora_noRev_mets = results_agora_noRev[[2]][Rsq > varShare_threshold_met, compound]
+    m2edit_agora_mets = mimosa2_results_edit_agora[[2]][Rsq > varShare_threshold_met, compound]
+    m2edit_kegg_mets = mimosa2_results_edit_kegg[[2]][Rsq > varShare_threshold_met, compound]
+    corr_mets = spec_met_corrs[,sum(Qval < corr_threshold), by=compound][V1 > 0, compound] # At least one correlated species
+    corr_mets_gene = spec_met_corrs[,sum(Qval < corr_threshold & hasGene==T), by=compound][V1 > 0, compound ]
+    consist_mets_compare = list(mimosa1 = consist_mets, mimosa1contrast = contrast_mets, 
+                                m2agora = m2agora_mets, m2agora_noRev = m2agora_noRev_mets, m2kegg = m2kegg_mets, 
+                                m2edit_agora = m2edit_agora_mets, m2edit_kegg = m2edit_kegg_mets,
+                                correlation = corr_mets, correlation_gene = corr_mets_gene)
+    
+    plot1 = ssvFeatureVenn(consist_mets_compare[c("mimosa1", "m2agora", "m2kegg")])
+    plot2 = ssvFeatureVenn(consist_mets_compare[c("mimosa1", "m2kegg", "correlation")])
+    plot3 = ssvFeatureEuler(consist_mets_compare)
+    compare_met_dat = get_overlaps(consist_mets_compare)
+    
+    contrib_list_cmps = clean_spec_contribs(spec_contribs, node_data, threshold = consist_threshold)[,ContribPair]
+    contrib_list_mets = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold)[,ContribPair]
+    contrib_list_varshares = clean_spec_contribs(spec_contribs3, node_data, varShare = T)[,ContribPair]
+    contrib_list_covshares = clean_spec_contribs(spec_contribs4, node_data, varShare = T)[,ContribPair]
+    mimosa2kegg = results_kegg$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2agora = results_agora$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2kegg_edit = mimosa2_results_edit_kegg$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2agora_edit = mimosa2_results_edit_agora$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2agora_noRev = results_agora_noRev$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
+    
+    corr_list = spec_met_corrs[Qval < corr_threshold, paste0(compound, "_", Species)]
+    corr_list_gene = spec_met_corrs[Qval < corr_threshold & hasGene==1, paste0(compound, "_", Species)]
+
+    
+    contribs_compare = list(mimosa1 = contrib_list_cmps, mimosa1_mets = contrib_list_mets,
+                            mimosa1_varshares = contrib_list_varshares, mimosa1_covshares = contrib_list_covshares, mimosa2_agora_norev = mimosa2agora_noRev,
+                            mimosa2kegg = mimosa2kegg, mimosa2agora = mimosa2agora, m2kegg_edit = mimosa2kegg_edit, m2agora_edit = mimosa2agora_edit,
+                            correlation = corr_list, correlation_gene = corr_list_gene)
+    plot4 = ssvFeatureEuler(contribs_compare)
+    compare_dat = get_overlaps(contribs_compare)
+    save(list = ls(), file = paste0("results/", file_id, "_runAll.rda"))
+    save_plot(plot3, file = paste0("results/", file_id, "_consistMets.png"), base_width = 6, base_height = 5.5)
+    save_plot(plot4, file = paste0("results/", file_id, "_contribs.png"), base_width = 6, base_height = 5.5)
+    return(list(plot1, plot2, plot3, plot4, compare_met_dat, compare_dat))
+    
   } else {
-    source("FBA_functions.R")
+    source(paste0(datadir2, "FBA_functions.R"))
     #Run on simulation data
     #Get S matrix
     species = fread(species_file)
+    if(!"Sample" %in% names(species)){
+      species[,Sample:=paste0("run", SimRun, "__TP", TimePoint)]
+      if("noiseLevel" %in% names(species)){
+        species[,Sample:=paste0(Sample, "_", noiseLevel*10)]
+      }
+    }
+    species = dcast(species, Species~Sample, value.var = "value", fill = 0)
+    setnames(species, "Species", "OTU")
+    species = spec_table_fix(species)
     mets = fread(met_file)
-    met_fluxes = fread()
-    contribs = getContributions()
+    if("medium" %in% names(mets)){
+      setnames(mets, "medium", "compound")
+    }
+    if(!"Sample" %in% names(mets)){
+      mets[,Sample:=paste0("run", SimRun, "__TP", TimePoint)]
+      if("noiseLevel" %in% names(mets)){
+        mets[,Sample:=paste0(Sample, "_", noiseLevel*10)]
+      }
+    }
     
-    mods = build_model_components() # Make minimal, working version of this function
-    run_all_metabolites_FBA()
+    mets = dcast(mets, compound~Sample, value.var = "value",fill = 0)
+    mets = met_table_fix(mets)
+    mets[,compound:=gsub("[env]", "[e]", compound, fixed = T)]
     
+    if(!is.null(fluxes_file)) met_fluxes = fread(fluxes_file)
+    contribs = getContributions(met_fluxes)
+    contribs[,compound:=gsub("[env]", "[e]", compound, fixed = T)]
+    #rm(met_fluxes)
     
+    config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "revRxns"), 
+                              V2 = c("Greengenes 13_5 or 13_8", "AGORA genomes and models", "KEGG Compound IDs", "data/KEGGfiles/", "data/", "bin/vsearch", T))
+    config_table = rbind(config_table, data.table(V1 = "manualAGORA", V2 = T))
+    ##MIMOSA2
+    mimosa2_results = run_mimosa2(config_table, species = species, mets = mets)
+    #Get network to use for MIMOSA1
+    network = build_metabolic_model(species, config_table = config_table, manual_agora = T, degree_filt = 0)[[1]]
+    network = add_rev_rxns(network)
+    
+    config_table = rbind(config_table, data.table(V1 = c("rxnEdit"), V2 = T))
+    mimosa2_results_edit = run_mimosa2(config_table, species = species, mets = mets)
+    
+    config_table = config_table[!V1 %in% c("rxnEdit", "revRxns")]
+    m2_noRev = run_mimosa2(config_table, species = species, mets = mets)
+    
+    mimosa1_results = run_all_metabolites_FBA2("HMPsims", fake_spec= species, fake_mets = mets, network = network, nperm = 1000, spec_codes = spec_codes)
+    cmp_mat = dcast(mimosa1_results[[4]], compound~Sample, value.var = "value", fill = 0)
+    cmp_mat = cmp_mat[compound %in% mets[,compound]]
+    setkey(cmp_mat, compound)
+    comps = cmp_mat[,compound]
+    all_rxns = lapply(comps, function(x){ 
+      if(nrow(network[Reac==x|Prod==x]) > 0){
+        return(data.table(network[Reac==x|Prod==x], Reversible = 0))
+      } else { return(NA) }
+    })
+    single_spec_cmps = get_species_cmp_scores(species, network, manual_agora = T)
+    single_spec_cmps = dcast(single_spec_cmps, compound+Species~Sample, value.var = "CMP", fill = 0)
+    single_spec_cmps = single_spec_cmps[compound %in% comps]
+    setkey(single_spec_cmps, compound)
+    spec_codes = data.table(Species = sort(unique(species[,OTU])), Code = sort(unique(species[,OTU])))
+    single_spec_cmps = lapply(spec_codes[,Code], function(x){ return(single_spec_cmps[Species==x])})
+    subjects = intersect(names(species), names(mets))
+    
+    spec_contribs1 = rbindlist(lapply(1:length(comps), cmp_species_contributions_picrust, cmps_sub_good = cmp_mat, all_rxns = all_rxns, subjects = subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps, comparison = "cmps", met_data = mets))
+    spec_contribs2 = rbindlist(lapply(1:length(comps), cmp_species_contributions_picrust, cmps_sub_good = cmp_mat, all_rxns = all_rxns, subjects = subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps, comparison = "mets", met_data = mets))
+    spec_contribs3 = var_shares_cmps(cmp_mat, all_rxns, subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps)
+    spec_contribs4 = var_shares_cmps(cmp_mat, all_rxns, subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps, cov_shares = T, met_data = mets)
+    
+    #Correlations
+    species_melt = melt(species, id.var = "OTU", variable.name = "Sample")
+    setnames(species_melt, "OTU", "Species")
+    mets_melt = melt(mets, id.var = "compound", variable.name = "Sample")
+    spec_met_corrs = basic_correlation_matrix(species_melt, mets_melt, method="spearman")
+    spec_met_corrs[,Qval:=p.adjust(p.value, method="fdr")]
+    network_links = melt(network[,list(OTU, Reac, Prod)], id.var = "OTU", value.name = "compound")
+    #This was an issue
+    network_links = unique(network_links[compound %in% mets[,compound],list(OTU, compound)]) #Don't need to keep reac/prod
+    spec_met_corrs[,GeneNum:=sapply(1:nrow(spec_met_corrs), function(x){
+      return(nrow(network_links[OTU==spec_met_corrs[x,Species] & compound==spec_met_corrs[x,compound]]))
+      })]
+    spec_met_corrs[,hasGene:=ifelse(GeneNum > 0, 1, 0)]
+    contribs = merge(contribs, network_links, by.x = c("compound", "Species"), by.y = c("compound", "OTU"), all.x = T)
+    #contribs[is.na(variable) & VarShare != 0]
+    
+    node_data = mimosa1_results[[2]]
+    consist_mets = node_data[QValPos < consist_threshold, compound]
+    contrast_mets = node_data[QValNeg < consist_threshold, compound]
+    #m2kegg_mets = results_kegg[[2]][Rsq > 0.1, compound]
+    m2agora_mets = mimosa2_results[[2]][Rsq > varShare_threshold_met, compound]
+    m2edit_mets = mimosa2_results_edit[[2]][Rsq > varShare_threshold_met, compound]
+    m2fwd_mets = m2_noRev[[2]][Rsq > varShare_threshold_met, compound]
+    corr_mets = spec_met_corrs[,sum(Qval < corr_threshold), by=compound][V1 > 0, compound] # At least one correlated species
+    corr_mets_gene = spec_met_corrs[,sum(Qval < corr_threshold & hasGene==T), by=compound][V1 > 0, compound ]
+    true_consist_mets = contribs[Species=="Inflow" & VarShare < (1-varShare_threshold), compound]
+    consist_mets_compare = list(mimosa1 = consist_mets, mimosa1contrast = contrast_mets, 
+                                m2agora = m2agora_mets, m2agora_edit = m2edit_mets, m2agora_fwd = m2fwd_mets, correlation = corr_mets, correlation_gene = corr_mets_gene, 
+                                true_consist = true_consist_mets)
+    plot1 = ssvFeatureVenn(consist_mets_compare[c("mimosa1", "m2agora_edit", "true_consist")])
+    plot2 = ssvFeatureVenn(consist_mets_compare[c("true_consist", "mimosa1", "correlation")])
+    plot3 = ssvFeatureEuler(consist_mets_compare)
+    compare_met_dat = get_overlaps(consist_mets_compare)
+    plot4 = ssvFeatureEuler(consist_mets_compare[c("mimosa1", "m2agora_edit", "correlation", "correlation_gene", "true_consist")])
+    compare_grid_met = get_overlaps_grid(consist_mets_compare, all_features = mets[,compound], melt = T)
+    feature_order = compare_grid_met[Method=="true_consist"][order(value), ID]
+    compare_grid_met[,ID:=factor(ID, levels = feature_order)]
+    ggplot(compare_grid_met, aes(x=ID, y = Method, fill = factor(value))) + geom_tile()
+    
+    contrib_list_cmps = clean_spec_contribs(spec_contribs1, node_data, threshold = consist_threshold)[,ContribPair]
+    contrib_list_mets = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold)[,ContribPair]
+    contrib_list_varshares = clean_spec_contribs(spec_contribs3, node_data, threshold = consist_threshold, varShare = T)[,ContribPair]
+    contrib_list_covshares = clean_spec_contribs(spec_contribs4, node_data, threshold = consist_threshold, varShare = T)[,ContribPair]
+    
+    mimosa2_results$varShares[,ContribPair:=paste0(compound, "_", Species)]
+    mimosa2_results_edit$varShares[,ContribPair:=paste0(compound, "_", Species)]
+    m2_noRev$varShares[,ContribPair:=paste0(compound, "_", Species)]
+    mimosa2_results_edit$varShares[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
+    mimosa2_results$varShares[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
+    m2_noRev$varShares[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
+    
+    compare_grid2 = get_overlaps_grid(contribs_compare, all_features = contribs[,ContribPair], melt = F)
+    compare_grid2[trueContribs==1 & rowSums(compare_grid2[,2:ncol(compare_grid2), with=F])==1]
+    
+    mimosa2_contribs = mimosa2_results$varShares[VarShare > varShare_threshold & Species != "Residual", ContribPair]
+    mimosa2_contribs_edit = mimosa2_results_edit$varShares[VarShare > varShare_threshold & Species != "Residual", ContribPair]
+    mimosa2_contribs_edit_scaled = mimosa2_results_edit$varShares[VarShare > varShare_threshold & Species != "Residual", ContribPair]
+    
+    mimosa2_contribs_noRev = m2_noRev$varShares[VarShare > varShare_threshold & Species != "Residual", ContribPair]
+    corr_list = spec_met_corrs[Qval < corr_threshold, paste0(compound, "_", Species)]
+    corr_list_gene = spec_met_corrs[Qval < corr_threshold & hasGene==1, paste0(compound, "_", Species)]
+    contribs[,ContribPair:=paste0(compound, "_", Species)]
+    true_contribs = contribs[VarShare > varShare_threshold & Species != "Inflow", ContribPair]
+    #try stricter true def also
+    contribs[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
+    contribs[,VarShareMagnitude:=abs(V1)/sum(abs(V1)), by=compound]
+    true_contribs_scaled = contribs[PosVarShare > varShare_threshold_met & Species != "Inflow", ContribPair]
+    
+    contribs_compare = list(mimosa1 = contrib_list_cmps, mimosa1_mets = contrib_list_mets,
+                            mimosa1_varshares = contrib_list_varshares, mimosa1_covshares = contrib_list_covshares, 
+                            mimosa2 = mimosa2_contribs, mimosa2_edit = mimosa2_contribs_edit, mimosa2_edit_scale = mimosa2_contribs_edit_scaled, mimosa2_noRev = mimosa2_contribs_noRev, correlation = corr_list, correlation_gene = corr_list_gene, 
+                            trueContribs = true_contribs_scaled)
+    plot5 = ssvFeatureEuler(contribs_compare)
+    plot5a = ssvFeatureEuler(contribs_compare[c("mimosa1", "mimosa2", "mimosa2_edit_scale", "correlation", "correlation_gene", "trueContribs")])
+    compare_dat = get_overlaps(contribs_compare)
+    compare_grid = get_overlaps_grid(contribs_compare, all_features = contribs[,ContribPair], melt = T)
+    feature_order = compare_grid[Method=="trueContribs"][order(value), ID]
+    compare_grid[,ID:=factor(ID, levels = feature_order)]
+    plot_grid = ggplot(compare_grid, aes(x=ID, y = Method, fill = factor(value))) + geom_tile()
+    compare_grid2 = get_overlaps_grid(contribs_compare, all_features = contribs[,ContribPair], melt = F)
+    compare_grid2[trueContribs==1 & rowSums(compare_grid2[,2:ncol(compare_grid2), with=F])==1]
+    
+    compare_grid3 = merge(contribs[,list(compound, Species, ContribPair, VarShare, PosVarShare)], mimosa2_results$varShares[,list(ContribPair, VarShare, PosVarShare)], by = "ContribPair", all = T)
+    setnames(compare_grid3, c("VarShare.x", "PosVarShare.x", "VarShare.y", "PosVarShare.y"), c("TrueVarShare", "TruePosVarShare", "M2VarShare", "M2PosVarShare"))
+    compare_grid3 = merge(compare_grid3, mimosa2_results_edit$varShares[,list(ContribPair, VarShare, PosVarShare)], by = "ContribPair", all = T)
+    setnames(compare_grid3, c("VarShare", "PosVarShare"), c("M2Edit_VarShare", "M2Edit_PosVarShare"))
+    spec_contribs3 = clean_spec_contribs(spec_contribs3, node_data, threshold = consist_threshold, varShare = T, return_all = T)
+    compare_grid3 = merge(compare_grid3, spec_contribs3[,list(ContribPair, VarShare2, PosVarShare)], by = "ContribPair", all = T)
+    setnames(compare_grid3, c("VarShare2", "PosVarShare"), c("M1_VarShare", "M1_PosVarShare"))
+    compare_grid3 = merge(compare_grid3, m2_noRev$varShares[,list(ContribPair, VarShare, PosVarShare)], by = "ContribPair", all = T)
+    setnames(compare_grid3, c("VarShare", "PosVarShare"), c("M2noRev_VarShare", "M2noRev_PosVarShare"))
+    compare_grid3 = compare_grid3[Species != "Inflow"]
+    compare_grid3[,BinaryContribPos:=ifelse(TruePosVarShare > varShare_threshold_met, 1, 0)]
+    roc_tab = data.table()
+    roc_plots = data.table()
+    for(j in 1:(length(names(compare_grid3))-5)){
+      if(names(compare_grid3)[j+5] != "BinaryContribPos"){
+        roc_results = roc(compare_grid3[,BinaryContribPos], compare_grid3[,get(names(compare_grid3)[j+5])])
+        roc_tab = rbind(roc_tab, data.table(Metric = names(compare_grid3)[j+5], AUC = roc_results$auc))
+        roc_plots = rbind(roc_plots, data.table(Sens = roc_results$sensitivities, Spec = roc_results$specificities, Metric = names(compare_grid3)[j+5]))
+      }
+    }
+    plot6 = ggplot(roc_tab, aes(x=Metric, y = AUC)) + geom_bar(stat = "identity") + scale_y_continuous(expand = c(0,0), limits = c(0,1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+    plot7 = ggplot(roc_plots, aes(x=1-Spec, y = Sens, color = Metric)) + geom_line()
+    file_id = gsub(".txt", "", basename(species_file))
+    save(list = ls(), file = paste0("results/fixed/", file_id, "_runAll.rda"))
+    save_plot(plot3, file = paste0("results/fixed/", file_id, "_consistMets.png"), base_width = 6, base_height = 5.5)
+    save_plot(plot4, file = paste0("results/fixed/", file_id, "_contribs.png"), base_width = 6, base_height = 5.5)
+    save_plot(plot6, file = paste0("results/fixed/", file_id, "_AUCs.png"), base_width = 6, base_height = 5.5)
+    save_plot(plot7, file = paste0("results/fixed/", file_id, "_ROCs.png"), base_width = 6.5, base_height = 5.5)
+    
+    return(list(plot1, plot2, plot3, plot4, compare_met_dat, compare_dat))
   }
+}
   
-  consistent_mets = list(node_data[QValPos < 0.01 & PValPos < 0.01, compound], )
-  venn_consistent_mets = ssvFeatureVenn
-  
-  spec_contrib_compare_set = list()
+#We should have this make linked bar plots of overlap to see total # of metabolites as well
+
+  # consistent_mets = list(node_data[QValPos < 0.01 & PValPos < 0.01, compound], )
+  # venn_consistent_mets = ssvFeatureVenn
+  # 
+  # spec_contrib_compare_set = list()
+#}
+
+datadir = "data/testData/mimosa1data/"
+datadir2 = "data/testData/sim_data/"
+
+args = commandArgs(trailingOnly = T)
+spec_file = args[1]
+met_file = args[2]
+if("sim" %in% args){
+  flux_file = args[3]
+  sim = T
+  ko_file = NULL
+} else if(length(args) > 2){
+  ko_file = args[3]
+  sim = F
+  flux_file = NULL
+} else {
+  ko_file = NULL
+  flux_file = NULL
+  sim = F
 }
 
-
-#Also try comparing Mantel test with species var share contributions
-species_file1 = paste0(datadir, "Dataset2_otu_table.txt")
-mets_file1 = paste0(datadir, "Dataset2_mets.txt")
-kos_file1 = paste0(datadir, "validation_picrust_good.txt")
-#setnames(species, "Species", "OTU")
-
-configTable = data.table(V1 = c("data_prefix", "database", "genomeChoices"), V2 = c("data/", "Greengenes 13_5 or 13_8", "PICRUSt KO genomes and KEGG metabolic model"))
-network_results = build_metabolic_model(species1, configTable) #, input_data$netAdd) #input_data$geneAdd, 
-network = network_results[[1]]
-species1 = network_results[[2]] #Species should be unchanged in this case
-rm(network_results)
-species1 = dcast(species1, OTU~Sample, value.var="value")
-indiv_cmps = get_species_cmp_scores(species1, network)
+compare_mimosa_1_2_corrs(spec_file, met_file, kos_file = ko_file, fluxes_file = flux_file, simulated = sim)
 
 
-mets_melt = melt(mets1, id.var = "KEGG", variable.name = "Sample", value.var = "value")
-setnames(mets_melt, "KEGG", "compound")
-mets_melt[is.na(value), value:=0]
-mets_melt[,value:=value/1000]
-cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt[,list(Sample, compound, value)])
-indiv_cmps = add_residuals(indiv_cmps, cmp_mods[[1]], cmp_mods[[2]])
-
-var_shares = calculate_var_shares(indiv_cmps)
 
 
-species2 = fread(paste0(datadir, "BV_kos_qpcr_good.txt"))
-mets2 = fread(paste0(datadir, "BV_mets_good.txt"))
-#setnames(species, "Species", "OTU")
-
-configTable = data.table(V1 = c("data_prefix", "database", "genomeChoices", "kegg_prefix"), V2 = c("data/", get_text("database_choices")[4], "PICRUSt KO genomes and KEGG metabolic model", "data/KEGGfiles/"))
-network_results = build_metabolic_model(species2, configTable) #, input_data$netAdd) #input_data$geneAdd, 
-network = network_results[[1]]
-species2 = network_results[[2]] #Species should be unchanged in this case
-indiv_cmps2 = get_cmp_scores_kos(species2, network)
-mets_melt2 = melt(mets2, id.var = "KEGG", variable.name = "Sample")
-setnames(mets_melt2, "KEGG", "compound")
-cmp_mods2 = fit_cmp_mods(indiv_cmps2, mets_melt2)
-indiv_cmps2 = add_residuals(indiv_cmps2, cmp_mods2[[1]], cmp_mods2[[2]])
-var_shares_metagenome = calculate_var_shares(indiv_cmps2)
-var_shares_metagenome
-#shinyjs::logjs(devtools::session_info())
-#Order dataset for plotting
