@@ -9,10 +9,10 @@ file_out = paste0(path_to_mimosa2, "/R/sysdata.rda")
 load(file_out)
 microbiome_header = "Microbiome data"
 database_title = "16S rRNA taxonomic data format"
-database_choices = c("Sequence variants", "Greengenes 13_5 or 13_8", "SILVA", "No 16S rRNA data; use metagenome functional data only")
+database_choices = c("Sequence variants", "Greengenes 13_5 or 13_8", "SILVA", "No 16S rRNA data; use metagenome data only")
 microbiome_input_title = "Upload 16S rRNA abundance file"
 metagenome_title = "Metagenome abundance data format"
-metagenome_options = c("Total KO abundances", "Species-specific KO abundances (HUMAnN2)")
+metagenome_options = c("Total KO abundances", "Taxon-specific KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)")
 metagenome_input_title = "Upload file of metagenomic KO abundances"
 #metagenome_use_option = "Use metagenome for core analysis instead of 16S rRNA data (see documentation)"
 microbiome_tooltip = "Help"
@@ -28,7 +28,7 @@ metabolome_description = "Upload a metabolite concentration table and select its
 
 network_header = "Model settings"
 source_title = "Gene content and metabolic model source"
-source_choices = c("PICRUSt KO genomes and KEGG metabolic model", "AGORA genomes and models")
+source_choices = c("PICRUSt KO genomes and KEGG metabolic model", "AGORA genomes and models", "RefSeq/EMBL_GEMs genomes and models")
 net_mod_option = "Upload modifications to metabolic models"
 net_mod_input_title = "Upload file of modifications at the species, gene, and/or reaction levels (optional)"
 network_tooltip = ""

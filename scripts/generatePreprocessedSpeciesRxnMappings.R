@@ -1,4 +1,4 @@
-##### Make processed species-reaction mappings for both AGORA and PICRUSt
+##### Make processed species-reaction mappings for both AGORA, PICRUSt, RefSeq/CarveMe
 library(data.table)
 library(mimosa) #, lib = "/data/shiny-server/r-packages/")
 
@@ -35,6 +35,32 @@ if(database == "PICRUSt"){
       spec_mod = spec_mod[,list(OTU, KO, Reac, Prod, stoichReac, stoichProd, normalized_copy_number)]
       write.table(spec_mod, file = paste0("data/picrustGenomeData/indivModels/", x, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
   }
+}else if(grepl("embl", database)){ #Embl gems
+  dat_path = paste0("data/", database, "/mat/")
+  out_path = paste0("data/", database, "/processed/")
+  print(dat_path)
+  otu_list = list.files(path = dat_path, pattern = ".mat$")
+  otu_list = gsub(".mat$", "", otu_list)
+  genome_info = fread("data/embl_gems/model_list_processed.txt")
+  bad_genomes = genome_info[duplicated(ModelID), ModelID] #One double genome
+  genome_info = genome_info[!(ModelID %in% bad_genomes & CopyNum16S==0)]
+  for(spec in otu_list){
+    mod1 = load_agora_models(spec, agora_path = dat_path)
+    mod1 = get_S_mats(mod1, spec, edge_list = T)
+    ##Read back in and add copy number info????
+    print(spec)
+    mod1[,copy_number:=1]
+    mod1[,Reac:=gsub("[C_c]", "[c]", Reac, fixed = T)]
+    mod1[,Prod:=gsub("[C_c]", "[c]", Prod, fixed = T)]
+    mod1[,Reac:=gsub("[C_e]", "[e]", Reac, fixed = T)]
+    mod1[,Prod:=gsub("[C_e]", "[e]", Prod, fixed = T)]
+    
+    mod1 = merge(mod1, genome_info[,list(ModelID, CopyNum16S)], all.x = T, by.x = "Species", by.y = "ModelID")
+    mod1[,normalized_copy_number:=ifelse(CopyNum16S==0|is.na(CopyNum16S), 1, copy_number/CopyNum16S)]
+    mod1 = mod1[,list(Species, KO, Reac, Prod, stoichReac, stoichProd, normalized_copy_number, LB, UB, Rev)]
+    write.table(mod1, file = paste0(out_path, spec, "_rxns.txt"), quote=F, row.names=F, sep = "\t")
+  }
+
 } else { #AGORA - type
   
   dat_path = paste0("data/", database, "/") #could be AGORA, AGORA_EuropeanConstrained, etc
