@@ -199,33 +199,46 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     ##Make venn diagrams of shared consistent metabolites and key contributors?? I think this would be good
     consist_mets = node_data[QValPos < consist_threshold, compound]
     contrast_mets = node_data[QValNeg < consist_threshold, compound]
-    m2kegg_mets = results_kegg[[2]][Rsq > varShare_threshold_met, compound]
-    m2agora_mets = results_agora[[2]][Rsq > varShare_threshold_met, compound]
-    m2agora_noRev_mets = results_agora_noRev[[2]][Rsq > varShare_threshold_met, compound]
-    m2edit_agora_mets = mimosa2_results_edit_agora[[2]][Rsq > varShare_threshold_met, compound]
-    m2edit_kegg_mets = mimosa2_results_edit_kegg[[2]][Rsq > varShare_threshold_met, compound]
+    m2kegg_mets = results_kegg[[2]][Rsq > varShare_threshold_met & Slope > 0, compound]
+    m2kegg_contrast_mets= results_kegg[[2]][Rsq > varShare_threshold_met & Slope < 0, compound]
+    m2agora_mets = results_agora[[2]][Rsq > varShare_threshold_met & Slope > 0, compound]
+    m2agora_contrast_mets  = results_agora[[2]][Rsq > varShare_threshold_met & Slope < 0, compound]
+    m2agora_noRev_mets = results_agora_noRev[[2]][Rsq > varShare_threshold_met & Slope > 0, compound]
+    m2agora_noRev_contrast_mets = results_agora_noRev[[2]][Rsq > varShare_threshold_met & Slope < 0, compound]
+    m2edit_agora_mets = mimosa2_results_edit_agora[[2]][Rsq > varShare_threshold_met & Slope > 0, compound]
+    m2edit_kegg_mets = mimosa2_results_edit_kegg[[2]][Rsq > varShare_threshold_met & Slope > 0, compound]
+    m2edit_agora_contrast_mets = mimosa2_results_edit_agora[[2]][Rsq > varShare_threshold_met & Slope < 0, compound]
+    m2edit_kegg_contrast_mets = mimosa2_results_edit_kegg[[2]][Rsq > varShare_threshold_met & Slope < 0, compound]
     corr_mets = spec_met_corrs[,sum(Qval < corr_threshold), by=compound][V1 > 0, compound] # At least one correlated species
     corr_mets_gene = spec_met_corrs[,sum(Qval < corr_threshold & hasGene==T), by=compound][V1 > 0, compound ]
-    consist_mets_compare = list(mimosa1 = consist_mets, mimosa1contrast = contrast_mets, 
-                                m2agora = m2agora_mets, m2agora_noRev = m2agora_noRev_mets, m2kegg = m2kegg_mets, 
+    consist_mets_compare = list(mimosa1 = consist_mets, 
+                                m2agora = m2agora_mets,  
+                                m2agora_noRev = m2agora_noRev_mets, m2kegg = m2kegg_mets, 
                                 m2edit_agora = m2edit_agora_mets, m2edit_kegg = m2edit_kegg_mets,
                                 correlation = corr_mets, correlation_gene = corr_mets_gene)
+    contrast_mets_compare =  list(mimosa1 = contrast_mets, 
+                                  m2agora = m2agora_contrast_mets,  
+                                  m2agora_noRev = m2agora_noRev_contrast_mets, 
+                                  m2kegg = m2kegg_contrast_mets, 
+                                  m2edit_agora = m2edit_agora_contrast_mets, m2edit_kegg = m2edit_kegg_contrast_mets,
+                                  correlation = corr_mets, correlation_gene = corr_mets_gene)
     
     plot1 = ssvFeatureVenn(consist_mets_compare[c("mimosa1", "m2agora", "m2kegg")])
     plot2 = ssvFeatureVenn(consist_mets_compare[c("mimosa1", "m2edit_kegg", "correlation")])
-    plot3 = ssvFeatureEuler(consist_mets_compare)
+    plot3 = ssvFeatureEuler(consist_mets_compare) + annotate("text", x = rep(1.75, length(consist_mets_compare)), y = seq(3.5, 4.9, by = 1.4/(length(consist_mets_compare)-1)), label = paste0(names(consist_mets_compare), " ", sapply(consist_mets_compare, length)))
     compare_met_dat = get_overlaps(consist_mets_compare)
-    plot4 = ssvFeatureEuler(consist_mets_compare[])
+    #plot4 = ssvFeatureEuler(consist_mets_compare[])
+    plot5 = ssvFeatureEuler(contrast_mets_compare) + annotate("text", x = rep(1.75, length(contrast_mets_compare)), y = seq(3.5, 4.9, by = 1.4/(length(contrast_mets_compare)-1)), label = paste0(names(contrast_mets_compare), " ", sapply(contrast_mets_compare, length)))
     
     contrib_list_cmps = clean_spec_contribs(spec_contribs, node_data, threshold = consist_threshold)[,ContribPair]
     contrib_list_mets = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold)[,ContribPair]
     contrib_list_varshares = clean_spec_contribs(spec_contribs3, node_data, varShare = T)[,ContribPair]
     contrib_list_covshares = clean_spec_contribs(spec_contribs4, node_data, varShare = T)[,ContribPair]
-    mimosa2kegg = results_kegg$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
-    mimosa2agora = results_agora$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
-    mimosa2kegg_edit = mimosa2_results_edit_kegg$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
-    mimosa2agora_edit = mimosa2_results_edit_agora$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
-    mimosa2agora_noRev = results_agora_noRev$varShares[VarShare > varShare_threshold_met & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2kegg = results_kegg$varShares[VarShare > varShare_threshold_met & Slope > 0 & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2agora = results_agora$varShares[VarShare > varShare_threshold_met &  Slope > 0 & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2kegg_edit = mimosa2_results_edit_kegg$varShares[VarShare > varShare_threshold_met &  Slope > 0 & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2agora_edit = mimosa2_results_edit_agora$varShares[VarShare > varShare_threshold_met &  Slope > 0 & Species != "Residual", paste0(compound, "_", Species)]
+    mimosa2agora_noRev = results_agora_noRev$varShares[VarShare > varShare_threshold_met &  Slope > 0 & Species != "Residual", paste0(compound, "_", Species)]
     
     corr_list = spec_met_corrs[Qval < corr_threshold, paste0(compound, "_", Species)]
     corr_list_gene = spec_met_corrs[Qval < corr_threshold & hasGene==1, paste0(compound, "_", Species)]
@@ -236,11 +249,13 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
                             mimosa2_agora_norev = mimosa2agora_noRev,
                             mimosa2kegg = mimosa2kegg, mimosa2agora = mimosa2agora, m2kegg_edit = mimosa2kegg_edit, m2agora_edit = mimosa2agora_edit,
                             correlation = corr_list, correlation_gene = corr_list_gene)
-    plot5 = ssvFeatureEuler(contribs_compare)
+    plot6 = ssvFeatureEuler(contribs_compare) + annotate("text", x = rep(1.75, length(contribs_compare)), y = seq(3.5, 4.9, by = 1.4/(length(contribs_compare)-1)), label = paste0(names(contribs_compare), " ", sapply(contribs_compare, length)))
+
     compare_dat = get_overlaps(contribs_compare)
     save(list = ls(), file = paste0("results/", file_id, "_runAll.rda"))
     save_plot(plot3, file = paste0("results/", file_id, "_consistMets.png"), base_width = 6, base_height = 5.5)
-    save_plot(plot4, file = paste0("results/", file_id, "_contribs.png"), base_width = 6, base_height = 5.5)
+    #save_plot(plot4, file = paste0("results/", file_id, "_contribs.png"), base_width = 6, base_height = 5.5)
+    save_plot(plot5, file = paste0("results/", file_id, "_contrastMets.png"), base_width = 6, base_height = 5.5)
     return(list(plot1, plot2, plot3, plot4, compare_met_dat, compare_dat))
     
   } else {
@@ -329,12 +344,12 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     })
     single_spec_cmps_nr = get_species_cmp_scores(species, network_noRev, manual_agora = T)
     single_spec_cmps_nr = dcast(single_spec_cmps_nr, compound+Species~Sample, value.var = "CMP", fill = 0)
-    single_spec_cmps_nr = single_spec_cmps_nr[compound %in% comps]
+    single_spec_cmps_nr = single_spec_cmps_nr[compound %in% comps_nr]
     setkey(single_spec_cmps_nr, compound)
     single_spec_cmps_nr = lapply(spec_codes[,Code], function(x){ return(single_spec_cmps_nr[Species==x])})
 
     spec_contribs1_nr = rbindlist(lapply(1:length(comps_nr), cmp_species_contributions_picrust, cmps_sub_good = cmp_mat_nr, all_rxns = all_rxns_nr, subjects = subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps_nr, comparison = "cmps", met_data = mets))
-    spec_contribs2_nr = rbindlist(lapply(1:length(comps_nr), cmp_species_contributions_picrust, cmps_sub_good = cmp_mat_nr, all_rxns = all_rxns_nr, subjects = subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps_nr, comparison = "mets", met_data = mets))
+    #spec_contribs2_nr = rbindlist(lapply(1:length(comps_nr), cmp_species_contributions_picrust, cmps_sub_good = cmp_mat_nr, all_rxns = all_rxns_nr, subjects = subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps_nr, comparison = "mets", met_data = mets))
     spec_contribs3_nr = var_shares_cmps(cmp_mat_nr, all_rxns_nr, subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps_nr)
     spec_contribs4_nr = var_shares_cmps(cmp_mat_nr, all_rxns_nr, subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps_nr, cov_shares = T, met_data = mets)
     
@@ -362,12 +377,20 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     contrast_mets2 = node_data2[QValNeg < consist_threshold, compound]
     
     #m2kegg_mets = results_kegg[[2]][Rsq > 0.1, compound]
-    m2agora_mets = mimosa2_results[[2]][Rsq > varShare_threshold_met, compound]
-    m2edit_mets = mimosa2_results_edit[[2]][Rsq > varShare_threshold_met, compound]
-    m2fwd_mets = m2_noRev[[2]][Rsq > varShare_threshold_met, compound]
+    m2agora_mets = mimosa2_results[[2]][Rsq > varShare_threshold_met & Slope > 0, compound]
+    m2agora_contrast_mets = mimosa2_results[[2]][Rsq > varShare_threshold_met & Slope < 0, compound]
+    m2edit_mets = mimosa2_results_edit[[2]][Rsq > varShare_threshold_met & Slope >0, compound]
+    m2edit_contrast_mets = mimosa2_results_edit[[2]][Rsq > varShare_threshold_met & Slope < 0, compound]
+    m2fwd_mets = m2_noRev[[2]][Rsq > varShare_threshold_met & Slope > 0, compound]
+    m2fwd_contrast_mets = m2_noRev[[2]][Rsq > varShare_threshold_met & Slope < 0, compound]
     corr_mets = spec_met_corrs[,sum(Qval < corr_threshold), by=compound][V1 > 0, compound] # At least one correlated species
     corr_mets_gene = spec_met_corrs[,sum(Qval < corr_threshold & hasGene==T), by=compound][V1 > 0, compound ]
+    
+    contribs[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
+    contribs[,VarShareMagnitude:=abs(V1)/sum(abs(V1)), by=compound]
+    
     true_consist_mets = contribs[Species=="Inflow" & PosVarShare < (1-varShare_threshold_met), compound]
+    true_contrast_mets = contribs[Species=="Inflow" & PosVarShare > (1-varShare_threshold_met), compound]
     
     contribs[Species=="Inflow", table(VarShare <(1-varShare_threshold))]
     contribs[Species=="Inflow", table(PosVarShare <(1-varShare_threshold))]
@@ -375,14 +398,22 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     
     m2_noRev[[2]][,table(Rsq > varShare_threshold)]
     
-    consist_mets_compare = list(mimosa1 = consist_mets, mimosa1contrast = contrast_mets, mimosa1_noRev = consist_mets2, 
+    consist_mets_compare = list(mimosa1 = consist_mets,mimosa1_noRev = consist_mets2, 
                                 m2agora = m2agora_mets, m2agora_edit = m2edit_mets, m2agora_fwd = m2fwd_mets, correlation = corr_mets, correlation_gene = corr_mets_gene, 
                                 true_consist = true_consist_mets)
+    
+    contrast_mets_compare = list(mimosa1 = contrast_mets,  mimosa1_noRev = contrast_mets2, 
+                                m2agora = m2agora_contrast_mets, m2agora_edit = m2edit_contrast_mets, m2agora_fwd = m2fwd_contrast_mets, correlation = corr_mets, correlation_gene = corr_mets_gene, 
+                                true_contrast = true_contrast_mets)
+    
     plot1 = ssvFeatureVenn(consist_mets_compare[c("mimosa1", "m2agora_edit", "true_consist")])
     plot2 = ssvFeatureVenn(consist_mets_compare[c("true_consist", "mimosa1", "correlation")])
-    plot3 = ssvFeatureEuler(consist_mets_compare)
+    plot3 = ssvFeatureEuler(consist_mets_compare) + annotate("text", x = rep(1.75, length(consist_mets_compare)), y = seq(3.5, 4.9, by = 1.4/(length(consist_mets_compare)-1)), label = paste0(names(consist_mets_compare), " ", sapply(consist_mets_compare, length)))
+    plot5 = ssvFeatureEuler(contrast_mets_compare) + annotate("text", x = rep(1.75, length(contrast_mets_compare)), y = seq(3.5, 4.9, by = 1.4/(length(contrast_mets_compare)-1)), label = paste0(names(contrast_mets_compare), " ", sapply(contrast_mets_compare, length)))
+    
     compare_met_dat = get_overlaps(consist_mets_compare)
     plot4 = ssvFeatureEuler(consist_mets_compare[c("mimosa1", "m2agora_edit", "correlation", "correlation_gene", "true_consist")])
+    
     compare_grid_met = get_overlaps_grid(consist_mets_compare, all_features = mets[,compound], melt = T)
     compare_grid_met2 = get_overlaps_grid(consist_mets_compare, all_features = mets[,compound], melt = F)
     compare_grid_met2[,table(true_consist, m2agora_fwd)]
@@ -396,11 +427,11 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     ggplot(compare_grid_met, aes(x=ID, y = Method, fill = factor(value))) + geom_tile()
     
     contrib_list_cmps = clean_spec_contribs(spec_contribs1, node_data, threshold = consist_threshold)[,ContribPair]
-    contrib_list_mets = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold)[,ContribPair]
+    #contrib_list_mets = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold)[,ContribPair]
     contrib_list_varshares = clean_spec_contribs(spec_contribs3, node_data, threshold = consist_threshold, varShare = T)[,ContribPair]
     contrib_list_covshares = clean_spec_contribs(spec_contribs4, node_data, threshold = consist_threshold, varShare = T)[,ContribPair]
     contrib_list_cmps2 = clean_spec_contribs(spec_contribs1_nr, node_data2, threshold = consist_threshold)[,ContribPair]
-    contrib_list_mets2 = clean_spec_contribs(spec_contribs2_nr, node_data2, threshold = consist_threshold)[,ContribPair]
+    #contrib_list_mets2 = clean_spec_contribs(spec_contribs2_nr, node_data2, threshold = consist_threshold)[,ContribPair]
     
     
     
@@ -412,12 +443,12 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     m2_noRev$varShares[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
     
     
-    mimosa2_contribs = mimosa2_results$varShares[VarShare > varShare_threshold & Species != "Residual", ContribPair]
-    mimosa2_contribs_edit = mimosa2_results_edit$varShares[VarShare > varShare_threshold & Species != "Residual", ContribPair]
-    mimosa2_contribs_edit_scaled = mimosa2_results_edit$varShares[PosVarShare > varShare_threshold_met & Species != "Residual", ContribPair]
+    mimosa2_contribs = mimosa2_results$varShares[VarShare > varShare_threshold & Slope > 0 & Species != "Residual", ContribPair]
+    mimosa2_contribs_edit = mimosa2_results_edit$varShares[VarShare > varShare_threshold & Slope > 0 & Species != "Residual", ContribPair]
+    mimosa2_contribs_edit_scaled = mimosa2_results_edit$varShares[PosVarShare > varShare_threshold_met & Slope > 0 & Species != "Residual", ContribPair]
     
-    mimosa2_contribs_noRev = m2_noRev$varShares[VarShare > varShare_threshold & Species != "Residual", ContribPair]
-    mimosa2_contribs_noRev_scaled = m2_noRev$varShares[PosVarShare > varShare_threshold_met & Species != "Residual", ContribPair]
+    mimosa2_contribs_noRev = m2_noRev$varShares[VarShare > varShare_threshold & Slope > 0 & Species != "Residual", ContribPair]
+    mimosa2_contribs_noRev_scaled = m2_noRev$varShares[PosVarShare > varShare_threshold_met & Slope > 0 & Species != "Residual", ContribPair]
     corr_list = spec_met_corrs[Qval < corr_threshold, paste0(compound, "_", Species)]
     corr_list_gene = spec_met_corrs[Qval < corr_threshold & hasGene==1, paste0(compound, "_", Species)]
     contribs[,ContribPair:=paste0(compound, "_", Species)]
@@ -432,16 +463,16 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     contribs[,VarShareMagnitude:=abs(V1)/sum(abs(V1)), by=compound]
     true_contribs_scaled = contribs[PosVarShare > varShare_threshold_met & Species != "Inflow", ContribPair]
     
-    contribs_compare = list(mimosa1 = contrib_list_cmps, mimosa1_mets = contrib_list_mets,
+    contribs_compare = list(mimosa1 = contrib_list_cmps,# mimosa1_mets = contrib_list_mets,
                             mimosa1_varshares = contrib_list_varshares, mimosa1_covshares = contrib_list_covshares, 
-                            mimosa1_nr = contrib_list_cmps2, mimosa1_nr_mets = contrib_list_mets2,
+                            mimosa1_nr = contrib_list_cmps2, #mimosa1_nr_mets = contrib_list_mets2,
                             mimosa2 = mimosa2_contribs, mimosa2_edit = mimosa2_contribs_edit, mimosa2_edit_scale = mimosa2_contribs_edit_scaled, 
                             mimosa2_noRev = mimosa2_contribs_noRev, mimosa2_noRev_scaled = mimosa2_contribs_noRev_scaled, correlation = corr_list, correlation_gene = corr_list_gene, 
                             trueContribs = true_contribs_scaled)
     compare_grid2 = get_overlaps_grid(contribs_compare, all_features = contribs[,ContribPair], melt = F)
     compare_grid2[trueContribs==1 & rowSums(compare_grid2[,2:ncol(compare_grid2), with=F])==1]
     
-    plot5 = ssvFeatureEuler(contribs_compare)
+    plot6 = ssvFeatureEuler(contribs_compare)+ annotate("text", x = rep(1.75, length(contribs_compare)), y = seq(3.5, 4.9, by = 1.4/(length(contribs_compare)-1)), label = paste0(names(contribs_compare), " ", sapply(contribs_compare, length)))
     plot5a = ssvFeatureEuler(contribs_compare[c("mimosa1", "mimosa2", "mimosa2_edit_scale", "correlation", "correlation_gene", "trueContribs")])
     plot5a = ssvFeatureEuler(contribs_compare[c("mimosa1_nr", "mimosa2_noRev", "mimosa2_edit_scale", "correlation", "correlation_gene", "trueContribs")])
     
@@ -472,7 +503,7 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     
     spec_contribs3 = clean_spec_contribs(spec_contribs3, node_data, threshold = consist_threshold, varShare = T, return_all = T)
     spec_contribs2 = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold, varShare = F, return_all = T)
-    spec_contribs2_nr = clean_spec_contribs(spec_contribs2_nr, node_data, threshold = consist_threshold, varShare = F, return_all = T)
+    #spec_contribs2_nr = clean_spec_contribs(spec_contribs2_nr, node_data, threshold = consist_threshold, varShare = F, return_all = T)
       
     compare_grid3 = merge(contribs[,list(compound, Species, ContribPair, VarShare, PosVarShare)], mimosa2_results$varShares[,list(ContribPair, VarShare, PosVarShare)], by = "ContribPair", all = T)
     setnames(compare_grid3, c("VarShare.x", "PosVarShare.x", "VarShare.y", "PosVarShare.y"), c("TrueVarShare", "TruePosVarShare", "M2VarShare", "M2PosVarShare"))
@@ -487,8 +518,8 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     compare_grid3 = merge(compare_grid3, spec_met_corrs[,list(ContribPair, AbsCor, AbsCorGene)], by = "ContribPair", all = T)
     compare_grid3 = merge(compare_grid3, spec_contribs2[,list(ContribPair, Cor2)], by="ContribPair", all = T)
     setnames(compare_grid3, "Cor2", "M1_Corr")
-    compare_grid3 = merge(compare_grid3, spec_contribs2_nr[,list(ContribPair, Cor2)], by="ContribPair", all = T)
-    setnames(compare_grid3, "Cor2", "M1_noRev_Corr")
+    #compare_grid3 = merge(compare_grid3, spec_contribs2_nr[,list(ContribPair, Cor2)], by="ContribPair", all = T)
+    #setnames(compare_grid3, "Cor2", "M1_noRev_Corr")
     
     roc_tab = data.table()
     roc_plots = data.table()
@@ -517,6 +548,7 @@ compare_mimosa_1_2_corrs = function(species_file, met_file, kos_file = NULL, flu
     
     save(list = ls(), file = paste0("results/fixed/", file_id, "_runAll.rda"))
     save_plot(plot3, file = paste0("results/fixed/", file_id, "_consistMets.png"), base_width = 6, base_height = 5.5)
+    save_plot(plot5, file = paste0("results/fixed/", file_id, "_contrastMets.png"), base_width = 6, base_height = 5.5)
     save_plot(plot4, file = paste0("results/fixed/", file_id, "_contribs.png"), base_width = 6, base_height = 5.5)
     save_plot(plot6, file = paste0("results/fixed/", file_id, "_AUCs.png"), base_width = 6, base_height = 5.5)
     save_plot(plot7, file = paste0("results/fixed/", file_id, "_ROCs.png"), base_width = 6.5, base_height = 5.5)
@@ -570,11 +602,19 @@ sens_spec_table_plot = sens_spec_table
 sens_spec_table2 = fread("~/Google Drive File Stream/My Drive/Genome_Sciences/MIMOSA2Data/HMP_test577_HMP_noise_specAbundssensSpec.txt")
 sens_spec_table_plot = rbind(sens_spec_table_plot, sens_spec_table2)
 sens_spec_table_plot = melt(sens_spec_table_plot, id.var = c("Metric", "Dataset"), variable.name = "Result")
-sens_spec_table_plot[,Dataset2:=ifelse(Dataset == "allSpeciesEnv3", "Dataset 1", "Dataset 2")]
+sens_spec_table_plot[,Dataset2:=ifelse(Dataset == "HMP", "Dataset 2", "Dataset 1")]
 sens_spec_plot = ggplot(sens_spec_table_plot[Metric %in% c("correlation", "correlation_gene", "mimosa1_nr", "mimosa2_noRev_scaled")], aes(x=Metric, y = value, shape = Dataset, fill = Metric)) + 
   geom_bar(stat = "identity", position = "dodge") + facet_grid(Dataset2~Result)+ 
   scale_fill_brewer(palette = "Set1", name = "Method", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2"),
                     guide = guide_legend(nrow = 2)) +
   scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), 
                                                                             strip.background = element_blank(), legend.position = "bottom")
+
+sens_spec_plot2 = ggplot(sens_spec_table_plot[Metric %in% c("correlation", "mimosa1_nr", "mimosa2_noRev_scaled") & Result=="Precision"], aes(x=Metric, y = value, shape = Dataset, fill = Metric)) + 
+  geom_bar(stat = "identity", position = "dodge") + facet_grid(~Dataset2)+ 
+  scale_fill_manual(values = brewer.pal(4, "Set1")[c(1,2,4)], name = "Method", labels = c("Correlation", "MIMOSA1", "MIMOSA2"),
+                    guide = guide_legend()) +
+  scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), 
+                                                                            strip.background = element_blank(), legend.position = "right", legend.title = element_blank()) + ylab("Precision")
+
 save_plot(sens_spec_plot, file = "simDatasets_compare_sensSpec.png", base_width = 6.5, base_height = 5)
