@@ -6,7 +6,7 @@ layout: default
 
 If you use MIMOSA, please cite:
 
-Citation
+Noecker, C. and E. Borenstein. MIMOSA2: A metabolic network-based tool for inferring mechanistic links from microbiome-metabolome data. In prep, 2019.
 
 
-For questions about MIMOSA, please email elbo [at] uw.edu .
+For questions about MIMOSA, please email elbo [at] tauex.tau.ac.il  .
