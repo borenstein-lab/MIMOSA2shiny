@@ -9,7 +9,7 @@
 ############ 1) Contribution/Correlation Analysis Functions ####################
 
 ############ Calculate true variance contributions
-getContributions = function(met_fluxes_final, spec_codes = "", kegg_translate = "", path_key = ""){
+getContributions = function(met_fluxes_final, spec_codes = "", kegg_translate = "", path_key = "", alt_calculate = F){
   if(!identical(spec_codes, "")){
     true_met_fluxes = merge(met_fluxes_final, spec_codes, by="Species", all = T)
   } else {
@@ -17,17 +17,23 @@ getContributions = function(met_fluxes_final, spec_codes = "", kegg_translate = 
     spec_codes = data.table(Species = true_met_fluxes[,sort(unique(Species))])
   }
   if("medium" %in% names(true_met_fluxes)) setnames(true_met_fluxes, "medium", "compound")
-  met_fluxes_fill = dcast(true_met_fluxes, compound+SimRun~Species, value.var = "cumulFlux", fun.aggregate=sum)
-
-  var_shares = rbindlist(lapply(spec_codes[,Species], function(y){
-    all1 = rbindlist(lapply(spec_codes[,Species], function(x){
-      foo = met_fluxes_fill[,cov(get(x), get(y), use="complete.obs"), by=compound]
-      foo[,Species:=x]
-      return(foo)
+  if(!alt_calculate){
+    met_fluxes_fill = dcast(true_met_fluxes, compound+SimRun~Species, value.var = "cumulFlux", fun.aggregate=sum)
+    
+    var_shares = rbindlist(lapply(spec_codes[,Species], function(y){
+      all1 = rbindlist(lapply(spec_codes[,Species], function(x){
+        foo = met_fluxes_fill[,cov(get(x), get(y), use="complete.obs"), by=compound]
+        foo[,Species:=x]
+        return(foo)
+      }))
+      all1[,Species2:=y]
     }))
-    all1[,Species2:=y]
-  }))
-  var_shares = var_shares[,sum(V1),by=list(compound, Species)]
+    var_shares = var_shares[,sum(V1),by=list(compound, Species)]
+  } else {
+    true_met_fluxes[,totFlux:=sum(cumulFlux), by=list(compound, SimRun)]
+    var_shares = true_met_fluxes[,cov(cumulFlux, totFlux), by=list(compound, Species)]
+  }
+
   if(ncol(spec_codes) > 1){
     var_shares = merge(var_shares, spec_codes[,list(Code,Species)], by = "Species")
   }

@@ -3,7 +3,7 @@ title: Input Data for MIMOSA2
 layout: default
 ---
 
-# Input data options for the main MIMOSA analysis
+# Input data options for the main MIMOSA2 analysis
 
 MIMOSA has several options for uploading and viewing datasets. Each data file must be formatted as shown in the examples linked below. 
 

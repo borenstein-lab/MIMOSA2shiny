@@ -8,4 +8,8 @@ Make this have a sidebar
 
 - What kind of microbiome data can I use? Can I provide transcriptomic data?
 
-- How should I interpret negatively predicted metabolites?
+- What reference database should I use?
+
+- Can I calculate metabolic potential scores without metabolite measurements?
+
+- What do negatively predicted metabolites mean?
