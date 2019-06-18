@@ -4,20 +4,25 @@ layout: default
 ---
 # MIMOSA2 Reference Data Downloads
 
-MIMOSA2 can use various types of reference data to construct metabolic models from a set of microbiome data. These are provided or linked below. 
-Details on how these files were generated can be found in the MIMOSA2 manuscript. All of the pre-processing scripts used to generate these datasets can be found [here](http://github.com/borenstein-lab/MIMOSA2app/scripts/).
+MIMOSA2 can use various types of reference data to construct metabolic models from a set of microbiome data. These are described below, and in some cases links are available for download. 
+The methods used to generate these files are described in the MIMOSA2 manuscript. All of the processing scripts can be found [here](http://github.com/borenstein-lab/MIMOSA2app/scripts/).
 
-Taxon-specific metabolic models, processed and formatted for MIMOSA2 compatibility: 
+### Taxon-specific metabolic models, processed and formatted for MIMOSA2 compatibility: 
 
-- KEGG reaction models for each Greengenes OTU (inferred by PICRUSt1)
+- KEGG reaction models for each Greengenes OTU (based on KEGG Ortholog inferences from PICRUSt1)
 
-- KEGG reaction models for each SILVA OTU (inferred by PICRUSt2)
+- KEGG reaction models for each SILVA OTU (based on KEGG Ortholog inferences from PICRUSt2)
 
-- AGORA models (Magnusdottir et al Nature Biotech 2017)
+- AGORA models (reconstructions from Magnusdottir et al Nature Biotech 2016)
 
-- CarveMe/EMBL_GEMS models (Machado et al Nucleic Acids Research 2018)
+- CarveMe/EMBL_GEMS models (reconstructions from Machado et al Nucleic Acids Research 2018)
 
-Processed mapping for linking OTUs to genomes and models:
+### Processed mappings for linking OTUs to genomes and models:
 
-- Mapping between Greengenes OTUs, SILVA OTUs, AGORA-linked genomes, and RefSeq genomes
+- Mapping from Greengenes OTUs to AGORA-linked genomes
 
+- Mapping from Greengenes OTUs to RefSeq genomes
+
+- Mapping from SILVA OTUs to AGORA-linked genomes
+
+- Mapping from SILVA OTUs to RefSeq genomes

@@ -6,9 +6,13 @@ layout: default
 ### Integrative, metabolic model-based analysis of microbiome and metabolomics data
 
 MIMOSA2 relates variation in microbiome composition to paired metabolite measurements, using information from reference databases on the metabolic capabilities of microbial taxa. 
-MIMOSA2 seeks to identify differences in microbial metabolic potential that may underlie differences in the concentrations of microbial metabolites between similar communities.
+MIMOSA2 identifies microbial features that may underlie differences in of microbial metabolite concentrations between similar communities. It answers questions such as:
 
-MIMOSA2 can be run as either a web application at https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/, or as a standalone R package available from GitHub. 
+- Do the metabolites in a dataset appear to vary depending on microbiome composition? Which ones?
+- Can differences in microbiome metabolic capabilities explain metabolite variation?
+- Which taxa, genes, and reactions appear to be playing a role in metabolite differences?
+
+MIMOSA2 can be run as either a web application at **[https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/)**, or as a standalone R package available from GitHub. 
 
 ### Overview
 
