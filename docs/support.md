@@ -18,7 +18,7 @@ MIMOSA2 also uses several other R packages, bioinformatics tools, and databases.
 
 - [AGORA](vmh.uni.lu): Magnúsdóttir, S., Heinken, A., Kutt, L., Ravcheev, D.A., Bauer, E., Noronha, A., Greenhalgh, K., Jäger, C., Baginska, J., Wilmes, P., et al. (2016). Generation of genome-scale metabolic reconstructions for 773 members of the human gut microbiota. Nature Biotechnology.
 
--[CarveMe/embl_gems](https://github.com/cdanielmachado/embl_gems): Machado, D., Andrejev, S., Tramontano, M., and Patil, K.R. (2018). Fast automated reconstruction of genome-scale metabolic models for microbial species and communities. Nucleic Acids Research 46, 7542–7553.
+- [CarveMe/embl_gems](https://github.com/cdanielmachado/embl_gems): Machado, D., Andrejev, S., Tramontano, M., and Patil, K.R. (2018). Fast automated reconstruction of genome-scale metabolic models for microbial species and communities. Nucleic Acids Research 46, 7542–7553.
 
 - [KEGG](https://www.genome.jp/kegg/): Kanehisa, M., and Goto, S. (2000). KEGG: kyoto encyclopedia of genes and genomes. Nucleic Acids Research 28, 27–30.
 

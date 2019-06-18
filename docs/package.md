@@ -25,7 +25,7 @@ devtools::test("mimosa2")
 
 Preprocessed reference data for the metabolic reconstruction databases can be downloaded from the [Downloads page](http://cnoecker.github.io/MIMOSA2shiny/downloads.html). 
 
-Alternatively, you can run the "generatePreprocessedSpeciesRxnMappings.R" script to obtain MIMOSA2-compatible files from the relevant source database files. 
+Alternatively, you can run the script `generatePreprocessedSpeciesRxnMappings.R` (link to GitHub) to obtain MIMOSA2-compatible files from the relevant source database files. 
 This is necessary for using the KEGG models, which require a license.
 
 ## Run a full MIMOSA2 analysis
@@ -74,3 +74,5 @@ mimosa_results = run_mimosa2(config_table)
 - `format_humann2_contributions`
 
 - `map_to_kegg`
+
+- plot functions

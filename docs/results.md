@@ -4,7 +4,10 @@ layout: default
 ---
 # Results of a MIMOSA2 Analysis
 
-After running a MIMOSA2 analysis, the web application will provide several results files for download and will also automatically generate several results summaries.
+After running a MIMOSA2 analysis, the web application will provide several results files for download and will also generate summaries of the results.
+
+![alt text](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/docs/MIMOSA_results_screenShot.png "MIMOSA2 Results")
+
 
 ## Results Tables for Download
 
@@ -33,11 +36,10 @@ Two types of plots are generated for each metabolite:
 - A scatter plot showing the overall relationship between community-level metabolic potential scores and metabolite measurements. The model fit is included as a trend line.
 - A bar plot showing the major taxonomic contributors to variation for each metabolite. 
 
-You can download the plots displayed by selecting one or more rows and clicking the "Download plots" button. This will also generate a heatmap plot 
-of all of the taxonomic contributors for the selected metabolites.
+Below the interactive table, there are some additional buttons for downloading plots of the results. You can download these by selecting one or more rows and 
+then clicking one of the "Download plot" buttons, which will only save the plots for the selected metabolites. The "Generate and download contribution heatmap" will download a summary plot 
+of all of the taxonomic contributors for the selected metabolites (example below).
 
-Picture of table
+![alt text](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/docs/contrib_heatmap_example.png "Taxa contributor summary")
 
-Example heatmap plot
 
-## Integrating MIMOSA2 results with other data types

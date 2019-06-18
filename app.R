@@ -182,10 +182,10 @@ run_pipeline = function(input_data, configTable, analysisID){
       no_spec_param = F
       humann2_param = F
     }
-    if("revRxns" %in% configTable[,V1]){ #Whether to add reverse of reversible-annotated rxns - mainly for agora networks
-      network = add_rev_rxns(network, sameID = T) # Give reverse the same rxn ID
-      cat("Will add reverse of reversible reactions\n")
-    }
+    # if("revRxns" %in% configTable[,V1]){ #Whether to add reverse of reversible-annotated rxns - mainly for agora networks
+    #   network = add_rev_rxns(network, sameID = T) # Give reverse the same rxn ID
+    #   cat("Will add reverse of reversible reactions\n")
+    # }
     if("met_transform" %in% configTable[,V1]){
       met_transform = configTable[V1=="met_transform", V2]
       cat(paste0("Will transform metabolite values, transform is ", met_transform))
@@ -209,7 +209,12 @@ run_pipeline = function(input_data, configTable, analysisID){
     }
     if(!configTable[V1 == "compare_only", V2==T]){
       incProgress(2/10, detail = "Calculating microbial contributions")
-      var_shares = calculate_var_shares(indiv_cmps, met_table = mets_melt, model_results = cmp_mods, config_table = configTable)
+      #Get low-abundance species to remove
+      spec_dat = melt(species, id.var = "OTU", variable.name = "Sample")[,list(value/sum(value), OTU), by=Sample] #convert to relative abundance
+      bad_spec = spec_dat[,list(length(V1[V1 != 0])/length(V1), max(V1)), by=OTU]
+      bad_spec = bad_spec[V1 < 0.2 & V1 < 0.1, OTU] #Never higher than 10% and absent in at least 80% of samples
+      print(bad_spec)
+      var_shares = calculate_var_shares(indiv_cmps, met_table = mets_melt, model_results = cmp_mods, config_table = configTable, species_merge = bad_spec)
     } else {
       var_shares = NULL
     }
@@ -217,11 +222,25 @@ run_pipeline = function(input_data, configTable, analysisID){
     #Order dataset for plotting
     incProgress(1/10, detail = "Making CMP-Metabolite plots")
     CMP_plots = plot_all_cmp_mets(cmp_table = indiv_cmps, met_table = mets_melt, mod_results = cmp_mods[[1]])
-    comp_list = cmp_mods[[1]][!identical(Rsq, NA) &  Rsq != 0][order(PVal), compound]
+    comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
+    comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
+    print(comp_list)
     if(!configTable[V1 == "compare_only", V2==T]){
       incProgress(1/10, detail = "Making metabolite contribution plots")
+      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & abs(VarShare) >= 0.03 & Species != "Residual", as.character(unique(Species))]
+      getPalette = colorRampPalette(brewer.pal(12, "Paired"))
+      contrib_color_palette = c("black", "gray", getPalette(length(all_contrib_taxa)))
+      names(contrib_color_palette) = c("Residual", "Other", all_contrib_taxa)
+      print("Color palette")
+      print(contrib_color_palette)
+      var_shares[,MetaboliteName:=met_names(as.character(compound))]
+      var_shares[is.na(MetaboliteName), MetaboliteName:=compound]
       met_contrib_plots = lapply(comp_list, function(x){
-        plot_contributions(var_shares, x, metIDcol = "compound")
+        print(x)
+        if(is.na(met_names(x))){
+          met_id = x
+        } else { met_id = met_names(x)}
+        plot_contributions(var_shares, met_id, metIDcol = "MetaboliteName", color_palette = contrib_color_palette, include_residual = F)
       })
     } else {
       met_contrib_plots = NULL
@@ -229,11 +248,15 @@ run_pipeline = function(input_data, configTable, analysisID){
     for(i in 1:length(CMP_plots)){
       save_plot(CMP_plots[[i]], file = paste0(analysisID, "_", names(CMP_plots)[i], ".png"), dpi = 50, base_width = 2, base_height = 2)
     }
-    for(i in 1:length(met_contrib_plots)){
-      print(comp_list[i])
-      save_plot(met_contrib_plots[[i]], file = paste0(analysisID, "_", comp_list[i], "_contribs.png"), dpi = 50, base_width = 2, base_height = 2)
+    if(!configTable[V1 == "compare_only", V2==T]){
+      for(i in 1:length(met_contrib_plots)){
+        print(comp_list[i])
+        if(!is.null(met_contrib_plots[[i]])){
+          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "_", comp_list[i], "_contribs.png"), dpi = 50, base_width = 2, base_height = 2)
+        }
+      }
     }
-    return(list(varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1)], networkData = network, CMPplots = CMP_plots, metContribPlots = met_contrib_plots))
+    return(list(newSpecies = species, varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1)], networkData = network[Prod %in% cmp_mods[[1]][,compound]|Reac %in% cmp_mods[[1]][,compound]], CMPplots = CMP_plots, metContribPlots = met_contrib_plots))
     #Send var_shares for download
     #Generate plot of var shares
     #source(other stuff)
@@ -249,10 +272,13 @@ ui = fluidPage(
     tags$link(rel = "stylesheet", type = "text/css", href = "burritostyle.css")
   ),
   tags$img(src = "title_lab_800.jpg", border = 0), #Borenstein lab img
-  titlePanel("MIMOSA", tags$style(type = "text/css", "horizontal-align: center;")),
+  titlePanel("MIMOSA2", tags$style(type = "text/css", "horizontal-align: center;")),
   mainPanel(fluidPage(
-    p("MIMOSA is a tool for metabolic model-based evaluation of paired microbiome and metabolomics datasets. For more information, see the ", 
-      tags$a("documentation.", href = "https://cnoecker.github.io/MIMOSA2shiny", target = "_blank"))), id="description", width = 12),
+    p("MIMOSA2 is a tool for metabolic model-based evaluation of paired microbiome and metabolomics datasets. MIMOSA2 1) constructs community metabolic models, 
+    2) assesses whether metabolite concentrations are consistent with estimated community metabolic potential, and 3) identifies specific taxa and reactions that can
+    explain metabolite variation.
+      For more information, see the ", 
+      tags$a(tags$b("documentation."), href = "https://cnoecker.github.io/MIMOSA2shiny", target = "_blank"))), id="description", width = 12),
   tags$style(type = "text/css", "#title { color: #3CB371; horizontal-align: left; width: 100%}"  ),
   mainPanel(
     uiOutput("uploadPage"),
@@ -306,35 +332,57 @@ server <- function(input, output, session) {
             width = 12, align = "center"
           )), width="100%", tags$style(type = "text/css", "#title { horizontal-align: left; width: 100%}"  )))
     } else {
-      fluidPage(
-      fluidRow(
-        column(
-          downloadButton("downloadModelData", "Model Summaries", class = "downloadButton"), 
-          downloadButton("downloadData", "Contribution Results", class = "downloadButton"), 
-          downloadButton("downloadNetworkData", "Community Metabolic Network Models", class = "downloadButton"), 
-      downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
-      tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
-      p(get_text("result_table_description")),
-      fluidRow( # Big table
-        DT::dataTableOutput("allMetaboliteInfo"), width="100%"
-      ),
-      fluidRow(
-        verbatimTextOutput('x4')
-        #tableOutput("data2"), width = "100%"
-      ),
-      fluidRow(
-        #plots
-        #plotOutput("residPlot", height = "100px", click = "plot_click"),
-        plotOutput("contribPlots", height = "650px") #, click = "plot_click", hover = "plot_hover") 
-      ) #,
-      # fluidRow(
-      #   dataTableOutput("indivCellInfo"), width="100%"
-      # ),
-      # fluidRow(
-      #   plotOutput("indivPlots", height = "600px")
-      # )
-      )
-  
+      if(input$compare_only == F){
+        fluidPage(
+          fluidRow(
+            column(
+              downloadButton("downloadModelData", "Model Summaries", class = "downloadButton"), 
+              downloadButton("downloadData", "Contribution Results", class = "downloadButton"), 
+              downloadButton("downloadSpecies", "Mapped Taxa Abundances", class = "downloadButton"),
+              downloadButton("downloadNetworkData", "Community Metabolic Network Models", class = "downloadButton"), 
+              downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
+              tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
+          p(get_text("result_table_description")),
+          fluidRow( # Big table
+            DT::dataTableOutput("allMetaboliteInfo"), width="100%"
+          ),
+          fluidRow(
+            downloadButton("downloadComparePlots", "Download selected CMP-Metabolite plots", class = "downloadButton"), 
+            downloadButton("downloadContribPlots", "Download selected taxa contribution plots", class = "downloadButton"), 
+            downloadButton("downloadContributionHeatmap", "Generate and download contribution heatmap plot", class = "downloadButton")
+            #verbatimTextOutput('x4')
+            #tableOutput("data2"), width = "100%"
+          )
+          # ),
+          # fluidRow(
+          #   plotOutput("contribPlots", height = "650px") #, click = "plot_click", hover = "plot_hover") 
+          # ) 
+        )
+      } else {
+        fluidPage(
+          fluidRow(
+            column(
+              downloadButton("downloadModelData", "Model Summaries", class = "downloadButton"), 
+              downloadButton("downloadSpecies", "Mapped Taxa Abundances", class = "downloadButton"),
+              downloadButton("downloadNetworkData", "Community Metabolic Network Models", class = "downloadButton"), 
+              downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
+              tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
+          p(get_text("result_table_description")),
+          fluidRow( # Big table
+            DT::dataTableOutput("allMetaboliteInfo"), width="100%"
+          ),
+          fluidRow(
+            downloadButton("downloadComparePlots", "Download Selected CMP-Metabolite Plots", class = "downloadButton") #, 
+            #downloadButton("downloadContribPlots", "Download Selected CMP-Metabolite Plots", class = "downloadButton"), 
+            #downloadButton("downloadContributionHeatmap", "Generate and download contribution heatmap plot", class = "downloadButton")
+            #verbatimTextOutput('x4')
+            #tableOutput("data2"), width = "100%"
+          )
+          # fluidRow(
+          #   plotOutput("contribPlots", height = "650px") #, click = "plot_click", hover = "plot_hover") 
+          # ) 
+        )
+      }
     }
 
   })
@@ -445,6 +493,14 @@ server <- function(input, output, session) {
       write.table(datasetInput()$varShares, file, row.names = F, sep = "\t", quote=F)
     }
   )
+  output$downloadSpecies = downloadHandler(
+    filename = function() {
+      "mappedTaxaData.txt"
+    },
+    content = function(file){
+      write.table(datasetInput$newSpecies, file, row.names = F, sep = "\t", quote=F)
+    }
+  )
   output$downloadModelData <- downloadHandler(
     filename = function() {
       "modelResults.txt"
@@ -462,6 +518,7 @@ server <- function(input, output, session) {
   		write.table(datasetInput()$networkData, file, row.names = F, sep = "\t", quote=F)
   	}
   )
+  
   output$contribPlots = renderPlot({
     plotData = datasetInput()$varShares
     plotData = merge(plotData, datasetInput()$modelData, by="compound", all.x = T)
@@ -475,21 +532,35 @@ server <- function(input, output, session) {
   output$allMetaboliteInfo = DT::renderDT({
     #print(datasetInput())
     tableData = datasetInput()$modelData[!is.na(Slope)]
+    #Get order before rounding
     tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
+    compound_order = tableData[order(m2R, decreasing = T), compound] #, tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
+    
+    #tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
     tableData[,PVal:=round(PVal, 3)]
     tableData[,Rsq:=round(Rsq, 3)]
     tableData[,Slope:=round(Slope, 3)]
     tableData[,Intercept:=round(Intercept, 3)]
-    tableData[,metName:=met_names(compound)]
-    compound_order = tableData[order(m2R, decreasing = T), compound]
+    tableData[,metName:=sapply(compound, met_names)]
     tableData2 = tableData[,list(compound, metName, Rsq, PVal, Slope, Intercept)]
     tableData2[,compound:=factor(compound, levels = compound_order)]
-    good_comps = list.files(path = getwd(), pattern = analysisID)
-    tableData2 = tableData2[paste0(analysisID, "_", compound, ".png") %in% good_comps]
-    tableData2[,Plot:=sapply(paste0(analysisID, "_", compound, ".png"), img_uri)]
+    print(tableData2)
+    #good_comps = list.files(path = getwd(), pattern = analysisID)
+    tableData2[,Plot:=sapply(paste0(analysisID, "_", compound, ".png"), function(x){ 
+      if(file.exists(x)){
+        return(img_uri(x))
+      } else {
+        return(img_uri("blank_plot.png"))
+      }})]
     if(input$compare_only != T){
-      tableData2 = tableData2[paste0(analysisID, "_",compound,"_contribs.png") %in% good_comps]
-      tableData2[,ContribPlot:=sapply(paste0(analysisID, "_", compound, "_contribs.png"), img_uri)]
+      #tableData2 = tableData2[paste0(analysisID, "_",compound,"_contribs.png") %in% good_comps]
+      tableData2[,ContribPlot:=sapply(paste0(analysisID, "_", compound, "_contribs.png"), function(x){
+        if(file.exists(x)){
+          return(img_uri(x))
+        } else {
+          return(img_uri("blank_plot.png"))
+        }
+        })]
       setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Intercept", "Comparison Plot", "Contribution Plot"))
     } else {
       setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Intercept", "Comparison Plot"))
@@ -500,7 +571,68 @@ server <- function(input, output, session) {
     #return(DT::datatable(tableData[order(m2R, decreasing = T),list(compound, Rsq, PVal, Slope, Intercept)], 
      #                    options = list(lengthMenu = c(5, 10), pageLength = 5)))
   })
+  output$downloadComparePlots = downloadHandler(
+    filename = function() {
+      "CMP_Metabolite_Compare.zip"
+      #paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      comp_num = input$allMetaboliteInfo_rows_selected
+      tableData = datasetInput()$modelData[!is.na(Slope)]
+      #Get order before rounding
+      tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
+      compound_order = tableData[order(m2R, decreasing = T), compound]
+      #compound_order = c(tableData[Slope > 0][order(Rsq, decreasing = T), compound], tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
+      comp_ids = compound_order[comp_num]
+      print(comp_ids)
+      file_ids = paste0(analysisID, "_", comp_ids, ".png")
+      file_ids = file_ids[sapply(file_ids, file.exists)]
+      zip(zipfile = file, files = file_ids)
+    }
+  )
+  output$downloadContribPlots = downloadHandler(
+    filename = function() {
+      "Metabolite_Taxa_Contributions.zip"
+      #paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      comp_num = input$allMetaboliteInfo_rows_selected
+      tableData = datasetInput()$modelData[!is.na(Slope)]
+      #Get order before rounding
+      tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
+      compound_order = tableData[order(m2R, decreasing = T), compound]
+      #compound_order = c(tableData[Slope > 0][order(Rsq, decreasing = T), compound], tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
+      comp_ids = compound_order[comp_num]
+      print(comp_ids)
+      file_ids = paste0(analysisID, "_", comp_ids, "_contribs.png")
+      file_ids = file_ids[sapply(file_ids, file.exists)]
+      if(length(file_ids) > 0) zip(zipfile = file, files = file_ids)
+    }
+  )
   
+  output$downloadContributionHeatmap = downloadHandler(
+    filename = function() {
+      "contributionHeatmapPlotSelected.pdf"
+    },
+    content = function(file) {
+      comp_num = input$allMetaboliteInfo_rows_selected
+      tableData = datasetInput()$modelData[!is.na(Slope)]
+      #Get order before rounding
+      tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
+      compound_order = tableData[order(m2R, decreasing = T), compound]
+      #compound_order = c(tableData[Slope > 0][order(Rsq, decreasing = T), compound], tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
+      comp_list = compound_order[comp_num]
+      plotData = datasetInput()$varShares[compound %in% comp_list]
+      plotData = merge(plotData, tableData[compound %in% comp_list], by="compound", all.x = T)
+      #print(plotData)
+      ##met1 = plotData[1,compound]
+      #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
+      #plotData[,hist(V1)]
+      save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = file, base_width = 10, base_height = 8)
+      
+    }
+
+  )
   output$x4 = renderPrint({
     s = input$allMetaboliteInfo_rows_selected
     if (length(s)) {
