@@ -222,11 +222,11 @@ run_pipeline = function(input_data, configTable, analysisID){
     #Order dataset for plotting
     incProgress(1/10, detail = "Making CMP-Metabolite plots")
     CMP_plots = plot_all_cmp_mets(cmp_table = indiv_cmps, met_table = mets_melt, mod_results = cmp_mods[[1]])
-    comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
-    comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
-    print(comp_list)
+      
     if(!configTable[V1 == "compare_only", V2==T]){
       incProgress(1/10, detail = "Making metabolite contribution plots")
+      comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
+      comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
       all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & abs(VarShare) >= 0.03 & Species != "Residual", as.character(unique(Species))]
       getPalette = colorRampPalette(brewer.pal(12, "Paired"))
       contrib_color_palette = c("black", "gray", getPalette(length(all_contrib_taxa)))
@@ -428,7 +428,7 @@ server <- function(input, output, session) {
       }
       return(data.table(V1 = inputs_provided, V2 = values_provided))
   	} else {
-  		return(fread("data/exampleData/configs_example_clean.txt", header = T))
+  		return(fread("data/exampleData/configs_example.txt", header = T))
   	}
   })
   
@@ -444,12 +444,16 @@ server <- function(input, output, session) {
     } else {
     	#logjs("Reading example data")
     	config = config_table()
-    	varShares = fread("data/exampleData/varSharesExample.txt")
+    	species_dat = fread("data/exampleData/speciesExample.txt")
+    	var_shares = fread("data/exampleData/contributionResultsExample.txt")
     	modResults = fread("data/exampleData/modelResultsExample.txt")
     	networkData = fread("data/exampleData/communityNetworkModelsExample.txt")
-    	return(list(varShares = varShares, modelData = modResults, configs = config))
+    	#analysisID = "example"
+    	
+    	return(list(newSpecies = species, varShares = var_shares, modelData = modResults, configs = config, networkData = networkData, example_data = T))
     }
   })
+  
   
   
   observeEvent(input$goButton, {
@@ -498,7 +502,7 @@ server <- function(input, output, session) {
       "mappedTaxaData.txt"
     },
     content = function(file){
-      write.table(datasetInput$newSpecies, file, row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$newSpecies, file, row.names = F, sep = "\t", quote=F)
     }
   )
   output$downloadModelData <- downloadHandler(
@@ -546,7 +550,13 @@ server <- function(input, output, session) {
     tableData2[,compound:=factor(compound, levels = compound_order)]
     print(tableData2)
     #good_comps = list.files(path = getwd(), pattern = analysisID)
-    tableData2[,Plot:=sapply(paste0(analysisID, "_", compound, ".png"), function(x){ 
+    if("example_data" %in% names(datasetInput())){
+      analysisID2 = "data/exampleData/example"
+    } else {
+      analysisID2 = analysisID
+    }
+    print(analysisID2)
+    tableData2[,Plot:=sapply(paste0(analysisID2, "_", compound, ".png"), function(x){ 
       if(file.exists(x)){
         return(img_uri(x))
       } else {
@@ -554,7 +564,7 @@ server <- function(input, output, session) {
       }})]
     if(input$compare_only != T){
       #tableData2 = tableData2[paste0(analysisID, "_",compound,"_contribs.png") %in% good_comps]
-      tableData2[,ContribPlot:=sapply(paste0(analysisID, "_", compound, "_contribs.png"), function(x){
+      tableData2[,ContribPlot:=sapply(paste0(analysisID2, "_", compound, "_contribs.png"), function(x){
         if(file.exists(x)){
           return(img_uri(x))
         } else {

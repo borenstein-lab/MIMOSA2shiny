@@ -1,0 +1,1 @@
+OTU	KO	Reac	Prod	stoichReac	stoichProd	normalized_copy_number	LB	UB	Rev	Reversible

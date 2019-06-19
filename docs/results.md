@@ -6,7 +6,7 @@ layout: default
 
 After running a MIMOSA2 analysis, the web application will provide several results files for download and will also generate summaries of the results.
 
-![alt text](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/docs/MIMOSA_results_screenShot.png "MIMOSA2 Results")
+![alt text](MIMOSA_results_screenShot.png "MIMOSA2 Results")
 
 
 ## Results Tables for Download
@@ -40,6 +40,6 @@ Below the interactive table, there are some additional buttons for downloading p
 then clicking one of the "Download plot" buttons, which will only save the plots for the selected metabolites. The "Generate and download contribution heatmap" will download a summary plot 
 of all of the taxonomic contributors for the selected metabolites (example below).
 
-![alt text](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/docs/contrib_heatmap_example.png "Taxa contributor summary")
+![alt text](contrib_heatmap_example.png "Taxa contributor summary")
 
 
