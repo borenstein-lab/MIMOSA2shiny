@@ -246,13 +246,13 @@ run_pipeline = function(input_data, configTable, analysisID){
       met_contrib_plots = NULL
     }
     for(i in 1:length(CMP_plots)){
-      save_plot(CMP_plots[[i]], file = paste0(analysisID, "_", names(CMP_plots)[i], ".png"), dpi = 50, base_width = 2, base_height = 2)
+      save_plot(CMP_plots[[i]], file = paste0(analysisID, "_", names(CMP_plots)[i], ".png"), dpi = 80, base_width = 2, base_height = 2)
     }
     if(!configTable[V1 == "compare_only", V2==T]){
       for(i in 1:length(met_contrib_plots)){
         print(comp_list[i])
         if(!is.null(met_contrib_plots[[i]])){
-          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "_", comp_list[i], "_contribs.png"), dpi = 50, base_width = 2, base_height = 2)
+          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "_", comp_list[i], "_contribs.png"), dpi = 80, base_width = 2, base_height = 2)
         }
       }
     }
@@ -450,7 +450,7 @@ server <- function(input, output, session) {
     	networkData = fread("data/exampleData/communityNetworkModelsExample.txt")
     	#analysisID = "example"
     	
-    	return(list(newSpecies = species, varShares = var_shares, modelData = modResults, configs = config, networkData = networkData, example_data = T))
+    	return(list(newSpecies = species_dat, varShares = var_shares, modelData = modResults, configs = config, networkData = networkData, example_data = T))
     }
   })
   
@@ -595,7 +595,14 @@ server <- function(input, output, session) {
       #compound_order = c(tableData[Slope > 0][order(Rsq, decreasing = T), compound], tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
       comp_ids = compound_order[comp_num]
       print(comp_ids)
-      file_ids = paste0(analysisID, "_", comp_ids, ".png")
+      print(analysisID)
+      if("example_data" %in% names(datasetInput())){
+        analysisID2 = "data/exampleData/example"
+      } else {
+        analysisID2 = analysisID
+      }
+      print(analysisID2)
+      file_ids = paste0(analysisID2, "_", comp_ids, ".png")
       file_ids = file_ids[sapply(file_ids, file.exists)]
       zip(zipfile = file, files = file_ids)
     }
@@ -614,7 +621,12 @@ server <- function(input, output, session) {
       #compound_order = c(tableData[Slope > 0][order(Rsq, decreasing = T), compound], tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
       comp_ids = compound_order[comp_num]
       print(comp_ids)
-      file_ids = paste0(analysisID, "_", comp_ids, "_contribs.png")
+      if("example_data" %in% names(datasetInput())){
+        analysisID2 = "data/exampleData/example"
+      } else {
+        analysisID2 = analysisID
+      }
+      file_ids = paste0(analysisID2, "_", comp_ids, "_contribs.png")
       file_ids = file_ids[sapply(file_ids, file.exists)]
       if(length(file_ids) > 0) zip(zipfile = file, files = file_ids)
     }
