@@ -16,6 +16,8 @@ MIMOSA2 can be run as either a web application at **[https://elbo-spice.gs.washi
 
 ### Overview
 
+![alt text](FlowChart.png "MIMOSA2 Flow Chart")
+
 A MIMOSA2 analysis consists of 4 major steps: 
 
 1) Construct a community metabolic model consisting of the set of metabolic reactions that each community member taxon is predicted to be capable of performing. 
