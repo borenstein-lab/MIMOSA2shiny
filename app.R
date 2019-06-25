@@ -272,7 +272,7 @@ ui = fluidPage(
     tags$link(rel = "stylesheet", type = "text/css", href = "burritostyle.css")
   ),
   tags$img(src = "title_lab_800.jpg", border = 0), #Borenstein lab img
-  titlePanel("MIMOSA2", tags$style(type = "text/css", "horizontal-align: center;")),
+  titlePanel("MIMOSA2", windowTitle = "MIMOSA2"),
   mainPanel(fluidPage(
     p("MIMOSA2 is a tool for metabolic model-based evaluation of paired microbiome and metabolomics datasets. MIMOSA2 1) constructs community metabolic models, 
     2) assesses whether metabolite concentrations are consistent with estimated community metabolic potential, and 3) identifies specific taxa and reactions that can
