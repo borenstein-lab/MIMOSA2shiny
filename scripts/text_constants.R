@@ -53,7 +53,7 @@ regression_choices = c("Rank-based regression", "Least-squares (OLS) regression"
 skip_contribs_option = "Skip taxonomic contribution analysis; only perform CMP-metabolite comparisons"
 skip_contribs_tooltip = "Taxonomic contribution analysis can be slow when rank-based regression is selected."
 
-result_table_description = "Select a row of the table to view the taxonomic contributors for that metabolite."
+result_table_description = "Each row of the table summarizes the MIMOSA2 results for a given metabolite, including the overall concordance between metabolic potential and concentration, and the contributing taxa."
 
 ### Replace previous sysdata
 all_dat = ls()
