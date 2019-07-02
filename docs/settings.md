@@ -49,7 +49,7 @@ for rank-based regression, the contributions of individual taxa to the model fit
 MIMOSA2 will only calculate taxonomic contributors for metabolites with a model p-value less than 0.1 (rather than all metabolites). You also have the option to skip 
 the contribution analysis and just compare metabolites with metabolic potential.
  
-Rank-based regression is provided using the Rfit package in R. You can read more about the statistical approach [here](https://journal.r-project.org/archive/2012-2/RJournal_2012-2_Kloke+McKean.pdf). 
+Rank-based regression is provided using the Rfit package in R. The general idea is to find a regression solution that minimizes a function of both the rank and the size of the model residuals (instead of the sum of squared errors in OLS). You can read more about the statistical approach [here](https://journal.r-project.org/archive/2012-2/RJournal_2012-2_Kloke+McKean.pdf). 
 Other non-linear models may be provided as options in the future.
 
 ## Run MIMOSA

@@ -31,17 +31,17 @@ If you provide ASV data, you can also control how specifically your sequences ar
 
 <h3>Metagenome abundance table</h3>
 
-A table of functional KEGG Ortholog abundances can be provided instead of *(or in addition to) the taxonomic abundances. This table can take two different forms: 
+A table of functional KEGG Ortholog abundances can be provided instead of *(or in addition to) the taxonomic abundances. This table can take multiple different forms: 
 
 1) **Total KO abundances**: A table of function abundances, as produced from any metagenomic functional annotation pipeline.
-<a href="https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/test_kos.txt" target="_blank">Example KO table</a>
+<a href="https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/test_metagenome.txt" target="_blank">Example KO table</a>
 
-2) **Taxon-stratified KO abundances**: A table of taxon-specific function abundances, which can be produced from HUMAnN2, kraken, or PICRUSt/PICRUSt2. This must be formatted in the style
-of the "metagenome contribution table" produced by PICRUSt version 1 or 2 (see [the PICRUSt2 documentation](https://github.com/picrust/picrust2/wiki/Full-pipeline-script)). 
-You can also use the "format_humann2_contributions" function in [the mimosa2 package](package.html) to correctly format a HuMAnN2 stratified table.
+2) **Taxon-stratified KO abundances**: A table of taxon-specific function abundances, which can be produced from HUMAnN2, PICRUSt/PICRUSt2, or similar programs (e.g. kraken). This must be formatted either in the style
+of the "metagenome contribution table" produced by PICRUSt version 1 or 2 (see [the PICRUSt2 documentation](https://github.com/picrust/picrust2/wiki/Full-pipeline-script)), or
+in the format of the stratified abundance table produced by HuMAnN2. MIMOSA2 will detect which format is used and process your table accordingly.
  
-<a href="https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/test_stratified_kos.txt" target="_blank">Example stratified KO table</a>
-
+<a href="https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/test_stratified_kos.txt" target="_blank">Example HuMAnN2 format</a><br>
+<a href="https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/test_contributions.txt" target="_blank">Example PICRUSt2 format</a>
 
 <h2 id="function">Metabolomics Data</h2>
 

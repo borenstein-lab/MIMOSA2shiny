@@ -1,5 +1,15 @@
 V1	V2
-database	Sequence variants
-genomeChoices	Map sequences to AGORA genomes and models
+analysisID	OHPWY02655
+database	Greengenes 13_5 or 13_8 OTUs
+genomeChoices	AGORA genomes and models
 metType	KEGG Compound IDs
-simThreshold	0.99
+met_transform	logplus
+regType	Rank-based regression
+compare_only	FALSE
+rankBased	TRUE
+rank_type	rfit
+metagenome	FALSE
+metagenome_format	FALSE
+contribType	FALSE
+netAdd	FALSE
+simThreshold	FALSE

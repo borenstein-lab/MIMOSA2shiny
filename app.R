@@ -12,9 +12,10 @@ library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
 library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(cowplot)
 library(RColorBrewer)
-options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=30*1024^2)
+options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=120*1024^2)
 theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
 library(shinyBS)
+library(ggpubr)
 
 microbiome_data_upload = function(){
   fluidPage(
@@ -137,18 +138,17 @@ run_pipeline = function(input_data, configTable, analysisID){
     species = input_data$species
     mets = input_data$mets
     print(configTable)
-    print(configTable[V1=="file1", V2])
     configTable[,V2:=as.character(V2)]
-    print(file.exists(configTable[V1=="file1", V2]))
     print(configTable)
-    print(configTable[V1=="file1", V2])
 	  configTable = check_config_table(configTable, app = T)
 	
     incProgress(2/10, detail = "Building metabolic model")
-    network_results = build_metabolic_model(species, configTable) #, input_data$netAdd) #input_data$geneAdd, 
+    validate(need(!(configTable[V1=="database", V2==get_text("database_choices")[4]] & 
+                                  configTable[V1=="genomeChoices", V2 != get_text("source_choices")[1]]), "Only KEGG metabolic model (network option 1) can be used with KEGG Ortholog data"))
+    network_results = build_metabolic_model(species, configTable, netAdd = input_data$netAdd) #, input_data$netAdd) #input_data$geneAdd, 
     network = network_results[[1]]
     species = network_results[[2]] #Allow for modifying this for AGORA
-    if(!is.null(input_data$metagenome) & configTable[V1=="database", V2==get_text("database_choices")[4]]){
+    if(!is.null(input_data$metagenome) & configTable[V1=="database", V2!=get_text("database_choices")[4]]){
       #If we are doing a comparison of the species network and the metagenome network
       #Metagenome data
       metagenome_network = build_metabolic_model(input_data$metagenome, configTable)
@@ -172,12 +172,13 @@ run_pipeline = function(input_data, configTable, analysisID){
       }
       cat(paste0("Regression type is ", rank_type, "\n"))
     } else rank_based = F
-    if(configTable[V1=="database", V2==get_text("database_choices")[4]] & configTable[V1=="metagenome_format", V2==get_text("metagenome_options")[1]]){
+    if(configTable[V1=="database", V2==get_text("database_choices")[4]] & identical(configTable[V1=="metagenome_format", V2], get_text("metagenome_options")[1])){
       no_spec_param = T
       humann2_param = F
-    } else if(configTable[V1=="database", V2==get_text("database_choices")[4]] & configTable[V1=="metagenome_format", V2==get_text("metagenome_options")[2]]){
+    } else if(configTable[V1=="database", V2==get_text("database_choices")[4]] & identical(configTable[V1=="metagenome_format", V2], get_text("metagenome_options")[2])){
       no_spec_param = F
       humann2_param = T
+      cat("Humann2 format\n")
     } else {
       no_spec_param = F
       humann2_param = F
@@ -196,7 +197,6 @@ run_pipeline = function(input_data, configTable, analysisID){
     if(met_transform != ""){
       mets_melt = transform_mets(mets_melt, met_transform)
     }
-    
     if(rxn_param){
       cmp_mods =  fit_cmp_net_edit(network, species, mets_melt, manual_agora = agora_param, rank_based = rank_based)
       network = cmp_mods[[3]] #Revised network
@@ -207,27 +207,41 @@ run_pipeline = function(input_data, configTable, analysisID){
       indiv_cmps = indiv_cmps[compound %in% mets[,compound]]
       cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt, rank_based = rank_based, rank_type = rank_type)
     }
+    print(cmp_mods[[1]]) 
     if(!configTable[V1 == "compare_only", V2==T]){
       incProgress(2/10, detail = "Calculating microbial contributions")
       #Get low-abundance species to remove
-      spec_dat = melt(species, id.var = "OTU", variable.name = "Sample")[,list(value/sum(value), OTU), by=Sample] #convert to relative abundance
-      bad_spec = spec_dat[,list(length(V1[V1 != 0])/length(V1), max(V1)), by=OTU]
-      bad_spec = bad_spec[V1 < 0.2 & V1 < 0.1, OTU] #Never higher than 10% and absent in at least 80% of samples
-      print(bad_spec)
+      if(!humann2_param){
+        spec_dat = melt(species, id.var = "OTU", variable.name = "Sample")[,list(value/sum(value), OTU), by=Sample] #convert to relative abundance
+        bad_spec = spec_dat[,list(length(V1[V1 != 0])/length(V1), max(V1)), by=OTU]
+        bad_spec = bad_spec[V1 < 0.2 & V1 < 0.1, OTU] #Never higher than 10% and absent in at least 80% of samples
+        print(bad_spec)
+      } else bad_spec = NULL
       var_shares = calculate_var_shares(indiv_cmps, met_table = mets_melt, model_results = cmp_mods, config_table = configTable, species_merge = bad_spec)
+      ## If nothing significant was analyzed, behave as if compare_only were selected
+      if(is.null(var_shares)){
+        configTable[V1 == "compare_only", V2:="TRUE"]
+      }
+      print("Var shares species")
+      if(!is.null(var_shares)) print(var_shares[,unique(Species)])
     } else {
       var_shares = NULL
     }
+    #Add species/rxn info
+    cmp_summary = get_cmp_summary(species, network, normalize = !rxn_param, manual_agora = F, kos_only = no_spec_param, humann2 = humann2_param, met_subset = cmp_mods[[1]][!is.na(Rsq) & Rsq != 0,compound])
+    cmp_mods[[1]] = merge(cmp_mods[[1]], cmp_summary, by = "compound", all.x = T)
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
     incProgress(1/10, detail = "Making CMP-Metabolite plots")
+    print(indiv_cmps[compound %in% mets_melt[,compound]])
     CMP_plots = plot_all_cmp_mets(cmp_table = indiv_cmps, met_table = mets_melt, mod_results = cmp_mods[[1]])
       
-    if(!configTable[V1 == "compare_only", V2==T]){
+    if(configTable[V1 == "compare_only", V2 != TRUE]){
       incProgress(1/10, detail = "Making metabolite contribution plots")
       comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
       comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
-      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & abs(VarShare) >= 0.03 & Species != "Residual", as.character(unique(Species))]
+      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual" & Species != "Other" & abs(VarShare) >= 0.03, as.character(unique(Species))]
+      print(all_contrib_taxa)
       getPalette = colorRampPalette(brewer.pal(12, "Paired"))
       contrib_color_palette = c("black", "gray", getPalette(length(all_contrib_taxa)))
       names(contrib_color_palette) = c("Residual", "Other", all_contrib_taxa)
@@ -255,8 +269,22 @@ run_pipeline = function(input_data, configTable, analysisID){
           save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "_", comp_list[i], "_contribs.png"), dpi = 80, base_width = 2, base_height = 2)
         }
       }
+      # if(!exists("contrib_legend")){ #Get legend from first non-nulll compound
+      #   
+      # }
+      print("Making legend")
+      print(all_contrib_taxa)
+      print(contrib_color_palette)
+      leg_dat = data.table(V1 = factor(names(contrib_color_palette), levels = c(all_contrib_taxa, "Other", "Residual")))
+      setnames(leg_dat, "V1", "Contributing Taxa")
+      print(leg_dat)
+      legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa")# + theme(legend.text = element_text(size = 10))
+      contrib_legend = get_legend(legend_plot) ####Whyyy is this happening
+      save_plot(contrib_legend, file = paste0(analysisID, "_", "contribLegend.png"), dpi=120, base_width = 4, base_height = 2.5)
+    } else {
+      contrib_legend = NULL
     }
-    return(list(newSpecies = species, varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1)], networkData = network[Prod %in% cmp_mods[[1]][,compound]|Reac %in% cmp_mods[[1]][,compound]], CMPplots = CMP_plots, metContribPlots = met_contrib_plots))
+    return(list(newSpecies = species, varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1) & V1 != "vsearch_path"], networkData = network[Prod %in% cmp_mods[[1]][,compound]|Reac %in% cmp_mods[[1]][,compound]], CMPplots = CMP_plots, metContribPlots = met_contrib_plots, plotLegend = contrib_legend))
     #Send var_shares for download
     #Generate plot of var shares
     #source(other stuff)
@@ -347,6 +375,9 @@ server <- function(input, output, session) {
             DT::dataTableOutput("allMetaboliteInfo"), width="100%"
           ),
           fluidRow(
+            plotOutput("contribLegend")
+          ),
+          fluidRow(
             downloadButton("downloadComparePlots", "Download selected CMP-Metabolite plots", class = "downloadButton"), 
             downloadButton("downloadContribPlots", "Download selected taxa contribution plots", class = "downloadButton"), 
             downloadButton("downloadContributionHeatmap", "Generate and download contribution heatmap plot", class = "downloadButton")
@@ -412,10 +443,16 @@ server <- function(input, output, session) {
   	if(is.null(input$exampleButton)|input$exampleButton==0){
   	    initial_inputs = c("database", "metagenome_format", "genomeChoices",  #"geneAdd", 
                        "metType", "simThreshold", "logTransform", "regType", "compare_only") #Check that this is all of them
+  	  if(is.null(input$metagenome)){
+  	    initial_inputs = initial_inputs[initial_inputs != "metagenome_format"]
+  	  }
+  	  if(input$database != get_text("database_choices")[1]){
+  	    initial_inputs = initial_inputs[initial_inputs != "simThreshold"] #Does nothing if we don't have ASV data
+  	  } 
       inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
       values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
-  	  inputs_provided = c(inputs_provided, "kegg_prefix", "data_prefix", "vsearch_path")
-	    values_provided = c(values_provided, "data/KEGGfiles/", "data/", "bin/vsearch")    #print(file.exists(input$file1$datapath))
+  	  inputs_provided = c("analysisID", inputs_provided, "kegg_prefix", "data_prefix", "vsearch_path")
+	    values_provided = c(analysisID, values_provided, "data/KEGGfiles/", "data/", "bin/vsearch")    #print(file.exists(input$file1$datapath))
       print(inputs_provided)
       print(values_provided)
       if(input$logTransform == T){
@@ -432,13 +469,15 @@ server <- function(input, output, session) {
   	}
   })
   
-  datasetInput <- reactive({
+  datasetInput = reactive({
     if(is.null(input$exampleButton)|input$exampleButton==0){
-      if(is.null(input$file1) & is.null(input$metagenome)) stop("No microbiome data file provided")
-      if(is.null(input$file2)) stop("No metabolite data file provided")
-      file_list1 = list(input$file1, input$file2, input$metagenome, input$netAddFile) # input$geneAddFile,
+      validate(need(!is.null(input$file1)|!is.null(input$metagenome), "No microbiome file provided"), 
+               need(input$file2, "No metabolite file provided")
+               )
+      file_list1 = list(input$file1, input$file2, input$metagenome, input$netAdd) # input$geneAddFile,
       names(file_list1) = c("file1","file2", "metagenome","netAdd") # "geneAddFile", 
       #logjs(config_table())
+      print(file_list1)
       input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
       run_pipeline(input_data, config_table(), analysisID)
     } else {
@@ -541,12 +580,12 @@ server <- function(input, output, session) {
     compound_order = tableData[order(m2R, decreasing = T), compound] #, tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
     
     #tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
-    tableData[,PVal:=round(PVal, 3)]
+    tableData[,PVal:=round(PVal, 5)]
     tableData[,Rsq:=round(Rsq, 3)]
     tableData[,Slope:=round(Slope, 3)]
     tableData[,Intercept:=round(Intercept, 3)]
     tableData[,metName:=sapply(compound, met_names)]
-    tableData2 = tableData[,list(compound, metName, Rsq, PVal, Slope, Intercept)]
+    tableData2 = tableData[,list(compound, metName, Rsq, PVal, Slope, SynthGenes, SynthSpec, DegGenes, DegSpec, Intercept)]
     tableData2[,compound:=factor(compound, levels = compound_order)]
     print(tableData2)
     #good_comps = list.files(path = getwd(), pattern = analysisID)
@@ -562,7 +601,7 @@ server <- function(input, output, session) {
       } else {
         return(img_uri("blank_plot.png"))
       }})]
-    if(input$compare_only != T){
+    if(datasetInput()$configs[V1=="compare_only", V2==FALSE]){
       #tableData2 = tableData2[paste0(analysisID, "_",compound,"_contribs.png") %in% good_comps]
       tableData2[,ContribPlot:=sapply(paste0(analysisID2, "_", compound, "_contribs.png"), function(x){
         if(file.exists(x)){
@@ -571,13 +610,19 @@ server <- function(input, output, session) {
           return(img_uri("blank_plot.png"))
         }
         })]
-      setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Intercept", "Comparison Plot", "Contribution Plot"))
+      tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, ContribPlot, SynthGenes, SynthSpec, DegGenes, DegSpec, Intercept)]
+      setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Contribution Plot", "Producing Genes/Rxns", "Producing Species", "Utilizing Genes/Rxns", "Utilizing Species", "Intercept"))
     } else {
-      setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Intercept", "Comparison Plot"))
+      if(datasetInput()$configs[V1=="metagenome_format", V2==get_text("metagenome_options")[1]]){ #Skip species
+        tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, SynthGenes, DegGenes, Intercept)]
+        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Producing Genes/Rxns","Utilizing Genes/Rxns", "Intercept"))
+      } else {
+        tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, SynthGenes, SynthSpec, DegGenes, DegSpec, Intercept)]
+        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Producing Genes/Rxns", "Producing Species", "Utilizing Genes/Rxns", "Utilizing Species",  "Intercept"))
+      }
     }
-    print(tableData2[1])
-    
-    return(DT::datatable(tableData2[order(`Compound ID`)], escape = F, options = list(lengthMenu = c(5, 10), pageLength = 5)))
+
+    return(DT::datatable(tableData2[order(`Compound ID`)], escape = F, options = list(lengthMenu = c(5, 10), pageLength = 5), filter = "top"))
     #return(DT::datatable(tableData[order(m2R, decreasing = T),list(compound, Rsq, PVal, Slope, Intercept)], 
      #                    options = list(lengthMenu = c(5, 10), pageLength = 5)))
   })
@@ -701,6 +746,11 @@ server <- function(input, output, session) {
       met_of_interest = plotData[1,compound]      
    	return(plot_contributions(plotData, metabolite = met_of_interest, include_zeros = F))
   }, res = 100)
+  
+  output$contribLegend = renderPlot({
+    return(plot_grid(datasetInput()$plotLegend))
+    #return(list(src = paste0(analysisID, "_contribLegend.png")))
+  })
   
   session$onSessionEnded(function() {
     #remove plots
