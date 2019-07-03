@@ -34,7 +34,9 @@ microbiome_data_upload = function(){
                 multiple = FALSE,
                 accept = c("text/csv",
                            "text/comma-separated-values,text/plain",
-                           ".csv"), width = '430px'), width = 8),
+                           ".csv", 
+                           ".tsv",
+                           "text/tsv"), width = '430px'), width = 8),
         column(tags$a(tags$img(src = "example.png", border = 0), href = "test_seqs.txt", target = "_blank"), width = 4)),
    #   checkboxInput("metagenomeOpt", label=get_text("metagenome_option"), width = '100%'),
     #p(get_text("metagenome_description")),
@@ -46,7 +48,9 @@ microbiome_data_upload = function(){
                          multiple = FALSE,
                          accept = c("text/csv",
                                     "text/comma-separated-values,text/plain",
-                                    ".csv"), width = '430px'), width = 8), 
+                                    ".csv", 
+                                    ".tsv",
+                                    "text/tsv"), width = '430px'), width = 8), 
    		column(tags$a(tags$img(src = "example.png", border = 0), href = "test_metagenome.txt", target = "_blank"), width = 4))
       #) )#,
       # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
@@ -75,7 +79,9 @@ metabolome_data_upload = function(){
               multiple = FALSE,
               accept = c("text/csv",
                          "text/comma-separated-values,text/plain",
-                         ".csv"), width = '430px'), width = 8),
+                         ".csv", 
+                         ".tsv",
+                         "text/tsv"), width = '430px'), width = 8),
     	column(tags$a(tags$img(src = "example.png", border = 0), href = "test_mets.txt", target = "_blank"), width = 4)),
 	id = "metabolome_section", tags$style(type = "text/css", "#metabolome_section { horizontal-align: left; width: 100%}" ))
 }
@@ -95,7 +101,9 @@ network_settings = function(){
     ),
     fluidRow(
    		column(fileInput("netAdd", get_text("net_mod_input_title"), multiple = FALSE, accept = c("text/csv",
-                                 "text/comma-separated-values,text/plain",".csv"),  width = '550px'), width = 8), #,  #, width = '100%') #,
+                                 "text/comma-separated-values,text/plain",".csv", 
+                                 ".tsv",
+                                 "text/tsv"),  width = '550px'), width = 8), #,  #, width = '100%') #,
                                      column(tags$a(tags$img(src = "example.png", border = 0), href = "test_netAdd_species_rxns_KEGG_clean.txt", target = "_blank"), width = 4)
     )
 
