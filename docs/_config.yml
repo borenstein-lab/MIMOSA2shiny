@@ -2,10 +2,23 @@ theme: jekyll-theme-minimal
 navigation:
       - text: "Input Data"
         title: "Input Data for MIMOSA2"
-        url: input.html
+        url: /input.html
       - text: "Choosing Settings and Running the Analysis"
         title: "MIMOSA2 Analysis Settings"
-        url: settings.html
+        url: /settings.html
       - text: "Results"
         title: "Interpreting MIMOSA2 Results"
-        url: results.html
+        url: /results.html
+      - text: "Reference Data"
+        title: "MIMOSA2 Reference Data"
+        url: /downloads.html
+      - text: "R Package Tutorial"
+        title: "Using the mimosa2 R package"
+        url: /package.html
+      - text: "FAQs"
+        title: "Frequently asked questions about MIMOSA2"
+        url: /faqs.html
+      - text: "Citation and Contact"
+        title: "Contact Us"
+        url: /support.html
+        
