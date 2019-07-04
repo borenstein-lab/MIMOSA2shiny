@@ -5,8 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
 {% seo %}
-
-    <link rel="stylesheet" href="{{ 'style.css' | append: site.github.build_revision | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
     <meta name="viewport" content="width=device-width">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -31,54 +30,44 @@
             <li><a href="{{ site.github.repository_url }}">View On <strong>GitHub</strong></a></li>
           </ul>
         {% endif %}
-        <ul>
-    	{% for my_page in site.pages %} 
-        {% if my_page.title %}
-            <li {% if my_page.url == page.url %} class="current" {% endif %}>
-                <a href="{{ my_page.url | relative_url }}">{{ my_page.title | escape }}
-                </a>
-            </li>
-        {% endif %} {% endfor %}
-</ul>
-<!--            <ul class="nav navbar-nav">
+
+		{% include nav.html %}
+
         {% if page.active == "input" %}
             <li class="active"><a href="#">Input Data</a></li>
         {% else %}
-            <li><a href="../MIMOSA2shiny/input.html">Input Data</a></li>
+            <li><a href="input.html">Input Data</a></li>
         {% endif %}
         {% if page.active == "settings" %}
             <li class="active"><a href="#">Choosing Settings and Running the Analysis</a></li>
         {% else %}
-            <li><a href="../MIMOSA2shiny/settings.html">Choosing Settings and Running the Analysis</a></li>
+            <li><a href="settings.html">Choosing Settings and Running the Analysis</a></li>
         {% endif %}
         {% if page.active == "results" %}
             <li class="active"><a href="#">Results</a></li>
         {% else %}
-            <li><a href="../MIMOSA2shiny/results.html">Results</a></li>
+            <li><a href="results.html">Results</a></li>
         {% endif %}
         {% if page.active == "downloads" %}
             <li class="active"><a href="#">Reference Data</a></li>
         {% else %}
-            <li><a href="../MIMOSA2shiny/downloads.html">Reference Data</a></li>
+            <li><a href="downloads.html">Reference Data</a></li>
         {% endif %}
         {% if page.active == "package" %}
             <li class="active"><a href="#">R Package Tutorial</a></li>
         {% else %}
-            <li><a href="../MIMOSA2shiny/package.html">R Package Tutorial</a></li>
+            <li><a href="package.html">R Package Tutorial</a></li>
         {% endif %}
         {% if page.active == "faqs" %}
             <li class="active"><a href="#">FAQs</a></li>
         {% else %}
-            <li><a href="../MIMOSA2shiny/faqs.html">FAQs</a></li>
+            <li><a href="faqs.html">FAQs</a></li>
         {% endif %}
         {% if page.active == "support" %}
             <li class="active"><a href="#">Citation and Contact</a></li>
         {% else %}
-            <li><a href="../MIMOSA2shiny/support.html">Citation and Contact</a></li>
+            <li><a href="support.html">Citation and Contact</a></li>
         {% endif %}
-
-        
-    	</ul> -->
         <!-- ><h3><a href="/input"  {% if page.url == '/input/' %} class="active"{% endif %}>Input Data</a></h3>
         <h3><a href="/settings" {% if page.url == '/settings/' %} class="active"{% endif %}>Choosing Settings and Running the Analysis</a></h3>
         <h3><a href="/results" {% if page.url == '/results/' %} class="active"{% endif %}>Results</a></h3>

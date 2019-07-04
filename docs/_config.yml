@@ -1,1 +1,11 @@
 theme: jekyll-theme-minimal
+navigation:
+	- text: Input Data
+	title: Input Data for MIMOSA2
+	url: /input.html 
+	- text: Choosing Settings and Running the Analysis
+	title: MIMOSA2 Analysis Settings
+	url: /settings.html 
+        - text: Results
+        title: Interpreting MIMOSA2 Results
+        url: /results.html
