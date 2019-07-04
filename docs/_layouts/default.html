@@ -6,7 +6,7 @@
 
 {% seo %}
 
-    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    <link rel="stylesheet" href="{{ 'style.css' | append: site.github.build_revision | relative_url }}">
     <meta name="viewport" content="width=device-width">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -34,7 +34,7 @@
         <ul>
     	{% for my_page in site.pages %} 
         {% if my_page.title %}
-            <li {% if my_page.url == page.url %} class="active" {% endif %}>
+            <li {% if my_page.url == page.url %} class="current" {% endif %}>
                 <a href="{{ my_page.url | relative_url }}">{{ my_page.title | escape }}
                 </a>
             </li>
