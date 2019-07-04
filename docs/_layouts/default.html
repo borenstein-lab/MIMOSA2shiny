@@ -31,14 +31,36 @@
             <li><a href="{{ site.github.repository_url }}">View On <strong>GitHub</strong></a></li>
           </ul>
         {% endif %}
-        <h3><a href="/input"  {% if page.url == '/input/' %} class="active"{% endif %}>Input Data</a></h3>
+            <ul class="nav navbar-nav">
+        {% if page.active == "input" %}
+            <li class="active"><a href="#">Input</a></li>
+        {% else %}
+            <li><a href="../input">Input</a></li>
+        {% endif %}
+        {% if page.active == "Settings" %}
+            <li class="active"><a href="#">Settings</a></li>
+        {% else %}
+            <li><a href="../settings">Settings</a></li>
+        {% endif %}
+        {% if page.active == "Results" %}
+            <li class="active"><a href="#">Results</a></li>
+        {% else %}
+            <li><a href="../results">Results</a></li>
+        {% endif %}
+        {% if page.active == "Downloads" %}
+            <li class="active"><a href="#">Downloads</a></li>
+        {% else %}
+            <li><a href="../downloads">Results</a></li>
+        {% endif %}
+    	</ul>
+        <!-- ><h3><a href="/input"  {% if page.url == '/input/' %} class="active"{% endif %}>Input Data</a></h3>
         <h3><a href="/settings" {% if page.url == '/settings/' %} class="active"{% endif %}>Choosing Settings and Running the Analysis</a></h3>
         <h3><a href="/results" {% if page.url == '/results/' %} class="active"{% endif %}>Results</a></h3>
         <h3><a href="/downloads" {% if page.url == '/downloads/' %} class="active"{% endif %}>Reference Data</a></h3>
         <h3><a href="/package" {% if page.url == '/package/' %} class="active"{% endif %}>R Package Tutorial </a></h3>
         <h3><a href="/faqs" {% if page.url == '/faqs/' %} class="active"{% endif %}>FAQs</a></h3>
         <h3><a href="/support" {% if page.url == '/support/' %} class="active"{% endif %}> Citation and Contact </a></h3>
-        
+        -->
       </header>
       <section>
 
