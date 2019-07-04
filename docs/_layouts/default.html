@@ -31,7 +31,16 @@
             <li><a href="{{ site.github.repository_url }}">View On <strong>GitHub</strong></a></li>
           </ul>
         {% endif %}
-            <ul class="nav navbar-nav">
+        <ul>
+    	{% for my_page in site.pages %} 
+        {% if my_page.title %}
+            <li {% if my_page.url == page.url %} class="active" {% endif %}>
+                <a href="{{ my_page.url | relative_url }}">{{ my_page.title | escape }}
+                </a>
+            </li>
+        {% endif %} {% endfor %}
+</ul>
+<!--            <ul class="nav navbar-nav">
         {% if page.active == "input" %}
             <li class="active"><a href="#">Input Data</a></li>
         {% else %}
@@ -69,7 +78,7 @@
         {% endif %}
 
         
-    	</ul>
+    	</ul> -->
         <!-- ><h3><a href="/input"  {% if page.url == '/input/' %} class="active"{% endif %}>Input Data</a></h3>
         <h3><a href="/settings" {% if page.url == '/settings/' %} class="active"{% endif %}>Choosing Settings and Running the Analysis</a></h3>
         <h3><a href="/results" {% if page.url == '/results/' %} class="active"{% endif %}>Results</a></h3>
