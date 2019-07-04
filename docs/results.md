@@ -1,6 +1,7 @@
 ---
 title: Interpreting MIMOSA2 Results
 layout: default
+active: results
 ---
 # Results of a MIMOSA2 Analysis
 

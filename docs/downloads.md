@@ -1,6 +1,7 @@
 ---
 title: MIMOSA2 Reference Data
 layout: default
+active: downloads
 ---
 # MIMOSA2 Reference Data Downloads
 

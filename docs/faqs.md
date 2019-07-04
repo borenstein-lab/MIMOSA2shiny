@@ -1,6 +1,7 @@
 ---
 title: Frequently asked questions about MIMOSA2
 layout: default
+active: faqs
 ---
 
 # Frequently Asked Questions about MIMOSA2

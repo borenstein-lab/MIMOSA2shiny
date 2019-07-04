@@ -1,6 +1,7 @@
 ---
 title: Using the mimosa2 R package
 layout: default
+active: package
 ---
 # Using the mimosa2 R package
 

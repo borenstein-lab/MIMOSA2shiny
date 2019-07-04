@@ -1,6 +1,7 @@
 ---
 title: MIMOSA2 Analysis Settings
 layout: default
+active: settings
 ---
 # Running a MIMOSA2 Analysis: Setup and Settings
 
