@@ -3,10 +3,12 @@ title: Frequently asked questions about MIMOSA2
 layout: default
 ---
 
-# Frequently asked questions about MIMOSA2
+# Frequently Asked Questions about MIMOSA2
 Make this have its own sidebar menu
 
 - What kind of microbiome data can I use? Can I provide transcriptomic data?
+
+- How is MIMOSA2 different from MIMOSA1?
 
 - Which reference database should I use?
 

@@ -6,7 +6,7 @@
 
 {% seo %}
 
-    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    <link rel="stylesheet" href="{{ 'style.css?v=' | append: site.github.build_revision | relative_url }}">
     <meta name="viewport" content="width=device-width">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -31,13 +31,13 @@
             <li><a href="{{ site.github.repository_url }}">View On <strong>GitHub</strong></a></li>
           </ul>
         {% endif %}
-        <h3><a href="input.html">Input Data</a></h3>
-        <h3><a href="settings.html">Choosing Settings and Running the Analysis</a></h3>
-        <h3><a href="results.html">Results</a></h3>
-        <h3><a href="downloads.html">Reference Data</a></h3>
-        <h3><a href="package.html">R Package Tutorial </a></h3>
-        <h3><a href="faqs.html">FAQs</a></h3>
-        <h3><a href="support.html"> Citation and Contact </a></h3>
+        <h3><a href="input.html"  {% if page.url == '/input/' %} class="active"{% endif %}>Input Data</a></h3>
+        <h3><a href="settings.html" {% if page.url == '/settings/' %} class="active"{% endif %}>Choosing Settings and Running the Analysis</a></h3>
+        <h3><a href="results.html" {% if page.url == '/results/' %} class="active"{% endif %}>Results</a></h3>
+        <h3><a href="downloads.html" {% if page.url == '/downloads/' %} class="active"{% endif %}>Reference Data</a></h3>
+        <h3><a href="package.html" {% if page.url == '/package/' %} class="active"{% endif %}>R Package Tutorial </a></h3>
+        <h3><a href="faqs.html" {% if page.url == '/faqs/' %} class="active"{% endif %}>FAQs</a></h3>
+        <h3><a href="support.html" {% if page.url == '/support/' %} class="active"{% endif %}> Citation and Contact </a></h3>
         
       </header>
       <section>

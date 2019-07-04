@@ -16,8 +16,9 @@ See [Input Data](input.html) for more information.
 ## Metabolic Model Options
 Select what metabolic database you would like to use to link your microbiome and metabolite data. Several options are available:
 
-- PICRUSt KO genomes and KEGG metabolic model: As in the original version of MIMOSA, this option uses pre-computed KEGG Ortholog inferences 
-and a generic KEGG metabolic model to link taxa to metabolites. If you provide a taxonomic abundance table, the input taxa will first be mapped to Greengenes OTUs. 
+- KEGG metabolic model: As in the original version of MIMOSA, this option uses pre-computed KEGG Ortholog inferences 
+and a generic KEGG metabolic model to link taxa to metabolites. If you provide a taxonomic abundance table, the input taxa will first be mapped to Greengenes OTUs, and the pre-computed PICRUSt KO predictions for each OTU will be used 
+as the basis for the community metabolic model. 
 If you provide KEGG Ortholog metagenome abundances, these will be directly linked to reactions and metabolites.
 
 - AGORA genomes and models (Magnusdottir et al Nature Biotech 2016): For this option, the 16S rRNA sequences of provided microbiome taxa (either from Greengenes/SILVA, or the ASV sequences themselves) are mapped to 
@@ -28,7 +29,7 @@ The metabolic reconstructions for mapped species are then combined into the comm
 all 5,587 RefSeq reference genomes and constructed using the CarveMe method. As in the AGORA option, MIMOSA2 maps the 16S rRNA sequences of input taxa 
 against a reference ribosomal database to link microbiome features to reference genomes and metabolic reconstructions.
 
-More in-depth information on these resources is available on the [Downloads page](downloads.html). 
+More in-depth information on these resources is available on the [Reference Data page](downloads.html). 
 
 If you have provided a table of 16S rRNA ASVs, you can select how strictly these sequences are aligned against the reference sequences. The default is a relatively strict minimum threshold (99%). 
 Mappings are pre-computed for reference OTU sequences at a 97% threshold.
@@ -38,12 +39,12 @@ Finally, advanced users can optionally provide a file specifying modifications t
 ## Metabolomics Data
 Select your metabolite data format, and upload the corresponding data file. Metabolite data can be generated using any platform but should consist of identified metabolite abundances (preferably specified as KEGG Compound IDs)
 
-Select whether the metabolite data should be log transformed. We recommend this option if your metabolite measurements tend to have highly skewed distributions (for example, if your study consists of two sample groups and one has higher variation than the other). 
+Select whether the metabolite data should be log transformed. We recommend this option if your metabolite measurements tend to have highly skewed distributions (for example, if your study consists of two sample groups and one has greater variability than the other). 
 You may find it useful to examine the CMP-Metabolite comparison results with and without log transformation.
 
 ## Algorithm Settings
 
-Select whether to compare metabolic potential (CMP) and metabolite levels using ordinary least-squares regression or rank-based regression. 
+Select whether to compare metabolic potential (CMP) and metabolite levels using ordinary least-squares regression (OLS) or rank-based regression. 
 We generally recommend rank-based regression as it can detect metabolite relationships more robustly and sensitively across a wider variety of data distributions (see the manuscript). However, 
 for rank-based regression, the contributions of individual taxa to the model fit are calculated using a permutation-based approach, which greatly increases the analysis runtime. Therefore, when this option is selected, 
 MIMOSA2 will only calculate taxonomic contributors for metabolites with a model p-value less than 0.1 (rather than all metabolites). You also have the option to skip 
