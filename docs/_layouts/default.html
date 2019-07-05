@@ -32,48 +32,47 @@
         {% endif %}
 
 		{% assign current = page.url | downcase | split: '/' %}
-	<nav>
-  		<ul>
+
+<!--  		<ul>
     		<li><a href='input.html' {% if current[1] == 'input' %}class='active'{% endif %}>Input Data</a></li>
     		<li><a href='settings.html' {% if current[1] == 'settings' %}class='active'{% endif %}>Choosing Settings and Running the Analysis</a></li>
     		<li><a href='results.html' {% if current[1] == 'results' %}class='active'{% endif %}>Results</a></li>
   		</ul>
-	</nav>
-
+-->
         {% if page.active == "input" %}
-            <li class="active"><a href="#">Input Data</a></li>
+            <a href="#" class="active">Input Data</a>
         {% else %}
-            <li><a href="input.html#">Input Data</a></li>
+            <a href="input.html#">Input Data</a>
         {% endif %}
         {% if page.active == "settings" %}
-            <li class="active"><a href="#">Choosing Settings and Running the Analysis</a></li>
+            <a href="#" class="active">Choosing Settings and Running the Analysis</a>
         {% else %}
-            <li><a href="settings.html#">Choosing Settings and Running the Analysis</a></li>
+            <a href="settings.html#">Choosing Settings and Running the Analysis</a>
         {% endif %}
         {% if page.active == "results" %}
-            <li class="active"><a href="#">Results</a></li>
+            <a href="#" class="active">Results</a>
         {% else %}
-            <li><a href="results.html#">Results</a></li>
+            <a href="results.html#">Results</a>
         {% endif %}
         {% if page.active == "downloads" %}
-            <li class="active"><a href="#">Reference Data</a></li>
+            <a href="#" class="active">Reference Data</a>
         {% else %}
-            <li><a href="downloads.html#">Reference Data</a></li>
+            <a href="downloads.html#">Reference Data</a>
         {% endif %}
         {% if page.active == "package" %}
-            <li class="active"><a href="#">R Package Tutorial</a></li>
+            <a href="#" class="active">R Package Tutorial</a>
         {% else %}
-            <li><a href="package.html#">R Package Tutorial</a></li>
+            <a href="package.html#">R Package Tutorial</a>
         {% endif %}
         {% if page.active == "faqs" %}
-            <li class="active"><a href="#">FAQs</a></li>
+            <a href="#" class="active">FAQs</a>
         {% else %}
-            <li><a href="faqs.html#">FAQs</a></li>
+            <a href="faqs.html#">FAQs</a>
         {% endif %}
         {% if page.active == "support" %}
-            <li class="active"><a href="#">Citation and Contact</a></li>
+            <a href="#" class="active">Citation and Contact</a>
         {% else %}
-            <li><a href="support.html#">Citation and Contact</a></li>
+            <a href="support.html#">Citation and Contact</a>
         {% endif %}
         <!-- ><h3><a href="/input"  {% if page.url == '/input/' %} class="active"{% endif %}>Input Data</a></h3>
         <h3><a href="/settings" {% if page.url == '/settings/' %} class="active"{% endif %}>Choosing Settings and Running the Analysis</a></h3>
