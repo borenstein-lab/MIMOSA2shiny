@@ -3,7 +3,7 @@
 
 @import "{{ site.theme }}";
 
-li.active {
+a.active {
  font-weight: bold;
  color: red;
 }
