@@ -1,0 +1,9 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+li.active {
+ font-weight: bold;
+ color: red;
+}
