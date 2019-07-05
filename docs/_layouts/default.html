@@ -34,9 +34,9 @@
 		{% assign current = page.url | downcase | split: '/' %}
 	<nav>
   		<ul>
-    		<li><a href='/input' {% if current[1] == 'input' %}class='active'{% endif %}>Input Data</a></li>
-    		<li><a href='/settings' {% if current[1] == 'settings' %}class='active'{% endif %}>Choosing Settings and Running the Analysis</a></li>
-    		<li><a href='/results' {% if current[1] == 'results' %}class='active'{% endif %}>Results</a></li>
+    		<li><a href='input.html' {% if current[1] == 'input' %}class='active'{% endif %}>Input Data</a></li>
+    		<li><a href='settings.html' {% if current[1] == 'settings' %}class='active'{% endif %}>Choosing Settings and Running the Analysis</a></li>
+    		<li><a href='results.html' {% if current[1] == 'results' %}class='active'{% endif %}>Results</a></li>
   		</ul>
 	</nav>
 
