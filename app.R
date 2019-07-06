@@ -12,7 +12,7 @@ library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
 library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(cowplot)
 library(RColorBrewer)
-options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=120*1024^2)
+options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=200*1024^2)
 theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
 library(shinyBS)
 library(ggpubr)
@@ -142,6 +142,9 @@ output_settings = function(){
 ###### Core app function
 run_pipeline = function(input_data, configTable, analysisID){
   withProgress(message = "Running MIMOSA!", {
+    if(is.character(input_data)){ #Error occurred
+      stop(input_data) #Print error message
+    }
     #process arguments
     species = input_data$species
     mets = input_data$mets
@@ -152,7 +155,7 @@ run_pipeline = function(input_data, configTable, analysisID){
 	
     incProgress(2/10, detail = "Building metabolic model")
     validate(need(!(configTable[V1=="database", V2==get_text("database_choices")[4]] & 
-                                  configTable[V1=="genomeChoices", V2 != get_text("source_choices")[1]]), "Only KEGG metabolic model (network option 1) can be used with KEGG Ortholog data"))
+                                  configTable[V1=="genomeChoices", V2 != get_text("source_choices")[1]]), "Error: Only KEGG metabolic model (network option 1) can be used with KEGG Ortholog data"))
     network_results = build_metabolic_model(species, configTable, netAdd = input_data$netAdd) #, input_data$netAdd) #input_data$geneAdd, 
     network = network_results[[1]]
     species = network_results[[2]] #Allow for modifying this for AGORA
@@ -248,7 +251,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       incProgress(1/10, detail = "Making metabolite contribution plots")
       comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
       comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
-      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual" & Species != "Other" & abs(VarShare) >= 0.03, as.character(unique(Species))]
+      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual" & Species != "Other" & abs(VarShare) >= 0.02, as.character(unique(Species))]
       print(all_contrib_taxa)
       getPalette = colorRampPalette(brewer.pal(12, "Paired"))
       contrib_color_palette = c("black", "gray", getPalette(length(all_contrib_taxa)))
@@ -262,7 +265,7 @@ run_pipeline = function(input_data, configTable, analysisID){
         if(is.na(met_names(x))){
           met_id = x
         } else { met_id = met_names(x)}
-        plot_contributions(var_shares, met_id, metIDcol = "MetaboliteName", color_palette = contrib_color_palette, include_residual = F)
+        plot_contributions(var_shares, met_id, metIDcol = "MetaboliteName", color_palette = contrib_color_palette, include_residual = F, merge_threshold = 0.02)
       })
     } else {
       met_contrib_plots = NULL
@@ -292,7 +295,17 @@ run_pipeline = function(input_data, configTable, analysisID){
     } else {
       contrib_legend = NULL
     }
-    return(list(newSpecies = species, varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1) & V1 != "vsearch_path"], networkData = network[Prod %in% cmp_mods[[1]][,compound]|Reac %in% cmp_mods[[1]][,compound]], CMPplots = CMP_plots, metContribPlots = met_contrib_plots, plotLegend = contrib_legend))
+    if(configTable[V1=="genomeChoices", V2 == get_text("source_choices")[1]]){
+      network_sub = network[Prod %in% cmp_mods[[1]][,compound]|Reac %in% cmp_mods[[1]][,compound]] #Network is in KEGG compounds
+    } else {
+      network[,KEGGReac:=agora_kegg_mets(Reac)]
+      network[,KEGGProd:=agora_kegg_mets(Prod)]
+      network_sub = network[(KEGGReac %in% cmp_mods[[1]][,compound] & grepl("[e]", Reac, fixed = T))|(KEGGProd %in% cmp_mods[[1]][,compound]& grepl("[e]", Prod, fixed = T))]
+    }
+    analysis_summary = get_analysis_summary(input_data[[1]], species, mets, network, indiv_cmps, cmp_mods, var_shares, config_table)
+    return(list(newSpecies = species, varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1) & V1 != "vsearch_path"], 
+                networkData = network_sub, CMPScores = indiv_cmps[CMP != 0], CMPplots = CMP_plots, metContribPlots = met_contrib_plots, plotLegend = contrib_legend, 
+                analysisSummary = analysis_summary))
     #Send var_shares for download
     #Generate plot of var shares
     #source(other stuff)
@@ -305,7 +318,11 @@ ui = fluidPage(
     #tags$link(rel = "stylesheet", type = "text/css", href = "lab_styles.css"),
     #tags$link(rel = "stylesheet", type = "text/css", href = "shiny-alt.css"),
     #tags$link(rel = "stylesheet", type = "text/css", href = "software.css"),
-    tags$link(rel = "stylesheet", type = "text/css", href = "burritostyle.css")
+    tags$link(rel = "stylesheet", type = "text/css", href = "burritostyle.css"), 
+    tags$style("#errorMessage{color: red;
+                                 font-size: 14px;
+                                 }"
+    )
   ),
   tags$img(src = "title_lab_800.jpg", border = 0), #Borenstein lab img
   titlePanel("MIMOSA2", windowTitle = "MIMOSA2"),
@@ -369,34 +386,42 @@ server <- function(input, output, session) {
           )), width="100%", tags$style(type = "text/css", "#title { horizontal-align: left; width: 100%}"  )))
     } else {
       if(input$compare_only == F){
+        if(class(datasetInput()) != "character"){
         fluidPage(
-          fluidRow(
-            column(
-              downloadButton("downloadModelData", "Model Summaries", class = "downloadButton"), 
-              downloadButton("downloadData", "Contribution Results", class = "downloadButton"), 
-              downloadButton("downloadSpecies", "Mapped Taxa Abundances", class = "downloadButton"),
-              downloadButton("downloadNetworkData", "Community Metabolic Network Models", class = "downloadButton"), 
-              downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
-              tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
-          p(get_text("result_table_description")),
-          fluidRow( # Big table
-            DT::dataTableOutput("allMetaboliteInfo"), width="100%"
-          ),
-          fluidRow(
-            plotOutput("contribLegend")
-          ),
-          fluidRow(
-            downloadButton("downloadComparePlots", "Download selected CMP-Metabolite plots", class = "downloadButton"), 
-            downloadButton("downloadContribPlots", "Download selected taxa contribution plots", class = "downloadButton"), 
-            downloadButton("downloadContributionHeatmap", "Generate and download contribution heatmap plot", class = "downloadButton")
-            #verbatimTextOutput('x4')
-            #tableOutput("data2"), width = "100%"
-          )
+            fluidRow(
+              column(
+                downloadButton("downloadSummaryStats", "Analysis Summary Statistics", class = "downloadButton"),
+                downloadButton("downloadModelData", "Model Summaries", class = "downloadButton"), 
+                downloadButton("downloadData", "Contribution Results", class = "downloadButton"), 
+                downloadButton("downloadSpecies", "Mapped Taxa Abundances", class = "downloadButton"),
+                downloadButton("downloadNetworkData", "Community Metabolic Network Models", class = "downloadButton"), 
+                downloadButton("downloadCMPs", "Community Metabolic Potential Scores", class = "downloadButton"),
+                downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
+                tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
+            p(get_text("result_table_description")),
+            fluidRow( # Big table
+              DT::dataTableOutput("allMetaboliteInfo"), width="100%"
+            ),
+            fluidRow(
+              plotOutput("contribLegend")
+            ),
+            fluidRow(
+              downloadButton("downloadComparePlots", "Download selected CMP-Metabolite plots", class = "downloadButton"), 
+              downloadButton("downloadContribPlots", "Download selected taxa contribution plots", class = "downloadButton"), 
+              downloadButton("downloadContributionHeatmap", "Generate and download contribution heatmap plot", class = "downloadButton")
+              #verbatimTextOutput('x4')
+              #tableOutput("data2"), width = "100%"
+            )
+
           # ),
           # fluidRow(
           #   plotOutput("contribPlots", height = "650px") #, click = "plot_click", hover = "plot_hover") 
           # ) 
         )
+        } else {
+          textOutput("errorMessage")
+        }
+        
       } else {
         fluidPage(
           fluidRow(
@@ -486,8 +511,10 @@ server <- function(input, output, session) {
       names(file_list1) = c("file1","file2", "metagenome","netAdd") # "geneAddFile", 
       #logjs(config_table())
       print(file_list1)
-      input_data = read_mimosa2_files(file_list = file_list1, configTable = config_table())
-      run_pipeline(input_data, config_table(), analysisID)
+      input_data = tryCatch(read_mimosa2_files(file_list = file_list1, configTable = config_table()), error = function(e){ return(e$message)})
+      tryCatch(run_pipeline(input_data, config_table(), analysisID), error=function(e){ 
+        print(e)
+        return(e$message)})
     } else {
     	#logjs("Reading example data")
     	config = config_table()
@@ -495,9 +522,12 @@ server <- function(input, output, session) {
     	var_shares = fread("data/exampleData/contributionResultsExample.txt")
     	modResults = fread("data/exampleData/modelResultsExample.txt")
     	networkData = fread("data/exampleData/communityNetworkModelsExample.txt")
+    	cmpScores = fread("data/exampleData/CMPScoresExample.txt")
+    	summaryStats = fread("data/exampleData/StatsExample.txt")
     	#analysisID = "example"
     	
-    	return(list(newSpecies = species_dat, varShares = var_shares, modelData = modResults, configs = config, networkData = networkData, example_data = T))
+    	return(list(newSpecies = species_dat, varShares = var_shares, modelData = modResults, configs = config, networkData = networkData, 
+    	            CMPScores = cmpScores, analysisSummary = summaryStats, example_data = T))
     }
   })
   
@@ -525,7 +555,19 @@ server <- function(input, output, session) {
     enable("downloadModelData")
     enable("downloadNetworkData")
   })
-    
+  
+  output$errorMessage = renderText({
+    paste0("Error: ", datasetInput())
+  })
+  output$downloadSummaryStats <- downloadHandler(
+    filename = function() {
+      "summaryStats.txt"
+      #paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.table(datasetInput()$analysisSummary, file, row.names = F, sep = "\t", quote=F)
+    }
+  )
   output$downloadSettings <- downloadHandler(
     filename = function() {
       "configSettings.txt"
@@ -568,6 +610,14 @@ server <- function(input, output, session) {
   	content = function(file) {
   		write.table(datasetInput()$networkData, file, row.names = F, sep = "\t", quote=F)
   	}
+  )
+  output$downloadCMPs = downloadHandler(
+    filename = function(){
+      "communityMetabolicPotentialScores.txt"
+    },
+    content = function(file) {
+      write.table(datasetInput()$networkData, file, row.names = F, sep = "\t", quote=F)
+    }
   )
   
   output$contribPlots = renderPlot({

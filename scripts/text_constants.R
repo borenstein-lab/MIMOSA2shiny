@@ -40,7 +40,7 @@ network_mapping_tooltip = "A higher threshold will result in fewer taxa more lik
 
 #closest_title = ""
 #closest_options = c("Use closest AGORA species", "Use AGORA models for species within a % similarity threshold")
-sim_title = "Minimum similarity threshold for mapping sequence variants"
+sim_title = "Minimum similarity threshold (for mapping ASVs only)"
 gapfill_option = "Gap-fill model for each species using x program"
 algorithm_header = "Algorithm settings"
 algorithm_description = "Select the regression method for comparing metabolite concentrations with community metabolic potential (CMP) scores."

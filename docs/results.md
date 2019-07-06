@@ -28,8 +28,8 @@ overall community model. *Note:* For analyses using rank-based regression, in or
 ## Output Interactive Table
 
 Below the download buttons, the main panel of the web application displays an interactive table of results for each metabolite. This table includes the model fit results, 
-number of taxa that explained greater than 5% of the variation, the specific reactions that contributed to model CMP scores, and plots of the overall fit and the 
-contributors. Metabolites are ordered by the variance explained by the model and by the direction of the relationship (positive slopes first, then negative). The
+the specific reactions and taxa that contributed to model CMP scores, and plots of the overall fit and the 
+contributors. Metabolites are ordered by the variance explained by the model and by the direction of the relationship. The
 first rows of the table therefore represent those metabolites whose variation is most consistent with shifts in the metabolic capacities of the community. 
 
 Two types of plots are generated for each metabolite: 
