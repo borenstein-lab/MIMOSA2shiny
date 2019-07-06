@@ -302,7 +302,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       network[,KEGGProd:=agora_kegg_mets(Prod)]
       network_sub = network[(KEGGReac %in% cmp_mods[[1]][,compound] & grepl("[e]", Reac, fixed = T))|(KEGGProd %in% cmp_mods[[1]][,compound]& grepl("[e]", Prod, fixed = T))]
     }
-    analysis_summary = get_analysis_summary(input_data[[1]], species, mets, network, indiv_cmps, cmp_mods, var_shares, config_table)
+    analysis_summary = get_analysis_summary(input_species = input_data[[1]], species = species, mets = mets, network = network, indiv_cmps = indiv_cmps, cmp_mods = cmp_mods, var_shares = var_shares, config_table = configTable)
     return(list(newSpecies = species, varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1) & V1 != "vsearch_path"], 
                 networkData = network_sub, CMPScores = indiv_cmps[CMP != 0], CMPplots = CMP_plots, metContribPlots = met_contrib_plots, plotLegend = contrib_legend, 
                 analysisSummary = analysis_summary))
