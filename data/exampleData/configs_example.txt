@@ -1,15 +1,15 @@
 V1	V2
+analysisID	MKMFX03013
 database	Greengenes 13_5 or 13_8 OTUs
-metagenome_format	Total KO abundances
 genomeChoices	AGORA genomes and models
 metType	KEGG Compound IDs
-simThreshold	0.99
 met_transform	logplus
 regType	Rank-based regression
 compare_only	FALSE
-vsearch_path	bin/vsearch
 rankBased	TRUE
 rank_type	rfit
 metagenome	FALSE
+metagenome_format	FALSE
 contribType	FALSE
 netAdd	FALSE
+simThreshold	FALSE
