@@ -12,7 +12,8 @@ library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
 library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(cowplot)
 library(RColorBrewer)
-options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=200*1024^2)
+options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=200*1024^2, 
+        show.error.locations=TRUE)
 theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
 library(shinyBS)
 library(ggpubr)
@@ -290,7 +291,8 @@ run_pipeline = function(input_data, configTable, analysisID){
       setnames(leg_dat, "V1", "Contributing Taxa")
       print(leg_dat)
       legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa")# + theme(legend.text = element_text(size = 10))
-      contrib_legend = get_legend(legend_plot) ####Whyyy is this happening
+      contrib_legend = get_legend(legend_plot) 
+      #save(contrib_legend, file = "data/exampleData/contrib_legend.rda")
       save_plot(contrib_legend, file = paste0(analysisID, "_", "contribLegend.png"), dpi=120, base_width = 4, base_height = 2.5)
     } else {
       contrib_legend = NULL
@@ -513,7 +515,7 @@ server <- function(input, output, session) {
       print(file_list1)
       input_data = tryCatch(read_mimosa2_files(file_list = file_list1, configTable = config_table()), error = function(e){ return(e$message)})
       tryCatch(run_pipeline(input_data, config_table(), analysisID), error=function(e){ 
-        print(e)
+        print(e$call)
         return(e$message)})
     } else {
     	#logjs("Reading example data")
@@ -806,7 +808,12 @@ server <- function(input, output, session) {
   }, res = 100)
   
   output$contribLegend = renderPlot({
-    return(plot_grid(datasetInput()$plotLegend))
+    if("example_data" %in% names(datasetInput())){
+      load("data/exampleData/example_contrib_legend.rda")
+      return(plot_grid(contrib_legend))
+    } else {
+      return(plot_grid(datasetInput()$plotLegend))
+    }
     #return(list(src = paste0(analysisID, "_contribLegend.png")))
   })
   
