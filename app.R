@@ -14,7 +14,7 @@ library(cowplot)
 library(RColorBrewer)
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=200*1024^2, 
         show.error.locations=TRUE)
-theme_set(theme_get() + theme(text = element_text(family = 'Helvetica')))
+theme_set(theme_cowplot() + theme(text = element_text(family = 'Helvetica')))
 library(shinyBS)
 library(ggpubr)
 
@@ -272,13 +272,13 @@ run_pipeline = function(input_data, configTable, analysisID){
       met_contrib_plots = NULL
     }
     for(i in 1:length(CMP_plots)){
-      save_plot(CMP_plots[[i]], file = paste0(analysisID, "_", names(CMP_plots)[i], ".png"), dpi = 80, base_width = 2, base_height = 2)
+      save_plot(CMP_plots[[i]], file = paste0(analysisID, "_", names(CMP_plots)[i], ".png"), base_width = 2, base_height = 2)
     }
     if(!configTable[V1 == "compare_only", V2==T]){
       for(i in 1:length(met_contrib_plots)){
         print(comp_list[i])
         if(!is.null(met_contrib_plots[[i]])){
-          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "_", comp_list[i], "_contribs.png"), dpi = 80, base_width = 2, base_height = 2)
+          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "_", comp_list[i], "_contribs.png"), base_width = 2, base_height = 2)
         }
       }
       # if(!exists("contrib_legend")){ #Get legend from first non-nulll compound
@@ -413,6 +413,10 @@ server <- function(input, output, session) {
               downloadButton("downloadContributionHeatmap", "Generate and download contribution heatmap plot", class = "downloadButton")
               #verbatimTextOutput('x4')
               #tableOutput("data2"), width = "100%"
+            ), 
+            tags$style(
+              type="text/css",
+              "#image img {max-width: 2in; max-height: 2in; width: auto; height: auto}"
             )
 
           # ),
