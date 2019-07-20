@@ -53,7 +53,21 @@ regression_choices = c("Rank-based regression", "Least-squares (OLS) regression"
 skip_contribs_option = "Skip taxonomic contribution analysis; only perform CMP-metabolite comparisons"
 skip_contribs_tooltip = "Taxonomic contribution analysis can be slow when rank-based regression is selected."
 
-result_table_description = "Each row of the table summarizes the MIMOSA2 results for a given metabolite, including the overall concordance between metabolic potential and concentration, and the contributing taxa."
+result_table_description = "Each row of the table summarizes the MIMOSA2 results for a given metabolite, including the overall concordance between metabolic potential and concentration, and the contributing taxa. 
+Mouse over the names of each column of the table for a more detailed description."
+results_table_titles = c('Metabolites are ordered by CMP-Metabolite model fit and positive/negative slope direction',
+                         'KEGG Compound Identification',
+                         'Metabolite Name',
+                         'CMP-Metabolite Model R-squared',
+                         'CMP-Metabolite Model P-value',
+                         'CMP-Metabolite Model Slope',
+                         'CMP scores versus metabolite concentrations - use the button below the table to download. R-squared is annotated in the top right corner. Points are plotted in red if the association is significant (p < 0.01), or blue if not.',
+                         "Taxa contribution plot - use the button below the table to download. Taxa color legend is shown below this table.",
+                         "Genes linked to reactions producing this compound (for AGORA/EMBL_GEMS models see http://bigg.ucsd.edu for annotations)",
+                         "Taxa linked to reactions producing this compound",
+                         "Genes linked to reactions utilizing this compound (for AGORA/EMBL_GEMS models see http://bigg.ucsd.edu for annotations)",
+                         "Taxa linked to reactions utilizing this compound",
+                         "CMP-Metabolite Model Intercept")
 
 ### Replace previous sysdata
 all_dat = ls()

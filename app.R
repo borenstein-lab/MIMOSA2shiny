@@ -255,8 +255,8 @@ run_pipeline = function(input_data, configTable, analysisID){
       all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual" & Species != "Other" & abs(VarShare) >= 0.02, as.character(unique(Species))]
       print(all_contrib_taxa)
       getPalette = colorRampPalette(brewer.pal(12, "Paired"))
-      contrib_color_palette = c("black", "gray", getPalette(length(all_contrib_taxa)))
-      names(contrib_color_palette) = c("Residual", "Other", all_contrib_taxa)
+      contrib_color_palette = c("gray", getPalette(length(all_contrib_taxa))) #"black", 
+      names(contrib_color_palette) = c( "Other", all_contrib_taxa) #"Residual",
       print("Color palette")
       print(contrib_color_palette)
       var_shares[,MetaboliteName:=met_names(as.character(compound))]
@@ -287,7 +287,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       print("Making legend")
       print(all_contrib_taxa)
       print(contrib_color_palette)
-      leg_dat = data.table(V1 = factor(names(contrib_color_palette), levels = c(all_contrib_taxa, "Other", "Residual")))
+      leg_dat = data.table(V1 = factor(names(contrib_color_palette), levels = c(all_contrib_taxa, "Other"))) #, "Residual"
       setnames(leg_dat, "V1", "Contributing Taxa")
       print(leg_dat)
       legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa")# + theme(legend.text = element_text(size = 10))
@@ -676,17 +676,70 @@ server <- function(input, output, session) {
         })]
       tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, ContribPlot, SynthGenes, SynthSpec, DegGenes, DegSpec, Intercept)]
       setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Contribution Plot", "Producing Genes/Rxns", "Producing Species", "Utilizing Genes/Rxns", "Utilizing Species", "Intercept"))
+      tooltip_table = htmltools::withTags(table(
+        class = 'display',
+        thead(
+          tr(
+            th('', title = get_text("results_table_titles")[1]),
+            th('Compound ID', title = get_text("results_table_titles")[2]),
+            th('Name', title = get_text("results_table_titles")[3]),
+            th('R-squared', title = get_text("results_table_titles")[4]),
+            th('P-value', title = get_text("results_table_titles")[5]),
+            th('Slope', title = get_text("results_table_titles")[6]),
+            th('Comparison Plot', title = get_text("results_table_titles")[7]),
+            th('Contribution Plot', title = get_text("results_table_titles")[8]),
+            th("Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
+            th("Producing Species", title = get_text("results_table_titles")[10]), 
+            th("Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
+            th("Utilizing Species", title = get_text("results_table_titles")[12]),
+            th("Intercept", title = get_text("results_table_titles")[13])
+          ))))
     } else {
       if(datasetInput()$configs[V1=="metagenome_format", V2==get_text("metagenome_options")[1]]){ #Skip species
         tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, SynthGenes, DegGenes, Intercept)]
         setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Producing Genes/Rxns","Utilizing Genes/Rxns", "Intercept"))
+        tooltip_table = htmltools::withTags(table(
+          class = 'display',
+          thead(
+            tr(
+              th('', title = get_text("results_table_titles")[1]),
+              th('Compound ID', get_text("results_table_titles")[2]),
+              th('Name', title = get_text("results_table_titles")[3]),
+              th('R-squared', title = get_text("results_table_titles")[4]),
+              th('P-value', title = get_text("results_table_titles")[5]),
+              th('Slope', title = get_text("results_table_titles")[6]),
+              th('Comparison Plot', title = get_text("results_table_titles")[7]),
+              th("Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
+              th("Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
+              th("Intercept", title = get_text("results_table_titles")[13])
+            ))))
       } else {
         tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, SynthGenes, SynthSpec, DegGenes, DegSpec, Intercept)]
         setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Producing Genes/Rxns", "Producing Species", "Utilizing Genes/Rxns", "Utilizing Species",  "Intercept"))
+        tooltip_table = htmltools::withTags(table(
+          class = 'display',
+          thead(
+            tr(
+              th('', title = get_text("results_table_titles")[1]),
+              th('Compound ID', get_text("results_table_titles")[2]),
+              th('Name', title = get_text("results_table_titles")[3]),
+              th('R-squared', title = get_text("results_table_titles")[4]),
+              th('P-value', title = get_text("results_table_titles")[5]),
+              th('Slope', title = get_text("results_table_titles")[6]),
+              th('Comparison Plot', title = get_text("results_table_titles")[7]),
+              th('Contribution Plot', title = get_text("results_table_titles")[8]),
+              th("Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
+              th("Producing Species", title = get_text("results_table_titles")[10]), 
+              th("Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
+              th("Utilizing Species", title = get_text("results_table_titles")[12]),
+              th("Intercept", title = get_text("results_table_titles")[13])
+            ))))
       }
     }
 
-    return(DT::datatable(tableData2[order(`Compound ID`)], escape = F, options = list(lengthMenu = c(5, 10), pageLength = 5), filter = "top"))
+    return(DT::datatable(
+      tableData2[order(`Compound ID`)], escape = F, options = list(lengthMenu = c(5, 10), pageLength = 5), filter = "top", 
+      container = tooltip_table))
     #return(DT::datatable(tableData[order(m2R, decreasing = T),list(compound, Rsq, PVal, Slope, Intercept)], 
      #                    options = list(lengthMenu = c(5, 10), pageLength = 5)))
   })
