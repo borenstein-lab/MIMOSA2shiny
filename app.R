@@ -727,7 +727,6 @@ server <- function(input, output, session) {
               th('P-value', title = get_text("results_table_titles")[5]),
               th('Slope', title = get_text("results_table_titles")[6]),
               th('Comparison Plot', title = get_text("results_table_titles")[7]),
-              th('Contribution Plot', title = get_text("results_table_titles")[8]),
               th("Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
               th("Producing Species", title = get_text("results_table_titles")[10]), 
               th("Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
