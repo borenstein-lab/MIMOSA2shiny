@@ -13,7 +13,7 @@ library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(cowplot)
 library(RColorBrewer)
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=200*1024^2, 
-        show.error.locations=TRUE)
+        show.error.locations=TRUE, shiny.trace = F)
 theme_set(theme_cowplot() + theme(text = element_text(family = 'Helvetica')))
 library(shinyBS)
 library(ggpubr)
@@ -240,8 +240,12 @@ run_pipeline = function(input_data, configTable, analysisID){
       var_shares = NULL
     }
     #Add species/rxn info
-    cmp_summary = get_cmp_summary(species, network, normalize = !rxn_param, manual_agora = F, kos_only = no_spec_param, humann2 = humann2_param, met_subset = cmp_mods[[1]][!is.na(Rsq) & Rsq != 0,compound])
+    cmp_summary = get_cmp_summary(species, network, normalize = !rxn_param, manual_agora = F, kos_only = no_spec_param, humann2 = humann2_param, 
+                                  met_subset = cmp_mods[[1]][!is.na(Rsq) & Rsq != 0,compound], contrib_sizes = var_shares)
     cmp_mods[[1]] = merge(cmp_mods[[1]], cmp_summary, by = "compound", all.x = T)
+    print(cmp_mods[[1]])
+    cmp_mods[[1]][,compound:=as.character(compound)]
+    indiv_cmps[,compound:=as.character(compound)]
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
     incProgress(1/10, detail = "Making CMP-Metabolite plots")
@@ -266,19 +270,26 @@ run_pipeline = function(input_data, configTable, analysisID){
         if(is.na(met_names(x))){
           met_id = x
         } else { met_id = met_names(x)}
-        plot_contributions(var_shares, met_id, metIDcol = "MetaboliteName", color_palette = contrib_color_palette, include_residual = F, merge_threshold = 0.02)
+        plot_contributions(var_shares, met_id, metIDcol = "MetaboliteName", color_palette = contrib_color_palette, include_residual = F, merge_threshold = 0.01)
       })
     } else {
       met_contrib_plots = NULL
     }
+    print(analysisID)
+    dir.create(path = analysisID, showWarnings = T)
+    print(dir.exists(analysisID))
     for(i in 1:length(CMP_plots)){
-      save_plot(CMP_plots[[i]], file = paste0(analysisID, "_", names(CMP_plots)[i], ".png"), base_width = 2, base_height = 2)
+      print(paste0(analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"))
+      print(CMP_plots[[i]])
+      if(!identical(CMP_plots[[i]], NA)){
+        save_plot(CMP_plots[[i]], file = paste0(analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"), base_width = 2, base_height = 2)
+      } 
     }
     if(!configTable[V1 == "compare_only", V2==T]){
       for(i in 1:length(met_contrib_plots)){
         print(comp_list[i])
         if(!is.null(met_contrib_plots[[i]])){
-          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "_", comp_list[i], "_contribs.png"), base_width = 2, base_height = 2)
+          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "/", analysisID, "_", comp_list[i], "_contribs.png"), base_width = 2, base_height = 2)
         }
       }
       # if(!exists("contrib_legend")){ #Get legend from first non-nulll compound
@@ -291,9 +302,9 @@ run_pipeline = function(input_data, configTable, analysisID){
       setnames(leg_dat, "V1", "Contributing Taxa")
       print(leg_dat)
       legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa")# + theme(legend.text = element_text(size = 10))
-      contrib_legend = get_legend(legend_plot) 
+      contrib_legend = tryCatch(get_legend(legend_plot), error = function(){ return(NULL)}) 
       #save(contrib_legend, file = "data/exampleData/contrib_legend.rda")
-      save_plot(contrib_legend, file = paste0(analysisID, "_", "contribLegend.png"), dpi=120, base_width = 4, base_height = 2.5)
+      if(!is.null(contrib_legend)) save_plot(contrib_legend, file = paste0(analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 4, base_height = 2.5)
     } else {
       contrib_legend = NULL
     }
@@ -387,11 +398,12 @@ server <- function(input, output, session) {
             width = 12, align = "center"
           )), width="100%", tags$style(type = "text/css", "#title { horizontal-align: left; width: 100%}"  )))
     } else {
-      if(input$compare_only == F){
+      if(input$compare_only == F & !(!is.null(input$metagenome) & input$metagenome_format==get_text("metagenome_options")[1])){
         if(class(datasetInput()) != "character"){
         fluidPage(
             fluidRow(
               column(
+                downloadButton("downloadAll", "Download All Results Tables and Plots", class = "downloadButton"),
                 downloadButton("downloadSummaryStats", "Analysis Summary Statistics", class = "downloadButton"),
                 downloadButton("downloadModelData", "Model Summaries", class = "downloadButton"), 
                 downloadButton("downloadData", "Contribution Results", class = "downloadButton"), 
@@ -417,7 +429,12 @@ server <- function(input, output, session) {
             tags$style(
               type="text/css",
               "#image img {max-width: 2in; max-height: 2in; width: auto; height: auto}"
-            )
+            ), 
+            tags$style(
+              type="text/css",
+              "#downloadAll  {background-color: #3CBCDB}"
+            ) 
+            
 
           # ),
           # fluidRow(
@@ -432,11 +449,18 @@ server <- function(input, output, session) {
         fluidPage(
           fluidRow(
             column(
+              downloadButton("downloadAll", "Download All Results Tables and Plots", class = "downloadButton"),
+              downloadButton("downloadSummaryStats", "Analysis Summary Statistics", class = "downloadButton"),
               downloadButton("downloadModelData", "Model Summaries", class = "downloadButton"), 
               downloadButton("downloadSpecies", "Mapped Taxa Abundances", class = "downloadButton"),
               downloadButton("downloadNetworkData", "Community Metabolic Network Models", class = "downloadButton"), 
+              downloadButton("downloadCMPs", "Community Metabolic Potential Scores", class = "downloadButton"),
               downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
-              tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
+              tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"),
+              tags$style(
+                type="text/css",
+                "#downloadAll  {background-color: #3CBCDB}"
+              ), width = 12, align = "center")),
           p(get_text("result_table_description")),
           fluidRow( # Big table
             DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -565,6 +589,45 @@ server <- function(input, output, session) {
   output$errorMessage = renderText({
     paste0("Error: ", datasetInput())
   })
+  
+  output$downloadAll = downloadHandler(
+    filename = function(){
+      if("example_data" %in% names(datasetInput())){
+        "example_allResults.zip"
+      } else {
+        paste0(analysisID, "_allResults.zip")
+      }
+    },
+    content = function(file){
+      if("example_data" %in% names(datasetInput())){
+        file_ids = paste0("data/exampleData/", list.files(path = "data/exampleData"))
+      } else {
+        write.table(datasetInput()$analysisSummary, file = paste0(analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
+        write.table(datasetInput()$configs, file = paste0(analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F)
+        
+        if(!input$compare_only & !(!is.null(input$metagenome) & input$metagenome_format==get_text("metagenome_options")[1])) write.table(datasetInput()$varShares, file = paste0(analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
+        write.table(datasetInput()$newSpecies, file = paste0(analysisID, "/mappedTaxaData.txt"), row.names = F, sep = "\t", quote=F)
+        write.table(datasetInput()$modelData, file = paste0(analysisID, "/modelResults.txt"), row.names = F, sep = "\t", quote=F)
+        write.table(datasetInput()$networkData, file = paste0(analysisID, "/communityNetworkModels.txt"), row.names = F, sep = "\t", quote=F)
+        write.table(datasetInput()$CMPScores, file = paste0(analysisID, "/communityMetabolicPotentialScores.txt"), row.names = F, sep = "\t", quote=F)
+        
+        if(!input$compare_only & !(!is.null(input$metagenome) & input$metagenome_format==get_text("metagenome_options")[1])){
+          plotData = datasetInput()$varShares
+          
+          tableData = datasetInput()$modelData[!is.na(Slope)]
+          # plotData = merge(plotData, tableData, by="compound", all.x = T)
+          # if("Slope.x" %in% names(plotData)) setnames(plotData, "Slope.x", "Slope")
+          save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0(analysisID, "/contributionHeatmapPlotSelected.pdf"), 
+                    base_width = 10, base_height = 8)
+        }
+        print(list.files(path = analysisID))
+        file_ids = paste0(analysisID, "/", list.files(path = analysisID))
+      }
+      print(file_ids)
+
+      zip(zipfile = file, files = file_ids)
+    }
+  )
   output$downloadSummaryStats <- downloadHandler(
     filename = function() {
       "summaryStats.txt"
@@ -622,13 +685,14 @@ server <- function(input, output, session) {
       "communityMetabolicPotentialScores.txt"
     },
     content = function(file) {
-      write.table(datasetInput()$networkData, file, row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$CMPScores, file, row.names = F, sep = "\t", quote=F)
     }
   )
   
   output$contribPlots = renderPlot({
     plotData = datasetInput()$varShares
-    plotData = merge(plotData, datasetInput()$modelData, by="compound", all.x = T)
+    # plotData = merge(plotData, datasetInput()$modelData, by="compound", all.x = T)
+    # if("Slope.x" %in% names(plotData)) setnames(plotData, "Slope.x", "Slope")
     #print(plotData)
     ##met1 = plotData[1,compound]
     #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
@@ -638,25 +702,28 @@ server <- function(input, output, session) {
   
   output$allMetaboliteInfo = DT::renderDT({
     #print(datasetInput())
+    print(datasetInput()$modelData)
+    print(names(datasetInput()$modelData))
     tableData = datasetInput()$modelData[!is.na(Slope)]
     #Get order before rounding
     tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
     compound_order = tableData[order(m2R, decreasing = T), compound] #, tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
     
+    print(head(tableData[,Slope]))
     #tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
     tableData[,PVal:=round(PVal, 5)]
     tableData[,Rsq:=round(Rsq, 3)]
     tableData[,Slope:=round(Slope, 3)]
     tableData[,Intercept:=round(Intercept, 3)]
     tableData[,metName:=sapply(compound, met_names)]
-    tableData2 = tableData[,list(compound, metName, Rsq, PVal, Slope, SynthGenes, SynthSpec, DegGenes, DegSpec, Intercept)]
+    tableData2 = tableData[,list(compound, metName, Rsq, PVal, Slope, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
     tableData2[,compound:=factor(compound, levels = compound_order)]
     print(tableData2)
     #good_comps = list.files(path = getwd(), pattern = analysisID)
     if("example_data" %in% names(datasetInput())){
       analysisID2 = "data/exampleData/example"
     } else {
-      analysisID2 = analysisID
+      analysisID2 = paste0(analysisID, "/", analysisID)
     }
     print(analysisID2)
     tableData2[,Plot:=sapply(paste0(analysisID2, "_", compound, ".png"), function(x){ 
@@ -674,8 +741,8 @@ server <- function(input, output, session) {
           return(img_uri("blank_plot.png"))
         }
         })]
-      tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, ContribPlot, SynthGenes, SynthSpec, DegGenes, DegSpec, Intercept)]
-      setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Contribution Plot", "Producing Genes/Rxns", "Producing Species", "Utilizing Genes/Rxns", "Utilizing Species", "Intercept"))
+      tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, ContribPlot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+      setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Contribution Plot", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns",  "Intercept"))
       tooltip_table = htmltools::withTags(table(
         class = 'display',
         thead(
@@ -688,16 +755,14 @@ server <- function(input, output, session) {
             th('Slope', title = get_text("results_table_titles")[6]),
             th('Comparison Plot', title = get_text("results_table_titles")[7]),
             th('Contribution Plot', title = get_text("results_table_titles")[8]),
-            th("Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
-            th("Producing Species", title = get_text("results_table_titles")[10]), 
-            th("Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
-            th("Utilizing Species", title = get_text("results_table_titles")[12]),
+            th("Top Producing Taxa and Genes/Rxns", title = get_text("results_table_titles")[9]),
+            th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[11]),
             th("Intercept", title = get_text("results_table_titles")[13])
           ))))
     } else {
       if(datasetInput()$configs[V1=="metagenome_format", V2==get_text("metagenome_options")[1]]){ #Skip species
-        tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, SynthGenes, DegGenes, Intercept)]
-        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Producing Genes/Rxns","Utilizing Genes/Rxns", "Intercept"))
+        tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Top Producing Genes/Rxns","Top Utilizing Genes/Rxns", "Intercept"))
         tooltip_table = htmltools::withTags(table(
           class = 'display',
           thead(
@@ -709,13 +774,13 @@ server <- function(input, output, session) {
               th('P-value', title = get_text("results_table_titles")[5]),
               th('Slope', title = get_text("results_table_titles")[6]),
               th('Comparison Plot', title = get_text("results_table_titles")[7]),
-              th("Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
-              th("Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
+              th("Top Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
+              th("Top Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
               th("Intercept", title = get_text("results_table_titles")[13])
             ))))
       } else {
-        tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, SynthGenes, SynthSpec, DegGenes, DegSpec, Intercept)]
-        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Producing Genes/Rxns", "Producing Species", "Utilizing Genes/Rxns", "Utilizing Species",  "Intercept"))
+        tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"))
         tooltip_table = htmltools::withTags(table(
           class = 'display',
           thead(
@@ -727,17 +792,15 @@ server <- function(input, output, session) {
               th('P-value', title = get_text("results_table_titles")[5]),
               th('Slope', title = get_text("results_table_titles")[6]),
               th('Comparison Plot', title = get_text("results_table_titles")[7]),
-              th("Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
-              th("Producing Species", title = get_text("results_table_titles")[10]), 
-              th("Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
-              th("Utilizing Species", title = get_text("results_table_titles")[12]),
+              th("Top Producing Taxa and Genes/Rxns", title = get_text("results_table_titles")[9]),
+              th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[11]),
               th("Intercept", title = get_text("results_table_titles")[13])
             ))))
       }
     }
 
     return(DT::datatable(
-      tableData2[order(`Compound ID`)], escape = F, options = list(lengthMenu = c(5, 10), pageLength = 5), filter = "top", 
+      tableData2[order(`Compound ID`)], escape = F, options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
       container = tooltip_table))
     #return(DT::datatable(tableData[order(m2R, decreasing = T),list(compound, Rsq, PVal, Slope, Intercept)], 
      #                    options = list(lengthMenu = c(5, 10), pageLength = 5)))
@@ -760,7 +823,7 @@ server <- function(input, output, session) {
       if("example_data" %in% names(datasetInput())){
         analysisID2 = "data/exampleData/example"
       } else {
-        analysisID2 = analysisID
+        analysisID2 = paste0(analysisID, "/", analysisID)
       }
       print(analysisID2)
       file_ids = paste0(analysisID2, "_", comp_ids, ".png")
@@ -785,7 +848,7 @@ server <- function(input, output, session) {
       if("example_data" %in% names(datasetInput())){
         analysisID2 = "data/exampleData/example"
       } else {
-        analysisID2 = analysisID
+        analysisID2 = paste0(analysisID, "/", analysisID)
       }
       file_ids = paste0(analysisID2, "_", comp_ids, "_contribs.png")
       file_ids = file_ids[sapply(file_ids, file.exists)]
@@ -806,7 +869,7 @@ server <- function(input, output, session) {
       #compound_order = c(tableData[Slope > 0][order(Rsq, decreasing = T), compound], tableData[Slope <= 0][order(Rsq, decreasing = T), compound])
       comp_list = compound_order[comp_num]
       plotData = datasetInput()$varShares[compound %in% comp_list]
-      plotData = merge(plotData, tableData[compound %in% comp_list], by="compound", all.x = T)
+      #plotData = merge(plotData, tableData[compound %in% comp_list], by="compound", all.x = T)
       #print(plotData)
       ##met1 = plotData[1,compound]
       #### Make a drop bar to select one metabolite to display plot & data for at a time!!! cool.
@@ -868,16 +931,20 @@ server <- function(input, output, session) {
       load("data/exampleData/example_contrib_legend.rda")
       return(plot_grid(contrib_legend))
     } else {
-      return(plot_grid(datasetInput()$plotLegend))
+      if(!is.null(datasetInput()$plotLegend)){
+        return(plot_grid(datasetInput()$plotLegend))
+      } else { return(NULL)}
     }
     #return(list(src = paste0(analysisID, "_contribLegend.png")))
   })
   
   session$onSessionEnded(function() {
     #remove plots
-    plots_made = list.files(pattern = analysisID)
+    plots_made = list.files(path = analysisID)
     print(plots_made)
-    file.remove(plots_made)
+    file.remove(paste0(analysisID, "/", plots_made))
+    file.remove(analysisID)
+    #Move files to www dir instead
 
   })
   
