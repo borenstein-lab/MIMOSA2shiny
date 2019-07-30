@@ -9,7 +9,7 @@ If you use MIMOSA2, please cite:
 
 Noecker, C. and E. Borenstein. MIMOSA2: A metabolic network-based tool for linking microbiome and metabolomics data. In prep, 2019.
 
-MIMOSA2 also uses several other R packages, bioinformatics tools, and databases. Depending on the settings for your MIMOSA2 analysis, you may also need to cite the following:
+MIMOSA2 uses several other R packages, bioinformatics tools, and databases. Depending on the settings for your MIMOSA2 analysis, you may also need to cite the following:
 
 - [vsearch](https://github.com/torognes/vsearch): Rognes, T., Flouri, T., Nichols, B., Quince, C., and Mahé, F. (2016). VSEARCH: a versatile open source tool for metagenomics. PeerJ 4, e2584.
 
@@ -25,4 +25,4 @@ MIMOSA2 also uses several other R packages, bioinformatics tools, and databases.
 
 - [Rfit](https://journal.r-project.org/archive/2012-2/RJournal_2012-2_Kloke+McKean.pdf): Kloke, J.D. and Mckean, J.W. (2012), Rfit: Rank-based estimation for linear models, The R Journal, 4, 57--64.
 
-For questions about MIMOSA, please email elbo [at] tauex.tau.ac.il  .
+For questions about MIMOSA2, please email elbo [at] tauex.tau.ac.il  .

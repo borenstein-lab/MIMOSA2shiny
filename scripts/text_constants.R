@@ -9,13 +9,13 @@ file_out = paste0(path_to_mimosa2, "/R/sysdata.rda")
 load(file_out)
 microbiome_header = "Microbiome data"
 database_title = "Microbiome data format"
-database_choices = c("Sequence variants (ASVs)", "Greengenes 13_5 or 13_8 OTUs", "SILVA 132 OTUs", "No taxonomic abundance data; use functional abundance data only")
-microbiome_input_title = "Upload taxonomic abundance file (16S rRNA)"
+database_choices = c("Sequence variants (ASVs)", "Greengenes 13_5 or 13_8 OTUs", "SILVA 132 OTUs", "Metagenome: Total KO abundances", "Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)")
+microbiome_input_title = "Upload microbiome abundance file"
 metagenome_title = "Functional abundance data format"
 metagenome_options = c("Total KO abundances", "Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)")
 metagenome_input_title = "Upload file of KEGG Ortholog functional abundances"
 #metagenome_use_option = "Use metagenome for core analysis instead of 16S rRNA data (see documentation)"
-microbiome_tooltip = "Sequence variants are preferred. MIMOSA2 will map each taxon to any of the source choices described below."
+microbiome_tooltip = "Sequence variants or metagenomic KO annotations are preferred. Not all data input formats are compatible with all of the model source choices below."
 microbiome_description = "Upload a dataset of taxonomic and/or functional abundances and select the corresponding format."
 metagenome_tooltip = "A table of functional (KEGG KO) abundances is optional. It can either replace the taxonomic table or be used in comparison with the taxa-based analysis."
 
@@ -63,9 +63,9 @@ results_table_titles = c('Metabolites are ordered by CMP-Metabolite model fit an
                          'CMP-Metabolite Model Slope',
                          'CMP scores versus metabolite concentrations - use the button below the table to download. R-squared is annotated in the top right corner. Points are plotted in red if the association is significant (p < 0.01), or blue if not.',
                          "Taxa contribution plot - use the button below the table to download. Taxa color legend is shown below this table.",
-                         "Genes linked to reactions producing this compound (for AGORA/EMBL_GEMS models see http://bigg.ucsd.edu for annotations)",
+                         "Top taxa and genes/reactions producing this compound (for AGORA or embl_gems models, see http://bigg.ucsd.edu for reaction annotations)",
                          "Taxa linked to reactions producing this compound",
-                         "Genes linked to reactions utilizing this compound (for AGORA/EMBL_GEMS models see http://bigg.ucsd.edu for annotations)",
+                         "Top taxa and genes/reactions utilizing this compound (for AGORA or embl_gems models, see http://bigg.ucsd.edu for reaction annotations)",
                          "Taxa linked to reactions utilizing this compound",
                          "CMP-Metabolite Model Intercept")
 

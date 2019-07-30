@@ -38,21 +38,21 @@ microbiome_data_upload = function(){
                            ".csv", 
                            ".tsv",
                            "text/tsv"), width = '430px'), width = 8),
-        column(tags$a(tags$img(src = "example.png", border = 0), href = "test_seqs.txt", target = "_blank"), width = 4)),
+        column(tags$a(tags$img(src = "example.png", border = 0), href = "test_seqs.txt", target = "_blank"), width = 4)) #,
    #   checkboxInput("metagenomeOpt", label=get_text("metagenome_option"), width = '100%'),
     #p(get_text("metagenome_description")),
-    fluidRow(
-    column(radioButtons("metagenome_format", get_text("metagenome_title"), choices = get_text("metagenome_options"), width="100%"), width = 8),
-    column(tipify(tags$img(src = "help.png", border = 0), title = get_text("metagenome_tooltip"), placement = "right"), width = 4)),
-   	fluidRow(
-   		column(      fileInput("metagenome", get_text("metagenome_input_title"),
-                         multiple = FALSE,
-                         accept = c("text/csv",
-                                    "text/comma-separated-values,text/plain",
-                                    ".csv", 
-                                    ".tsv",
-                                    "text/tsv"), width = '430px'), width = 8), 
-   		column(tags$a(tags$img(src = "example.png", border = 0), href = "test_metagenome.txt", target = "_blank"), width = 4))
+   #  fluidRow(
+   #  column(radioButtons("metagenome_format", get_text("metagenome_title"), choices = get_text("metagenome_options"), width="100%"), width = 8),
+   #  column(tipify(tags$img(src = "help.png", border = 0), title = get_text("metagenome_tooltip"), placement = "right"), width = 4)),
+   # 	fluidRow(
+   # 		column(      fileInput("metagenome", get_text("metagenome_input_title"),
+   #                       multiple = FALSE,
+   #                       accept = c("text/csv",
+   #                                  "text/comma-separated-values,text/plain",
+   #                                  ".csv", 
+   #                                  ".tsv",
+   #                                  "text/tsv"), width = '430px'), width = 8), 
+   # 		column(tags$a(tags$img(src = "example.png", border = 0), href = "test_metagenome.txt", target = "_blank"), width = 4))
       #) )#,
       # disabled(checkboxInput("metagenome_use", get_text("metagenome_use_option"),
       #               ))
@@ -93,7 +93,7 @@ network_settings = function(){
        #tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "genome", width='100%'),
     p(get_text("network_description")),
     fluidRow(
-      column(radioButtons("genomeChoices", label = get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[2], width="100%"), width = 8),
+      column(radioButtons("genomeChoices", label = get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[1], width="100%"), width = 8),
       column(tipify(tags$img(src = "help.png", border = 0), title = get_text("network_tooltip"), placement = "right"), width = 4)
     ),
     fluidRow(
@@ -155,16 +155,17 @@ run_pipeline = function(input_data, configTable, analysisID){
 	  configTable = check_config_table(configTable, app = T)
 	
     incProgress(2/10, detail = "Building metabolic model")
-    validate(need(!(configTable[V1=="database", V2==get_text("database_choices")[4]] & 
+    validate(need(!(configTable[V1=="database", V2] %in% get_text("database_choices")[4:5] & 
                                   configTable[V1=="genomeChoices", V2 != get_text("source_choices")[1]]), "Error: Only KEGG metabolic model (network option 1) can be used with KEGG Ortholog data"))
+    print(input_data$netAdd)
     network_results = build_metabolic_model(species, configTable, netAdd = input_data$netAdd) #, input_data$netAdd) #input_data$geneAdd, 
     network = network_results[[1]]
     species = network_results[[2]] #Allow for modifying this for AGORA
-    if(!is.null(input_data$metagenome) & configTable[V1=="database", V2!=get_text("database_choices")[4]]){
-      #If we are doing a comparison of the species network and the metagenome network
-      #Metagenome data
-      metagenome_network = build_metabolic_model(input_data$metagenome, configTable)
-    }
+    # if(!is.null(input_data$metagenome) & configTable[V1=="database", V2!=get_text("database_choices")[4]]){
+    #   #If we are doing a comparison of the species network and the metagenome network
+    #   #Metagenome data
+    #   metagenome_network = build_metabolic_model(input_data$metagenome, configTable)
+    # }
     if(configTable[V1=="metType", V2 ==get_text("met_type_choices")[2]]){
       mets = map_to_kegg(mets)
     }
@@ -184,10 +185,10 @@ run_pipeline = function(input_data, configTable, analysisID){
       }
       cat(paste0("Regression type is ", rank_type, "\n"))
     } else rank_based = F
-    if(configTable[V1=="database", V2==get_text("database_choices")[4]] & identical(configTable[V1=="metagenome_format", V2], get_text("metagenome_options")[1])){
+    if(configTable[V1=="database", V2==get_text("database_choices")[4]]){
       no_spec_param = T
       humann2_param = F
-    } else if(configTable[V1=="database", V2==get_text("database_choices")[4]] & identical(configTable[V1=="metagenome_format", V2], get_text("metagenome_options")[2])){
+    } else if(configTable[V1=="database", V2==get_text("database_choices")[5]]){
       no_spec_param = F
       humann2_param = T
       cat("Humann2 format\n")
@@ -303,7 +304,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       print(leg_dat)
       legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa")# + theme(legend.text = element_text(size = 10))
       contrib_legend = tryCatch(get_legend(legend_plot), error = function(){ return(NULL)}) 
-      #save(contrib_legend, file = "data/exampleData/contrib_legend.rda")
+      #save(contrib_legend, file = "data/exampleData/example_contrib_legend.rda")
       if(!is.null(contrib_legend)) save_plot(contrib_legend, file = paste0(analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 4, base_height = 2.5)
     } else {
       contrib_legend = NULL
@@ -398,7 +399,7 @@ server <- function(input, output, session) {
             width = 12, align = "center"
           )), width="100%", tags$style(type = "text/css", "#title { horizontal-align: left; width: 100%}"  )))
     } else {
-      if(input$compare_only == F & !(!is.null(input$metagenome) & input$metagenome_format==get_text("metagenome_options")[1])){
+      if(input$compare_only == F & !(input$database==get_text("database_choices")[4])){
         if(class(datasetInput()) != "character"){
         fluidPage(
             fluidRow(
@@ -486,13 +487,13 @@ server <- function(input, output, session) {
     } else {
       #updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[1])
     }
-    if(input$database==get_text("database_choices")[4]){
-      #updateCheckboxInput(session, "metagenomeOpt", value = T)
-      disable("file1")
-    } else {
-      #updateCheckboxInput(session, "metagenomeOpt", value = F)
-      enable("file1")
-    }
+    # if(input$database==get_text("database_choices")[4]){
+    #   #updateCheckboxInput(session, "metagenomeOpt", value = T)
+    #   disable("file1")
+    # } else {
+    #   #updateCheckboxInput(session, "metagenomeOpt", value = F)
+    #   enable("file1")
+    # }
   })
   observeEvent(input$genomeChoices, {
     # if(input$genomeChoices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
@@ -504,11 +505,11 @@ server <- function(input, output, session) {
 
   config_table = reactive({
   	if(is.null(input$exampleButton)|input$exampleButton==0){
-  	    initial_inputs = c("database", "metagenome_format", "genomeChoices",  #"geneAdd", 
+  	    initial_inputs = c("database","genomeChoices",  #"geneAdd", 
                        "metType", "simThreshold", "logTransform", "regType", "compare_only") #Check that this is all of them
-  	  if(is.null(input$metagenome)){
-  	    initial_inputs = initial_inputs[initial_inputs != "metagenome_format"]
-  	  }
+  	  # if(is.null(input$metagenome)){
+  	  #   initial_inputs = initial_inputs[initial_inputs != "metagenome_format"]
+  	  # }
   	  if(input$database != get_text("database_choices")[1]){
   	    initial_inputs = initial_inputs[initial_inputs != "simThreshold"] #Does nothing if we don't have ASV data
   	  } 
@@ -534,17 +535,17 @@ server <- function(input, output, session) {
   
   datasetInput = reactive({
     if(is.null(input$exampleButton)|input$exampleButton==0){
-      validate(need(!is.null(input$file1)|!is.null(input$metagenome), "No microbiome file provided"), 
+      validate(need(input$file1, "No microbiome file provided"), 
                need(input$file2, "No metabolite file provided")
                )
-      file_list1 = list(input$file1, input$file2, input$metagenome, input$netAdd) # input$geneAddFile,
-      names(file_list1) = c("file1","file2", "metagenome","netAdd") # "geneAddFile", 
+      file_list1 = list(input$file1, input$file2, input$netAdd) # input$geneAddFile,
+      names(file_list1) = c("file1","file2", "netAdd") # "geneAddFile", 
       #logjs(config_table())
       print(file_list1)
       input_data = tryCatch(read_mimosa2_files(file_list = file_list1, configTable = config_table()), error = function(e){ return(e$message)})
       tryCatch(run_pipeline(input_data, config_table(), analysisID), error=function(e){ 
         print(e$call)
-        return(e$message)})
+        return(paste0("Error in: ", e$call, "\n", e$message))})
     } else {
     	#logjs("Reading example data")
     	config = config_table()
@@ -605,13 +606,13 @@ server <- function(input, output, session) {
         write.table(datasetInput()$analysisSummary, file = paste0(analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
         write.table(datasetInput()$configs, file = paste0(analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F)
         
-        if(!input$compare_only & !(!is.null(input$metagenome) & input$metagenome_format==get_text("metagenome_options")[1])) write.table(datasetInput()$varShares, file = paste0(analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
+        if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)) write.table(datasetInput()$varShares, file = paste0(analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
         write.table(datasetInput()$newSpecies, file = paste0(analysisID, "/mappedTaxaData.txt"), row.names = F, sep = "\t", quote=F)
         write.table(datasetInput()$modelData, file = paste0(analysisID, "/modelResults.txt"), row.names = F, sep = "\t", quote=F)
         write.table(datasetInput()$networkData, file = paste0(analysisID, "/communityNetworkModels.txt"), row.names = F, sep = "\t", quote=F)
         write.table(datasetInput()$CMPScores, file = paste0(analysisID, "/communityMetabolicPotentialScores.txt"), row.names = F, sep = "\t", quote=F)
         
-        if(!input$compare_only & !(!is.null(input$metagenome) & input$metagenome_format==get_text("metagenome_options")[1])){
+        if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)){
           plotData = datasetInput()$varShares
           
           tableData = datasetInput()$modelData[!is.na(Slope)]
@@ -760,7 +761,7 @@ server <- function(input, output, session) {
             th("Intercept", title = get_text("results_table_titles")[13])
           ))))
     } else {
-      if(datasetInput()$configs[V1=="metagenome_format", V2==get_text("metagenome_options")[1]]){ #Skip species
+      if(datasetInput()$configs[V1=="database", V2==get_text("database_choices")[4]]){ #Skip species
         tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
         setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Top Producing Genes/Rxns","Top Utilizing Genes/Rxns", "Intercept"))
         tooltip_table = htmltools::withTags(table(
