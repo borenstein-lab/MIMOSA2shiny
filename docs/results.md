@@ -57,7 +57,7 @@ Below the download buttons, the main panel of the web application displays an in
 - Top Utilizing Taxa and Genes/Rxns: The taxa with the largest contributors to variation in that metabolite, and the genes or reactions utilizing that metabolite that contributed to the relevant CMP scores. A maximum of 5 taxa-gene/reaction pairs is shown, but all of them can be found in the Contribution Results file.
 - Intercept: Model intercept (provided for completeness, but is not very interpretable.)
 
-For AGORA and embl_gems models, reaction annotations can be obtained from http://bigg.ucsd.edu. For KEGG models, KO annotations can be found at https://www.genome.jp/kegg/ko.html. 
+For AGORA and embl_gems models, reaction annotations can be obtained from [http://bigg.ucsd.edu](http://bigg.ucsd.edu). For KEGG models, KO annotations can be found at [http://www.genome.jp/kegg/ko.html](http://www.genome.jp/kegg/ko.html). 
 
 Metabolites are ordered by the variance explained by the model and by the direction of the relationship. The
 first rows of the table therefore represent those metabolites whose variation is most consistent with shifts in the metabolic capacities of the community. You can 

@@ -75,7 +75,6 @@ The table below lists the various fields that you can provide in your configurat
 |------|----------|
 |**file1** | Microbiome file path |
 |**file2** | Metabolomics file path |
-|metagenome | Metagenome (function abundances) file path |
 |**database** | Taxonomic abundance file type |
 |metagenome_format | Metagenome function abundance file type |
 |**genomeChoices** | Ref model option |

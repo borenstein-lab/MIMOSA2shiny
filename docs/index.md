@@ -30,3 +30,5 @@ and use a regression model to assess whether CMP scores are significantly predic
 
 4) For significant metabolites, decompose the overall model fit from step 3 into the contributions from each taxon, 
 identifying specific taxa that explain variation in each metabolite.
+
+For more on each of these steps, see [What Does A MIMOSA2 Analysis Do?](analysis_description.html).

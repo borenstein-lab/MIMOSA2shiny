@@ -140,6 +140,7 @@ output_settings = function(){
   )
 }
 
+
 ###### Core app function
 run_pipeline = function(input_data, configTable, analysisID){
   withProgress(message = "Running MIMOSA!", {
@@ -188,13 +189,16 @@ run_pipeline = function(input_data, configTable, analysisID){
     if(configTable[V1=="database", V2==get_text("database_choices")[4]]){
       no_spec_param = T
       humann2_param = F
+      rel_abund_param = T
     } else if(configTable[V1=="database", V2==get_text("database_choices")[5]]){
       no_spec_param = F
       humann2_param = T
+      rel_abund_param = F
       cat("Humann2 format\n")
     } else {
       no_spec_param = F
       humann2_param = F
+      rel_abund_param = T
     }
     # if("revRxns" %in% configTable[,V1]){ #Whether to add reverse of reversible-annotated rxns - mainly for agora networks
     #   network = add_rev_rxns(network, sameID = T) # Give reverse the same rxn ID
@@ -216,8 +220,11 @@ run_pipeline = function(input_data, configTable, analysisID){
       indiv_cmps = cmp_mods[[4]]
       #Will have to report nice summary of rxns removed, rxns direction switched, etc
     } else {
-      indiv_cmps = get_species_cmp_scores(species, network, normalize = !rxn_param, leave_rxns = rxn_param, manual_agora = F, kos_only = no_spec_param, humann2 = humann2_param)
+      indiv_cmps = get_species_cmp_scores(species, network, normalize = !rxn_param, leave_rxns = rxn_param, manual_agora = F, kos_only = no_spec_param, humann2 = humann2_param, relAbund = rel_abund_param)
       indiv_cmps = indiv_cmps[compound %in% mets[,compound]]
+      if(nrow(indiv_cmps[,length(CMP), by=list(compound, Species, Sample)][V1 != 1]) > 0){ #If there is not just 1 value for each data feature we will have problems
+        stop("Error calculating CMP scores - duplicates in data")
+      }
       cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt, rank_based = rank_based, rank_type = rank_type)
     }
     print(cmp_mods[[1]]) 
@@ -243,10 +250,16 @@ run_pipeline = function(input_data, configTable, analysisID){
     #Add species/rxn info
     cmp_summary = get_cmp_summary(species, network, normalize = !rxn_param, manual_agora = F, kos_only = no_spec_param, humann2 = humann2_param, 
                                   met_subset = cmp_mods[[1]][!is.na(Rsq) & Rsq != 0,compound], contrib_sizes = var_shares)
-    cmp_mods[[1]] = merge(cmp_mods[[1]], cmp_summary, by = "compound", all.x = T)
+    cmp_mods[[1]] = merge(cmp_mods[[1]], cmp_summary$CompLevelSummary, by = "compound", all.x = T)
     print(cmp_mods[[1]])
+    if(length(cmp_summary) > 1) var_shares = merge(var_shares, cmp_summary$SpeciesLevelSummary, by = c("compound", "Species"), all.x = T)
     cmp_mods[[1]][,compound:=as.character(compound)]
     indiv_cmps[,compound:=as.character(compound)]
+    if(!is.null(var_shares)){
+      var_shares[,compound:=as.character(compound)]
+      var_shares[,Species:=as.character(Species)]
+      var_shares = var_shares[,list(compound, Rsq, VarDisp, PVal, Slope, Intercept, Species, VarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
+    }
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
     incProgress(1/10, detail = "Making CMP-Metabolite plots")
@@ -257,11 +270,16 @@ run_pipeline = function(input_data, configTable, analysisID){
       incProgress(1/10, detail = "Making metabolite contribution plots")
       comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
       comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
-      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual" & Species != "Other" & abs(VarShare) >= 0.02, as.character(unique(Species))]
+      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual", as.character(unique(Species))]
       print(all_contrib_taxa)
       getPalette = colorRampPalette(brewer.pal(12, "Paired"))
-      contrib_color_palette = c("gray", getPalette(length(all_contrib_taxa))) #"black", 
-      names(contrib_color_palette) = c( "Other", all_contrib_taxa) #"Residual",
+      if(var_shares[compound %in% comp_list & Species != "Residual", length(unique(Species[VarShare != 0])), by=compound][,any(V1 > 10)]){
+        contrib_color_palette = c("gray", getPalette(length(all_contrib_taxa))) #"black",  #Work with plotting function filters
+        names(contrib_color_palette) = c( "Other", all_contrib_taxa) #"Residual",
+      } else {
+        contrib_color_palette = getPalette(length(all_contrib_taxa)) #"black", 
+        names(contrib_color_palette) = all_contrib_taxa #"Residual",
+      }
       print("Color palette")
       print(contrib_color_palette)
       var_shares[,MetaboliteName:=met_names(as.character(compound))]
@@ -276,21 +294,21 @@ run_pipeline = function(input_data, configTable, analysisID){
     } else {
       met_contrib_plots = NULL
     }
+    incProgress(1/10, detail = "Saving results")
     print(analysisID)
-    dir.create(path = analysisID, showWarnings = T)
+    dir.create(path = paste0("www/analysisResults/", analysisID), showWarnings = T)
     print(dir.exists(analysisID))
     for(i in 1:length(CMP_plots)){
-      print(paste0(analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"))
-      print(CMP_plots[[i]])
+      print(paste0("www/analysisResults/", analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"))
       if(!identical(CMP_plots[[i]], NA)){
-        save_plot(CMP_plots[[i]], file = paste0(analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"), base_width = 2, base_height = 2)
+        save_plot(CMP_plots[[i]], file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"), base_width = 2, base_height = 2)
       } 
     }
     if(!configTable[V1 == "compare_only", V2==T]){
       for(i in 1:length(met_contrib_plots)){
         print(comp_list[i])
         if(!is.null(met_contrib_plots[[i]])){
-          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0(analysisID, "/", analysisID, "_", comp_list[i], "_contribs.png"), base_width = 2, base_height = 2)
+          save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", comp_list[i], "_contribs.png"), base_width = 2, base_height = 2)
         }
       }
       # if(!exists("contrib_legend")){ #Get legend from first non-nulll compound
@@ -305,7 +323,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa")# + theme(legend.text = element_text(size = 10))
       contrib_legend = tryCatch(get_legend(legend_plot), error = function(){ return(NULL)}) 
       #save(contrib_legend, file = "data/exampleData/example_contrib_legend.rda")
-      if(!is.null(contrib_legend)) save_plot(contrib_legend, file = paste0(analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 4, base_height = 2.5)
+      if(!is.null(contrib_legend)) save_plot(contrib_legend, file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 4, base_height = 2.5)
     } else {
       contrib_legend = NULL
     }
@@ -325,6 +343,7 @@ run_pipeline = function(input_data, configTable, analysisID){
     #source(other stuff)
   })
 }
+
 
 ui = fluidPage(
   useShinyjs(),
@@ -360,6 +379,50 @@ server <- function(input, output, session) {
   #shinyjs::logjs(devtools::session_info())
   #shinyjs::logjs(Cairo.capabilities())
   analysisID = randomString()
+  #Save text output files and contribution plot
+  save_output_files = function(){
+    write.table(datasetInput()$analysisSummary, file = paste0("www/analysisResults/", analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
+    write.table(datasetInput()$configs, file = paste0("www/analysisResults/", analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F)
+    
+    if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)) write.table(datasetInput()$varShares, file = paste0("www/analysisResults/", analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
+    write.table(datasetInput()$newSpecies, file = paste0("www/analysisResults/", analysisID, "/mappedTaxaData.txt"), row.names = F, sep = "\t", quote=F)
+    write.table(datasetInput()$modelData, file = paste0("www/analysisResults/", analysisID, "/modelResults.txt"), row.names = F, sep = "\t", quote=F)
+    write.table(datasetInput()$networkData, file = paste0("www/analysisResults/", analysisID, "/communityNetworkModels.txt"), row.names = F, sep = "\t", quote=F)
+    write.table(datasetInput()$CMPScores, file = paste0("www/analysisResults/", analysisID, "/communityMetabolicPotentialScores.txt"), row.names = F, sep = "\t", quote=F)
+    
+    if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)){
+      plotData = datasetInput()$varShares
+      
+      tableData = datasetInput()$modelData[!is.na(Slope)]
+      # plotData = merge(plotData, tableData, by="compound", all.x = T)
+      # if("Slope.x" %in% names(plotData)) setnames(plotData, "Slope.x", "Slope")
+      summary_plot_width = plotData[,length(unique(compound))]/2+5
+      summary_plot_height = plotData[,length(unique(Species))]/2+4
+      save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0("www/analysisResults/", analysisID, "/contributionHeatmapPlotSelected.pdf"), 
+                base_width = 10, base_height = 8)
+    }
+  }
+  
+  ## Download zip file
+  download_all_zip = function(file, example_data = F){
+    if(example_data){
+      file_ids = paste0("data/exampleData/", list.files(path = "data/exampleData"))
+    } else {
+      print(list.files(path = analysisID))
+      file_ids = paste0("www/analysisResults/", analysisID, "/", list.files(path = paste0("www/analysisResults/", analysisID)))
+    }
+    print(file_ids)
+    
+    zip(zipfile = file, files = file_ids)
+  }
+  
+  analysisResultsFile = reactive({
+    if("example_data" %in% names(datasetInput())){
+      "example_allResults.zip"
+    } else {
+      paste0(analysisID, "/allResults.zip")
+    }
+  })
 
   output$uploadPage = renderUI({
     if(is.null(input$goButton) & is.null(input$exampleButton)){
@@ -413,6 +476,7 @@ server <- function(input, output, session) {
                 downloadButton("downloadCMPs", "Community Metabolic Potential Scores", class = "downloadButton"),
                 downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
                 tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
+            p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("http://elbo-spice.gs.washington.edu/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
             p(get_text("result_table_description")),
             fluidRow( # Big table
               DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -462,6 +526,7 @@ server <- function(input, output, session) {
                 type="text/css",
                 "#downloadAll  {background-color: #3CBCDB}"
               ), width = 12, align = "center")),
+          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("http://elbo-spice.gs.washington.edu/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
           p(get_text("result_table_description")),
           fluidRow( # Big table
             DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -516,7 +581,7 @@ server <- function(input, output, session) {
       inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
       values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
   	  inputs_provided = c("analysisID", inputs_provided, "kegg_prefix", "data_prefix", "vsearch_path")
-	    values_provided = c(analysisID, values_provided, "data/KEGGfiles/", "data/", "bin/vsearch")    #print(file.exists(input$file1$datapath))
+	    values_provided = c(analysisID, values_provided, "data/KEGGfiles/KEGG_2019/", "data/", "bin/vsearch")    #print(file.exists(input$file1$datapath))
       print(inputs_provided)
       print(values_provided)
       if(input$logTransform == T){
@@ -544,8 +609,7 @@ server <- function(input, output, session) {
       print(file_list1)
       input_data = tryCatch(read_mimosa2_files(file_list = file_list1, configTable = config_table()), error = function(e){ return(e$message)})
       tryCatch(run_pipeline(input_data, config_table(), analysisID), error=function(e){ 
-        print(e$call)
-        return(paste0("Error in: ", e$call, "\n", e$message))})
+        return(e$call)})  #paste0(e$call, "\n", e$message)
     } else {
     	#logjs("Reading example data")
     	config = config_table()
@@ -569,6 +633,7 @@ server <- function(input, output, session) {
     #if(error_checks){
     config_table()
     datasetInput()
+    save_output_files()
     enable("downloadSettings")
     enable("downloadData")
     enable("downloadModelData")
@@ -591,42 +656,21 @@ server <- function(input, output, session) {
     paste0("Error: ", datasetInput())
   })
   
+
   output$downloadAll = downloadHandler(
     filename = function(){
       if("example_data" %in% names(datasetInput())){
         "example_allResults.zip"
       } else {
-        paste0(analysisID, "_allResults.zip")
+        paste0("www/analysisResults/", analysisID, "allResults.zip")
       }
     },
     content = function(file){
       if("example_data" %in% names(datasetInput())){
-        file_ids = paste0("data/exampleData/", list.files(path = "data/exampleData"))
+        download_all_zip(file, example_data = T)
       } else {
-        write.table(datasetInput()$analysisSummary, file = paste0(analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
-        write.table(datasetInput()$configs, file = paste0(analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F)
-        
-        if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)) write.table(datasetInput()$varShares, file = paste0(analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
-        write.table(datasetInput()$newSpecies, file = paste0(analysisID, "/mappedTaxaData.txt"), row.names = F, sep = "\t", quote=F)
-        write.table(datasetInput()$modelData, file = paste0(analysisID, "/modelResults.txt"), row.names = F, sep = "\t", quote=F)
-        write.table(datasetInput()$networkData, file = paste0(analysisID, "/communityNetworkModels.txt"), row.names = F, sep = "\t", quote=F)
-        write.table(datasetInput()$CMPScores, file = paste0(analysisID, "/communityMetabolicPotentialScores.txt"), row.names = F, sep = "\t", quote=F)
-        
-        if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)){
-          plotData = datasetInput()$varShares
-          
-          tableData = datasetInput()$modelData[!is.na(Slope)]
-          # plotData = merge(plotData, tableData, by="compound", all.x = T)
-          # if("Slope.x" %in% names(plotData)) setnames(plotData, "Slope.x", "Slope")
-          save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0(analysisID, "/contributionHeatmapPlotSelected.pdf"), 
-                    base_width = 10, base_height = 8)
-        }
-        print(list.files(path = analysisID))
-        file_ids = paste0(analysisID, "/", list.files(path = analysisID))
+        download_all_zip(file, example_data = F)
       }
-      print(file_ids)
-
-      zip(zipfile = file, files = file_ids)
     }
   )
   output$downloadSummaryStats <- downloadHandler(
@@ -705,6 +749,9 @@ server <- function(input, output, session) {
     #print(datasetInput())
     print(datasetInput()$modelData)
     print(names(datasetInput()$modelData))
+    if(nrow(datasetInput()$modelData)==0){
+      stop("Analysis failed, no metabolite data found")
+    }
     tableData = datasetInput()$modelData[!is.na(Slope)]
     #Get order before rounding
     tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
@@ -724,7 +771,7 @@ server <- function(input, output, session) {
     if("example_data" %in% names(datasetInput())){
       analysisID2 = "data/exampleData/example"
     } else {
-      analysisID2 = paste0(analysisID, "/", analysisID)
+      analysisID2 = paste0("www/analysisResults/", analysisID, "/", analysisID)
     }
     print(analysisID2)
     tableData2[,Plot:=sapply(paste0(analysisID2, "_", compound, ".png"), function(x){ 
@@ -824,7 +871,7 @@ server <- function(input, output, session) {
       if("example_data" %in% names(datasetInput())){
         analysisID2 = "data/exampleData/example"
       } else {
-        analysisID2 = paste0(analysisID, "/", analysisID)
+        analysisID2 = paste0("www/analysisResults/", analysisID, "/", analysisID)
       }
       print(analysisID2)
       file_ids = paste0(analysisID2, "_", comp_ids, ".png")
@@ -849,7 +896,7 @@ server <- function(input, output, session) {
       if("example_data" %in% names(datasetInput())){
         analysisID2 = "data/exampleData/example"
       } else {
-        analysisID2 = paste0(analysisID, "/", analysisID)
+        analysisID2 = paste0("www/analysisResults/", analysisID, "/", analysisID)
       }
       file_ids = paste0(analysisID2, "_", comp_ids, "_contribs.png")
       file_ids = file_ids[sapply(file_ids, file.exists)]
@@ -940,11 +987,19 @@ server <- function(input, output, session) {
   })
   
   session$onSessionEnded(function() {
-    #remove plots
-    plots_made = list.files(path = analysisID)
+    plots_made = list.files(path = paste0("www/analysisResults/", analysisID))
+    #remove everything except zip file
     print(plots_made)
-    file.remove(paste0(analysisID, "/", plots_made))
-    file.remove(analysisID)
+    
+    if(file.exists(paste0("www/analysisResults/", analysisID))){
+      download_all_zip(paste0("www/analysisResults/", analysisID, "/allResults.zip"), example_data = F)
+      nonzip_files = list.files(path = paste0("www/analysisResults/", analysisID))
+      nonzip_files = nonzip_files[nonzip_files != "allResults.zip"]
+      file.remove(paste0("www/analysisResults/", analysisID, "/", nonzip_files))
+    }
+
+    # file.remove(paste0(analysisID, "/", plots_made))
+    # file.remove(analysisID)
     #Move files to www dir instead
 
   })
