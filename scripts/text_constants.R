@@ -56,7 +56,7 @@ skip_contribs_tooltip = "Taxonomic contribution analysis can be slow when rank-b
 result_table_description = "Each row of the table below summarizes the MIMOSA2 results for a given metabolite, including the overall concordance between metabolic potential and concentration, and the contributing taxa. 
 Mouse over the names of each column of the table for a more detailed description. Specific plots can be downloaded using the buttons below the table."
 
-find_results_description = "After this session terminates, a zip file of the results can be downloaded from the following link for 30 days:\n"
+find_results_description = "After this session terminates, a zipped directory of all results files can be downloaded from the following link for 30 days:\n"
 results_table_titles = c('Metabolites are ordered by CMP-Metabolite model fit and positive/negative slope direction',
                          'KEGG Compound Identification',
                          'Metabolite Name',

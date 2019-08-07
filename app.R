@@ -12,7 +12,7 @@ library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
 library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(cowplot)
 library(RColorBrewer)
-options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=200*1024^2, 
+options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=300*1024^2, 
         show.error.locations=TRUE, shiny.trace = F)
 theme_set(theme_cowplot() + theme(text = element_text(family = 'Helvetica')))
 library(shinyBS)
@@ -258,7 +258,7 @@ run_pipeline = function(input_data, configTable, analysisID){
     if(!is.null(var_shares)){
       var_shares[,compound:=as.character(compound)]
       var_shares[,Species:=as.character(Species)]
-      var_shares = var_shares[,list(compound, Rsq, VarDisp, PVal, Slope, Intercept, Species, VarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
+      var_shares = var_shares[,list(compound, Rsq, VarDisp, ModelPVal, Slope, Intercept, Species, VarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
     }
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
@@ -335,7 +335,9 @@ run_pipeline = function(input_data, configTable, analysisID){
       network_sub = network[(KEGGReac %in% cmp_mods[[1]][,compound] & grepl("[e]", Reac, fixed = T))|(KEGGProd %in% cmp_mods[[1]][,compound]& grepl("[e]", Prod, fixed = T))]
     }
     analysis_summary = get_analysis_summary(input_species = input_data[[1]], species = species, mets = mets, network = network, indiv_cmps = indiv_cmps, cmp_mods = cmp_mods, var_shares = var_shares, config_table = configTable)
-    return(list(newSpecies = species, varShares = var_shares, modelData = cmp_mods[[1]], configs = configTable[!grepl("prefix", V1) & V1 != "vsearch_path"], 
+    #clean up config file
+    config1 = configTable[!grepl("prefix", V1) & V1 != "vsearch_path"]
+    return(list(newSpecies = species, varShares = var_shares, modelData = cmp_mods[[1]], configs = config1, 
                 networkData = network_sub, CMPScores = indiv_cmps[CMP != 0], CMPplots = CMP_plots, metContribPlots = met_contrib_plots, plotLegend = contrib_legend, 
                 analysisSummary = analysis_summary))
     #Send var_shares for download
@@ -482,7 +484,7 @@ server <- function(input, output, session) {
                 downloadButton("downloadCMPs", "Community Metabolic Potential Scores", class = "downloadButton"),
                 downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
                 tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
-            p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
+            p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), target = "_blank"))),
             p(get_text("result_table_description")),
             fluidRow( # Big table
               DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -532,7 +534,7 @@ server <- function(input, output, session) {
                 type="text/css",
                 "#downloadAll  {background-color: #3CBCDB}"
               ), width = 12, align = "center")),
-          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
+          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
           p(get_text("result_table_description")),
           fluidRow( # Big table
             DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -598,6 +600,11 @@ server <- function(input, output, session) {
         inputs_provided = c(inputs_provided, "rankBased", "rank_type")
         values_provided = c(values_provided, T, "rfit")
       }
+      #Add file names just for provenance/reproducibility
+      print("file1")
+      print(input$file1)
+      inputs_provided = c(inputs_provided, "file1", "file2", "netAdd")
+      values_provided = c(values_provided, input$file1$name, input$file2$name, ifelse(is.null(input$netAdd), NA, normalizePath(input$netAdd$name)))
       return(data.table(V1 = inputs_provided, V2 = values_provided))
   	} else {
   		return(fread("data/exampleData/configs_example.txt", header = T))

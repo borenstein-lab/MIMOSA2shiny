@@ -1,5 +1,5 @@
 ---
-title: What does a MIMOSA2 analysis do?
+title: What does MIMOSA2 do?
 layout: default
 active: analysis_description
 ---
