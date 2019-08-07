@@ -391,33 +391,34 @@ server <- function(input, output, session) {
     }
     print(file_ids)
     
-    zip(zipfile = file, files = file_ids)
+    zip(zipfile = file, files = file_ids, flags = "-j")
   }
   
   #Save text output files and contribution plot
   save_output_files = function(){
-    write.table(datasetInput()$analysisSummary, file = paste0("www/analysisResults/", analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
-    write.table(datasetInput()$configs, file = paste0("www/analysisResults/", analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F)
-    
-    if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)) write.table(datasetInput()$varShares, file = paste0("www/analysisResults/", analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
-    write.table(datasetInput()$newSpecies, file = paste0("www/analysisResults/", analysisID, "/mappedTaxaData.txt"), row.names = F, sep = "\t", quote=F)
-    write.table(datasetInput()$modelData, file = paste0("www/analysisResults/", analysisID, "/modelResults.txt"), row.names = F, sep = "\t", quote=F)
-    write.table(datasetInput()$networkData, file = paste0("www/analysisResults/", analysisID, "/communityNetworkModels.txt"), row.names = F, sep = "\t", quote=F)
-    write.table(datasetInput()$CMPScores, file = paste0("www/analysisResults/", analysisID, "/communityMetabolicPotentialScores.txt"), row.names = F, sep = "\t", quote=F)
-    
-    if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)){
-      plotData = datasetInput()$varShares
+    if(is.list(datasetInput())){
+      write.table(datasetInput()$analysisSummary, file = paste0("www/analysisResults/", analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$configs, file = paste0("www/analysisResults/", analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F)
       
-      tableData = datasetInput()$modelData[!is.na(Slope)]
-      # plotData = merge(plotData, tableData, by="compound", all.x = T)
-      # if("Slope.x" %in% names(plotData)) setnames(plotData, "Slope.x", "Slope")
-      summary_plot_width = plotData[,length(unique(compound))]/2+5
-      summary_plot_height = plotData[,length(unique(Species))]/2+4
-      save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0("www/analysisResults/", analysisID, "/contributionHeatmapPlotSelected.pdf"), 
-                base_width = 10, base_height = 8)
+      if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)) write.table(datasetInput()$varShares, file = paste0("www/analysisResults/", analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$newSpecies, file = paste0("www/analysisResults/", analysisID, "/mappedTaxaData.txt"), row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$modelData, file = paste0("www/analysisResults/", analysisID, "/modelResults.txt"), row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$networkData, file = paste0("www/analysisResults/", analysisID, "/communityNetworkModels.txt"), row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$CMPScores, file = paste0("www/analysisResults/", analysisID, "/communityMetabolicPotentialScores.txt"), row.names = F, sep = "\t", quote=F)
+      
+      if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)){
+        plotData = datasetInput()$varShares
+        
+        tableData = datasetInput()$modelData[!is.na(Slope)]
+        # plotData = merge(plotData, tableData, by="compound", all.x = T)
+        # if("Slope.x" %in% names(plotData)) setnames(plotData, "Slope.x", "Slope")
+        summary_plot_width = plotData[,length(unique(compound))]/2+5
+        summary_plot_height = plotData[,length(unique(Species))]/2+4
+        save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0("www/analysisResults/", analysisID, "/contributionHeatmapPlotSelected.pdf"), 
+                  base_width = 10, base_height = 8)
+      }
+      download_all_zip(paste0("www/analysisResults/", analysisID, "/allResults.zip"), example_data = F)
     }
-    download_all_zip(paste0("www/analysisResults/", analysisID, "/allResults.zip"), example_data = F)
-    
   }
   
   
@@ -481,7 +482,7 @@ server <- function(input, output, session) {
                 downloadButton("downloadCMPs", "Community Metabolic Potential Scores", class = "downloadButton"),
                 downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
                 tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
-            p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("http://elbo-spice.gs.washington.edu/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
+            p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
             p(get_text("result_table_description")),
             fluidRow( # Big table
               DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -531,7 +532,7 @@ server <- function(input, output, session) {
                 type="text/css",
                 "#downloadAll  {background-color: #3CBCDB}"
               ), width = 12, align = "center")),
-          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("http://elbo-spice.gs.washington.edu/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
+          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
           p(get_text("result_table_description")),
           fluidRow( # Big table
             DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -883,7 +884,7 @@ server <- function(input, output, session) {
       print(analysisID2)
       file_ids = paste0(analysisID2, "_", comp_ids, ".png")
       file_ids = file_ids[sapply(file_ids, file.exists)]
-      zip(zipfile = file, files = file_ids)
+      zip(zipfile = file, files = file_ids, flags = "-j")
     }
   )
   output$downloadContribPlots = downloadHandler(
@@ -907,7 +908,7 @@ server <- function(input, output, session) {
       }
       file_ids = paste0(analysisID2, "_", comp_ids, "_contribs.png")
       file_ids = file_ids[sapply(file_ids, file.exists)]
-      if(length(file_ids) > 0) zip(zipfile = file, files = file_ids)
+      if(length(file_ids) > 0) zip(zipfile = file, files = file_ids, flags = "-j")
     }
   )
   
