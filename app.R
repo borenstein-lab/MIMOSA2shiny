@@ -379,6 +379,21 @@ server <- function(input, output, session) {
   #shinyjs::logjs(devtools::session_info())
   #shinyjs::logjs(Cairo.capabilities())
   analysisID = randomString()
+  
+  ## Download zip file fnunction
+  download_all_zip = function(file, example_data = F){
+    if(example_data){
+      file_ids = paste0("data/exampleData/", list.files(path = "data/exampleData"))
+    } else {
+      print(list.files(path = analysisID))
+      file_ids = paste0("www/analysisResults/", analysisID, "/", list.files(path = paste0("www/analysisResults/", analysisID)))
+      file_ids = file_ids[file_ids != "allResults.zip"] # In case this already exists
+    }
+    print(file_ids)
+    
+    zip(zipfile = file, files = file_ids)
+  }
+  
   #Save text output files and contribution plot
   save_output_files = function(){
     write.table(datasetInput()$analysisSummary, file = paste0("www/analysisResults/", analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
@@ -401,20 +416,10 @@ server <- function(input, output, session) {
       save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0("www/analysisResults/", analysisID, "/contributionHeatmapPlotSelected.pdf"), 
                 base_width = 10, base_height = 8)
     }
+    download_all_zip(paste0("www/analysisResults/", analysisID, "/allResults.zip"), example_data = F)
+    
   }
   
-  ## Download zip file
-  download_all_zip = function(file, example_data = F){
-    if(example_data){
-      file_ids = paste0("data/exampleData/", list.files(path = "data/exampleData"))
-    } else {
-      print(list.files(path = analysisID))
-      file_ids = paste0("www/analysisResults/", analysisID, "/", list.files(path = paste0("www/analysisResults/", analysisID)))
-    }
-    print(file_ids)
-    
-    zip(zipfile = file, files = file_ids)
-  }
   
   analysisResultsFile = reactive({
     if("example_data" %in% names(datasetInput())){
@@ -629,15 +634,17 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$goButton, {
+    req(input$file1)
     req(input$file2)
     #if(error_checks){
     config_table()
     datasetInput()
-    save_output_files()
+    #
     enable("downloadSettings")
     enable("downloadData")
     enable("downloadModelData")
     enable("downloadNetworkData")
+    save_output_files()
     #var_shares = run_pipeline(input) #Just give it everything and go from there
     
     #}
@@ -749,7 +756,7 @@ server <- function(input, output, session) {
     #print(datasetInput())
     print(datasetInput()$modelData)
     print(names(datasetInput()$modelData))
-    if(nrow(datasetInput()$modelData)==0){
+    if(is.null(datasetInput()$modelData)){
       stop("Analysis failed, no metabolite data found")
     }
     tableData = datasetInput()$modelData[!is.na(Slope)]
@@ -816,7 +823,7 @@ server <- function(input, output, session) {
           thead(
             tr(
               th('', title = get_text("results_table_titles")[1]),
-              th('Compound ID', get_text("results_table_titles")[2]),
+              th('Compound ID', title = get_text("results_table_titles")[2]),
               th('Name', title = get_text("results_table_titles")[3]),
               th('R-squared', title = get_text("results_table_titles")[4]),
               th('P-value', title = get_text("results_table_titles")[5]),
@@ -992,7 +999,6 @@ server <- function(input, output, session) {
     print(plots_made)
     
     if(file.exists(paste0("www/analysisResults/", analysisID))){
-      download_all_zip(paste0("www/analysisResults/", analysisID, "/allResults.zip"), example_data = F)
       nonzip_files = list.files(path = paste0("www/analysisResults/", analysisID))
       nonzip_files = nonzip_files[nonzip_files != "allResults.zip"]
       file.remove(paste0("www/analysisResults/", analysisID, "/", nonzip_files))
