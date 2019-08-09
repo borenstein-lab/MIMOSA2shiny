@@ -28,7 +28,7 @@ describing an approximate relative estimate of the effects of each taxon, on eac
 3) Compare total community-level metabolic potential (CMP) scores with metabolite concentrations across all samples, 
 and use a regression model to assess whether CMP scores are significantly predictive of concentrations.
 
-4) For significant metabolites, decompose the overall model fit from step 3 into the contributions from each taxon, 
+4) Decompose the overall model fit from step 3 into the contributions from each taxon, 
 identifying specific taxa that explain variation in each metabolite.
 
 For more on each of these steps, see [What Does A MIMOSA2 Analysis Do?](analysis_description.html).

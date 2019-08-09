@@ -8,23 +8,23 @@ active: faqs
 
 ### Input Data
 
-- [**What kind of microbiome data can I use? Can I provide transcriptomic data?**](faqs.html#transcriptome)
+- [What kind of microbiome data can I use? Can I provide transcriptomic data?](faqs.html#transcriptome)
 
-- [**Can I calculate metabolic potential scores even if I don't have metabolomics data?**](faqs.html#cmpsAlone)
+- [Can I calculate metabolic potential scores even if I don't have metabolomics data?](faqs.html#cmpsAlone)
 
-- [**What about metabolomics features that have not been assigned a compound identification?**](faqs.html#noID)
+- [What about metabolomics features that have not been assigned a compound identification?](faqs.html#noID)
 
 ### MIMOSA2 Functionality and Analysis Options
 
-- [**How is MIMOSA2 different from MIMOSA1?**](faqs.html#mimosa1)
+- [How is MIMOSA2 different from MIMOSA1?](faqs.html#mimosa1)
 
-- [**Why does MIMOSA2 only analyze some of my metabolites? Why does the set of analyzed metabolites depend on the analysis settings?**](faqs.html#metabolites)
+- [Why does MIMOSA2 only analyze some of my metabolites? Why does the set of analyzed metabolites depend on the analysis settings?](faqs.html#metabolites)
 
-- [**Which reference database should I use? Why do my results change when using different reference databases?**](faqs.html#whichReference)
+- [Which reference database should I use? Why do my results change when using different reference databases?](faqs.html#whichReference)
 
-- [**I don't have a KEGG license. Can I still use the KEGG-based analysis?**](faqs.html#keggLicense)
+- [I don't have a KEGG license. Can I still use the KEGG-based analysis?](faqs.html#keggLicense)
 
-- [**What does it mean for a metabolite to be negatively predicted by metabolic potential (negative slope)?**](faqs.html#negatives)
+- [What does it mean for a metabolite to be negatively predicted by metabolic potential (negative slope)?](faqs.html#negatives)
 
 ### Input Data
 
@@ -71,5 +71,8 @@ Yes. An advantage of running MIMOSA2 via the web server is that you can run anal
 will not be able to run any MIMOSA2 analyses locally unless you have access to files from the KEGG FTP database.
 
 <h4 id="negatives">What does it mean for a metabolite to be negatively predicted by metabolic potential (negative slope)?</h4>
-It's complicated...
+We are still working on answering this question. Possible reasons for a negative correlation between a metabolite's concentration and metabolic potential include incorrectly annotated or missing reactions,
+and effects beyond direct metabolic reactions such as growth promotion or toxicity. In simulations and in a simple validation dataset, we find that taxonomic contributors to a model with a negative slope are 
+slightly less likely (*** stat) to represent a true taxon-metabolite link than contributors to a model with a positive slope. Contributors identified for negatively correlated metabolites could therefore 
+represent true relationships but should be interpreted more cautiously than positively correlated metabolites. 
 

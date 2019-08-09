@@ -764,8 +764,11 @@ server <- function(input, output, session) {
     #print(datasetInput())
     print(datasetInput()$modelData)
     print(names(datasetInput()$modelData))
+    if(typeof(datasetInput())=="character"){
+      stop(datasetInput())
+    }
     if(is.null(datasetInput()$modelData)){
-      stop("Analysis failed, no metabolite data found")
+      stop("Analysis failed, no metabolite data found. Error message: ", datasetInput())
     }
     tableData = datasetInput()$modelData[!is.na(Slope)]
     #Get order before rounding
