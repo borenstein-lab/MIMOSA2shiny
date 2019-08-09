@@ -16,11 +16,12 @@ mimosa2 can be easily installed from GitHub using the `devtools` package:
 devtools::install_github("borenstein-lab/mimosa2")
 ``` 
 
-You can test that the package has been installed correctly by running the test suite:
+<!- You can test that the package has been installed correctly by running the test suite:
 
 ```R
 devtools::test("mimosa2")
 ```
+-->
 
 ## Generating preprocessed reference data
 

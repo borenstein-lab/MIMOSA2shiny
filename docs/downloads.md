@@ -5,8 +5,8 @@ active: downloads
 ---
 # MIMOSA2 Reference Data Downloads
 
-MIMOSA2 can use various types of reference data to construct metabolic models from a set of microbiome data. These are described below, and in some cases links are available for download. 
-The methods used to generate these files are described in the MIMOSA2 manuscript. All of the processing scripts can be found [here](http://github.com/borenstein-lab/MIMOSA2app/scripts/).
+MIMOSA2 can use various types of reference data to construct metabolic models from a set of microbiome data. A subset of these are available for download below. 
+The methods used to generate these files are described in the MIMOSA2 manuscript. Scripts to re-generate these files can be found [here](http://github.com/borenstein-lab/MIMOSA2app/scripts/).
 
 ### Taxon-specific metabolic models, processed and formatted for MIMOSA2 compatibility: 
 
