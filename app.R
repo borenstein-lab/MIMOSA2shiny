@@ -170,7 +170,7 @@ run_pipeline = function(input_data, configTable, analysisID){
     if(configTable[V1=="metType", V2 ==get_text("met_type_choices")[2]]){
       mets = map_to_kegg(mets)
     }
-    incProgress(1/10, detail = "Calculating metabolic potential and fitting metabolite concentration model")
+    incProgress(1/10, detail = "Calculating metabolic potential and fitting metabolite concentration models")
     #Get CMP scores
     if("rxnEdit" %in% configTable[,V1]){
       rxn_param = T
@@ -237,7 +237,7 @@ run_pipeline = function(input_data, configTable, analysisID){
         bad_spec = bad_spec[V1 < 0.2 & V1 < 0.1, OTU] #Never higher than 10% and absent in at least 80% of samples
         print(bad_spec)
       } else bad_spec = NULL
-      var_shares = calculate_var_shares(indiv_cmps, met_table = mets_melt, model_results = cmp_mods, config_table = configTable, species_merge = bad_spec)
+      var_shares = calculate_var_shares(indiv_cmps, met_table = mets_melt, model_results = cmp_mods, config_table = configTable, species_merge = bad_spec, signif_threshold = 0.1)
       ## If nothing significant was analyzed, behave as if compare_only were selected
       if(is.null(var_shares)){
         configTable[V1 == "compare_only", V2:="TRUE"]
@@ -484,7 +484,7 @@ server <- function(input, output, session) {
                 downloadButton("downloadCMPs", "Community Metabolic Potential Scores", class = "downloadButton"),
                 downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
                 tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
-            p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), target = "_blank"))),
+            p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("analysisResults/", analysisResultsFile()), target = "_blank"))),
             p(get_text("result_table_description")),
             fluidRow( # Big table
               DT::dataTableOutput("allMetaboliteInfo"), width="100%"
