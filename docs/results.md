@@ -7,7 +7,7 @@ active: results
 
 After running a MIMOSA2 analysis, the web application will provide several results files for download and will also generate summaries of the results.
 
-![alt text](MIMOSA_results_screenShot.png "MIMOSA2 Results")
+![alt text](results_screenshot_fig3.png "MIMOSA2 Results")
 
 
 ## Results Tables for Download

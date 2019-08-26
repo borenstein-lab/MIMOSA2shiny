@@ -11,7 +11,9 @@ MIMOSA2 summarizes paired microbiome-metabolome datasets to support mechanistic 
 
 **2) Which specific microbial taxa appear to be responsible for differences in the concentrations of each metabolite across samples?**
 
-MIMOSA2 uses a 4-step workflow, described below, to answer these questions. A more technical explanation of the method can be found in the [MIMOSA2 manuscript](link).
+MIMOSA2 uses a 4-step workflow, described below, to answer these questions. Each step is illustrated for a toy metabolite dataset in the figure below. A more technical explanation of the method can be found in the [MIMOSA2 manuscript](link).
+
+![example MIMOSA2](toyExampleTitlesRank.png "Example MIMOSA2 Process")
 
 ---
 **1) Construct a community metabolic model consisting of the set of metabolic reactions that each community member taxon is predicted to be capable of performing.**
@@ -42,6 +44,5 @@ Finally, MIMOSA2 analyzes the model fits from step 3 to attribute the variation 
 regression model from step 3. In other words, a microbe's contribution to a metabolite is equal to the share of the total variation in that metabolite that is explained by that microbe's metabolic potential. For metabolites that are significantly associated with predicted metabolic potential, the taxa with the largest contributions 
 are hypothesized to be the main drivers of differences in the levels of that metabolite across samples. See [the manuscript](manuscript_link) for more details on how these 
 contributions are calculated. 
-
 
 

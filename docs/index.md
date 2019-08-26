@@ -16,7 +16,7 @@ MIMOSA2 can be run as either a web application at **[https://elbo-spice.gs.washi
 
 ### Overview
 
-![alt text](FlowChart.png "MIMOSA2 Flow Chart")
+![alt text](schematic_v2.png "MIMOSA2 Flow Chart")
 
 A MIMOSA2 analysis consists of 4 major steps: 
 

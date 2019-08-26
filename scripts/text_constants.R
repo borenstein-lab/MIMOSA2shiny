@@ -27,7 +27,7 @@ metabolome_upload_title = "Upload metabolite abundance file"
 metabolome_tooltip = "If KEGG IDs are not provided, MIMOSA2 will try to map compound names to KEGG IDs using MetaboAnalystR"
 metabolome_description = "Upload a metabolite concentration table and select its metabolite ID format."
 metabolome_norm_description = "Log transform metabolite values"
-metabolome_transform_tooltip = "See the MIMOSA documentation for recommendations on whether to transform your data."
+metabolome_transform_tooltip = "See the documentation for recommendations on whether to transform your data."
 
 network_header = "Metabolic model settings"
 source_title = "Gene content and metabolic model source"

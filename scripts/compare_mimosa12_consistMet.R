@@ -79,13 +79,12 @@ hmp2_rank = run_mimosa2(config_table, species = sim_data[[1]], mets = sim_data[[
 hmp_compare_rank = compare_mimosa12(hmp2[[2]], hmp2_rank[[2]], contribs = sim_data[[3]])
 hmp_rank_plot = compare_mimosa12_plot(hmp_compare_rank, simulated = T)
 # Does rank id microbial metabolites better?
-hmp_compare_rank[,cor(1-EnvVarShare, Rsq.x, use = "complete.obs")]
-hmp_compare_rank[,cor(1-EnvVarShare, Rsq.y, use = "complete.obs")] #Yes
+hmp_compare_rank[,cor(1-EnvVarShare, Rsq.x, use = "complete.obs", method = "spearman")]
+hmp_compare_rank[,cor(1-EnvVarShare, Rsq.y, use = "complete.obs", method = "spearman")] 
 hmp_compare_rank[!is.na(Rsq.x) & !is.na(EnvVarShare), sum((1 -EnvVarShare > 0.2) == (Rsq.x > 0.2))/length(Rsq.x)]
 hmp_compare_rank[!is.na(Rsq.y) & !is.na(EnvVarShare), sum((1 -EnvVarShare > 0.2) == (Rsq.y > 0.2))/length(Rsq.y)] #Hm
 hmp_compare_rank[!is.na(Rsq.x) & !is.na(EnvVarShare), sum((1 -EnvVarShare > 0.5) == (Rsq.x > 0.5))/length(Rsq.x)]
 hmp_compare_rank[!is.na(Rsq.y) & !is.na(EnvVarShare), sum((1 -EnvVarShare > 0.5) == (Rsq.y > 0.5))/length(Rsq.y)] #Hm
-#Ok, answer is yes
 
 hmp_compare_dat = compare_mimosa12(hmp1, hmp2, contribs = sim_data[[3]])
 hmp_comparison = compare_mimosa12_plot(hmp_compare_dat, simulated = T)
@@ -93,6 +92,8 @@ hmp_met_plot = cmp_met_compare(sim_data, config_table, simulated = T)
 hmp_met_plot2 = cmp_met_compare(sim_data, config_table, simulated = T, compare_dat = hmp_compare_dat)
 hmp_met_plot2a = cmp_met_compare(sim_data, config_table, simulated = T, compare_dat = hmp_compare_dat, rank_based = T)
 
+
+#Do another analysis with a higher level of env noise also
 ten_spec_dat = process_abundances("data/testData/sim_data/allSpeciesEnv3.txt", "data/testData/sim_data/allMetabolitesEnv3.txt", fluxes_file = "data/testData/sim_data/allMetFluxesEnv3.txt", simulated = T)
 config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "revRxns"), 
                           V2 = c("Greengenes 13_5 or 13_8", "AGORA genomes and models", "KEGG Compound IDs", "data/KEGGfiles/", "data/", "bin/vsearch", T))

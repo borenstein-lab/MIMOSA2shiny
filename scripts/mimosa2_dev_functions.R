@@ -338,3 +338,61 @@ test_fit_options = function(processed_data, met_transform_options = c("zscore", 
   return(list(plotList = compare_plot_list, compareRsq = compare_dat, compareVarShares = var_share_compare_dat))
 }
 
+clean_spec_contribs = function(spec_contribs, node_data, threshold = 0.1, varShare = F, threshold2 = 0.2, return_all = F){
+  if(!"QValPos" %in% names(spec_contribs)){
+    spec_contribs = merge(spec_contribs, node_data, by ="compound")
+  }
+  if(varShare == T){
+    spec_contribs[,Pass:=ifelse(!is.na(VarShare) & VarShare > threshold2, 1, 0)]
+  }
+  if(return_all == F){
+    spec_contribs_good = spec_contribs[Pass==1 & QValPos < threshold]
+  } else {
+    spec_contribs_good = spec_contribs
+    if("VarShare" %in% names(spec_contribs_good)){
+      spec_contribs_good[,VarShare2:=ifelse(QValPos < threshold, 0, VarShare)]
+      spec_contribs_good[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
+      
+    } else {
+      spec_contribs_good[,Cor2:=ifelse(QValPos < threshold, 0, Cor)]
+      spec_contribs_good[is.na(Cor2), Cor2:=0]
+    }
+  }
+  spec_contribs_good[,ContribPair:=paste0(compound, "_", Species)]
+  return(spec_contribs_good)
+}
+
+get_overlaps = function(set_list){
+  num_types = length(set_list)
+  overlaps = data.table(expand.grid(names(set_list), names(set_list)))
+  overlaps = overlaps[Var1 != Var2]
+  overlaps[,NumShared:=sapply(1:nrow(overlaps), function(x){
+    length(intersect(set_list[[overlaps[x,Var1]]], set_list[[overlaps[x,Var2]]]))
+  })]
+  overlaps[,NumVar1:=sapply(Var1, function(x){
+    length(set_list[[x]])
+  })]
+  overlaps[,NumVar2:=sapply(Var2, function(x){
+    length(set_list[[x]])
+  })]
+  return(overlaps)
+}
+
+get_overlaps_grid = function(set_list, all_features = NULL, melt = T){
+  if(is.null(all_features)){
+    all_features = unique(unlist(set_list)) #all mets or contribs
+  }
+  overlaps = data.table(ID = all_features)
+  for(j in 1:length(names(set_list))){
+    overlaps[,names(set_list)[j] := ifelse(ID %in% set_list[[j]], 1, 0)]
+  }
+  if(melt){
+    overlaps = melt(overlaps, id.var = "ID", variable.name = "Method")
+    ##Remove ones that are 0 for everything
+    bad_mets = overlaps[,sum(value), by=ID][V1==0, ID]
+    overlaps = overlaps[!ID %in% bad_mets]
+  } else {
+    overlaps = overlaps[rowSums(overlaps[,2:ncol(overlaps), with=F]) != 0]
+  }
+  return(overlaps)
+}

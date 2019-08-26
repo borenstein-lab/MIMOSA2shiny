@@ -14,7 +14,7 @@ active: faqs
 
 - [What about metabolomics features that have not been assigned a compound identification?](faqs.html#noID)
 
-### MIMOSA2 Functionality and Analysis Options
+### Functionality and Analysis Options
 
 - [How is MIMOSA2 different from MIMOSA1?](faqs.html#mimosa1)
 
@@ -24,7 +24,11 @@ active: faqs
 
 - [I don't have a KEGG license. Can I still use the KEGG-based analysis?](faqs.html#keggLicense)
 
+### Results Interpretation
+
 - [What does it mean for a metabolite to be negatively predicted by metabolic potential (negative slope)?](faqs.html#negatives)
+
+- [What cutoff(s) should I use to identify microbial metabolites and contributing taxa?](faqs.html#thresholds)
 
 ### Input Data
 
@@ -43,7 +47,7 @@ predicting changes in unknown metabolites.
 Currently, we can't do anything about them. You can assign a putative identification and see if MIMOSA is able to link them to anything interesting.
 
 
-### MIMOSA2 Functionality and Analysis Options
+### Functionality and Analysis Options
 
 <h4 id="mimosa1">How is MIMOSA2 different from MIMOSA1?</h4>
 MIMOSA2 and MIMOSA1 answer the same general questions: Which metabolites vary consistently with microbial metabolic potential? What taxa and reactions do they appear to depend on?
@@ -56,7 +60,7 @@ Therefore, it can only analyze metabolites that are present in the specific refe
 constructed from your microbiome dataset. If you modify the settings for how the community metabolic model is being constructed, you may change whether certain metabolites
 are included in the model.
 
-<h4 id="reference">Which reference database should I use? Why do my results change when using different reference databases?</h4>
+<h4 id="whichReference">Which reference database should I use? Why do my results change when using different reference databases?</h4>
 The best choice of reference data depends on the type of microbiome data you have and the environment of your samples. Here are various considerations that can affect the answer to this question: 
 - If you have metagenomic or metatranscriptomic data, currently MIMOSA2 can only utilize the KEGG metabolic network to construct a KEGG metabolic model from your data (this may change in the future). 
 - The AGORA database is a collection of metabolic reconstructions of human gut microbiome species, so if your dataset is from an environment other than the human gut, analyses using that option may not be ideal (and may result in a smaller share of taxa included in the community metabolic model).
@@ -70,9 +74,15 @@ number of metabolites present in the model can differ widely between the differe
 Yes. An advantage of running MIMOSA2 via the web server is that you can run analyses using KEGG on our server. The web server only provides a subset of the community metabolic network to download, so you
 will not be able to run any MIMOSA2 analyses locally unless you have access to files from the KEGG FTP database.
 
+### Results Interpretation
+
 <h4 id="negatives">What does it mean for a metabolite to be negatively predicted by metabolic potential (negative slope)?</h4>
 We are still working on answering this question. Possible reasons for a negative correlation between a metabolite's concentration and metabolic potential include incorrectly annotated or missing reactions,
 and effects beyond direct metabolic reactions such as growth promotion or toxicity. In simulations and in a simple validation dataset, we find that taxonomic contributors to a model with a negative slope are 
 slightly less likely (*** stat) to represent a true taxon-metabolite link than contributors to a model with a positive slope. Contributors identified for negatively correlated metabolites could therefore 
 represent true relationships but should be interpreted more cautiously than positively correlated metabolites. 
+
+<h4 id="thresholds">What cutoff(s) should I use to identify microbial metabolites and contributing taxa?</h4>
+
+
 
