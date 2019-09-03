@@ -258,7 +258,9 @@ run_pipeline = function(input_data, configTable, analysisID){
     if(!is.null(var_shares)){
       var_shares[,compound:=as.character(compound)]
       var_shares[,Species:=as.character(Species)]
-      var_shares = var_shares[,list(compound, Rsq, VarDisp, ModelPVal, Slope, Intercept, Species, VarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
+      var_shares[,MetaboliteName:=met_names(as.character(compound))]
+      var_shares[is.na(MetaboliteName), MetaboliteName:=compound]
+      var_shares = var_shares[,list(compound, MetaboliteName, Rsq, VarDisp, ModelPVal, Slope, Intercept, Species, VarShare, PosVarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
     }
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
@@ -282,8 +284,6 @@ run_pipeline = function(input_data, configTable, analysisID){
       }
       print("Color palette")
       print(contrib_color_palette)
-      var_shares[,MetaboliteName:=met_names(as.character(compound))]
-      var_shares[is.na(MetaboliteName), MetaboliteName:=compound]
       met_contrib_plots = lapply(comp_list, function(x){
         print(x)
         if(is.na(met_names(x))){
@@ -382,7 +382,7 @@ server <- function(input, output, session) {
   #shinyjs::logjs(Cairo.capabilities())
   analysisID = randomString()
   
-  ## Download zip file fnunction
+  ## Download zip file function
   download_all_zip = function(file, example_data = F){
     if(example_data){
       file_ids = paste0("data/exampleData/", list.files(path = "data/exampleData"))
@@ -419,7 +419,7 @@ server <- function(input, output, session) {
         save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0("www/analysisResults/", analysisID, "/contributionHeatmapPlotSelected.pdf"), 
                   base_width = 10, base_height = 8)
       }
-      download_all_zip(paste0("www/analysisResults/", analysisID, "/allResults.zip"), example_data = F)
+      download_all_zip("allResults.zip", example_data = F)
     }
   }
   
