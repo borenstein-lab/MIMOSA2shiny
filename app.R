@@ -234,7 +234,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       if(!humann2_param){
         spec_dat = melt(species, id.var = "OTU", variable.name = "Sample")[,list(value/sum(value), OTU), by=Sample] #convert to relative abundance
         bad_spec = spec_dat[,list(length(V1[V1 != 0])/length(V1), max(V1)), by=OTU]
-        bad_spec = bad_spec[V1 < 0.2 & V1 < 0.1, OTU] #Never higher than 10% and absent in at least 80% of samples
+        bad_spec = bad_spec[V1 < 0.2 & V2 < 0.1, OTU] #Never higher than 10% and absent in at least 80% of samples
         print(bad_spec)
       } else bad_spec = NULL
       var_shares = calculate_var_shares(indiv_cmps, met_table = mets_melt, model_results = cmp_mods, config_table = configTable, species_merge = bad_spec, signif_threshold = 0.1)
@@ -272,7 +272,8 @@ run_pipeline = function(input_data, configTable, analysisID){
       incProgress(1/10, detail = "Making metabolite contribution plots")
       comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
       comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
-      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual", as.character(unique(Species))]
+      all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual", sort(as.character(unique(Species)))] 
+      #alphabetical order please
       print(all_contrib_taxa)
       getPalette = colorRampPalette(brewer.pal(12, "Paired"))
       if(var_shares[compound %in% comp_list & Species != "Residual", length(unique(Species[VarShare != 0])), by=compound][,any(V1 > 10)]){
@@ -622,7 +623,7 @@ server <- function(input, output, session) {
       print(file_list1)
       input_data = tryCatch(read_mimosa2_files(file_list = file_list1, configTable = config_table()), error = function(e){ return(e$message)})
       tryCatch(run_pipeline(input_data, config_table(), analysisID), error=function(e){ 
-        return(e$call)})  #paste0(e$call, "\n", e$message)
+        return(paste0(e$message, "\n", paste0(e$call, collapse = " ")))})  #paste0(e$call, "\n", e$message)
     } else {
     	#logjs("Reading example data")
     	config = config_table()
