@@ -378,7 +378,7 @@ get_overlaps = function(set_list){
   return(overlaps)
 }
 
-get_overlaps_grid = function(set_list, all_features = NULL, melt = T){
+get_overlaps_grid = function(set_list, all_features = NULL, melt = T, include_zero_features = F){
   if(is.null(all_features)){
     all_features = unique(unlist(set_list)) #all mets or contribs
   }
@@ -389,10 +389,14 @@ get_overlaps_grid = function(set_list, all_features = NULL, melt = T){
   if(melt){
     overlaps = melt(overlaps, id.var = "ID", variable.name = "Method")
     ##Remove ones that are 0 for everything
-    bad_mets = overlaps[,sum(value), by=ID][V1==0, ID]
-    overlaps = overlaps[!ID %in% bad_mets]
+    if(!include_zero_features){
+      bad_mets = overlaps[,sum(value), by=ID][V1==0, ID]
+      overlaps = overlaps[!ID %in% bad_mets]
+    }
   } else {
-    overlaps = overlaps[rowSums(overlaps[,2:ncol(overlaps), with=F]) != 0]
+    if(!include_zero_features){
+      overlaps = overlaps[rowSums(overlaps[,2:ncol(overlaps), with=F]) != 0]
+    }
   }
   return(overlaps)
 }

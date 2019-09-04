@@ -2,6 +2,8 @@
 title: "Simulation results for paper"
 date: 8/21/2019
 output: html_notebook
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -17,18 +19,32 @@ library(cowplot)
 library(pROC)
 source("scripts/mimosa2_dev_functions.R")
 
+datasetID = "ten_spec"
 ## 
-ten_spec_dat = process_abundances("data/testData/sim_data/allSpeciesEnv3.txt", "data/testData/sim_data/allMetabolitesEnv3.txt", fluxes_file = "data/testData/sim_data/allMetFluxesEnv3.txt", simulated = T)
-hmp_dat = process_abundances("data/testData/sim_data/HMP_test577_HMP_noise_specAbunds.txt", "data/testData/sim_data/HMP_test577_HMP_noise_metAbunds.txt", fluxes_file = "data/testData/sim_data/HMP_test577_HMP_noise_metFluxesFinal.txt", simulated = T)
-config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "revRxns"), 
+if(datasetID == "ten_spec"){
+  ten_spec_dat = process_abundances("data/testData/sim_data/allSpeciesEnv3.txt", "data/testData/sim_data/allMetabolitesEnv3.txt", fluxes_file = "data/testData/sim_data/allMetFluxesEnv3.txt", simulated = T)
+#ten_spec_dat = process_abundances("data/testData/sim_data/allSpeciesEnv5.txt", "data/testData/sim_data/allMetabolitesEnv5.txt", fluxes_file = "data/testData/sim_data/allMetFluxesEnv5.txt", simulated = T)
+  config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "revRxns"), 
                           V2 = c(get_text("database_choices")[2], get_text("source_choices")[2], get_text("met_type_choices")[1], "data/KEGGfiles/", "data/", "bin/vsearch", T))
+
+
+
+} else {
+  
+  hmp_dat = process_abundances("data/testData/sim_data/HMP_test577_HMP_noise_specAbunds.txt", "data/testData/sim_data/HMP_test577_HMP_noise_metAbunds.txt", fluxes_file = "data/testData/sim_data/HMP_test577_HMP_noise_metFluxesFinal.txt", simulated = T)
+  config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "revRxns"), 
+                          V2 = c(get_text("database_choices")[2], get_text("source_choices")[2], get_text("met_type_choices")[1], "data/KEGGfiles/", "/net/borenstein/vol1/DATA_REFERENCE/MIMOSA2_REFDATA/", "bin/vsearch", T))
+
+}
+
+
 config_table = rbind(config_table, data.table(V1 = "manualAGORA", V2 = T))
 config_table = config_table[!V1 %in% c("rxnEdit", "revRxns")]
 base_config_table_sim = rbind(config_table, data.table(V1 = "met_transform", V2 = "zscore"))
 
 m_settings = c("orig", "logMets", "rankBased", "logMetsRank")
 #datasetIDs = c("ten_spec", "hmp")
-datasetIDs = "ten_spec"
+datasetIDs = datasetID
 hmp_results = vector("list", length(m_settings))
 ten_spec_results = vector("list", length(m_settings))
 names(hmp_results) = m_settings
@@ -36,6 +52,7 @@ names(ten_spec_results) = m_settings
 all_plot_dat = data.table()
 #datasets = list(ten_spec_dat, hmp_dat)
 datasets = list(ten_spec_dat)
+datasets = list(hmp_dat)
 config_table1_sim = base_config_table_sim
 for(j in 1:length(m_settings)){
   print(m_settings[j])
@@ -65,22 +82,40 @@ for(j in 1:length(m_settings)){
 }
 
 write.table(all_plot_dat, file = "results/tenspec_env3_comparison_resultsMain.txt", quote=F, row.names = F, sep = "\t")
+write.table(all_plot_dat, file = "results/hmp_comparison_resultsMain.txt", quote=F, row.names = F, sep = "\t")
+
+save(hmp_results, file = "results/hmp_mimosa2_results.rda")
+
 ```
 
+
+
 ```{r}
-# From mimosa1datasets_run.R:
+# Modified From mimosa1datasets_run.R:
 consist_threshold = 0.05
 corr_threshold = 0.01
-varShare_threshold = 0.2
+varShare_threshold = 0.05
 varShare_threshold_met = 0.1
-pval_threshold_met = 0.01
+pval_threshold_met = 0.1
+true_contrib_threshold = 0.1
 
-mimosa2_results1 = ten_spec_results[[1]]
-mimosa2_rank1 = ten_spec_results[[3]]
+if(datasetID == "ten_spec"){
+  mimosa2_results1 = ten_spec_results[[1]]
+  mimosa2_rank1 = ten_spec_results[[3]]
 
-species = ten_spec_dat[[1]]
-mets = ten_spec_dat[[2]]
-contribs = ten_spec_dat[[3]]
+  species = ten_spec_dat[[1]]
+  mets = ten_spec_dat[[2]]
+  contribs = ten_spec_dat[[3]]
+} else {
+  mimosa2_results1 = hmp_results[[1]]
+  mimosa2_rank1 = hmp_results[[3]]
+
+  species = hmp_dat[[1]]
+  mets = hmp_dat[[2]]
+  contribs = hmp_dat[[3]]
+
+}
+
 #Get network to use for MIMOSA1
 network = build_metabolic_model(species, config_table = config_table, manual_agora = T, degree_filt = 0)[[1]]
 
@@ -106,6 +141,13 @@ subjects = intersect(names(species), names(mets))
 spec_contribs1 = rbindlist(lapply(1:length(comps), cmp_species_contributions_picrust, cmps_sub_good = cmp_mat, all_rxns = all_rxns, subjects = subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps, comparison = "cmps", met_data = mets))
 spec_contribs2 = rbindlist(lapply(1:length(comps), cmp_species_contributions_picrust, cmps_sub_good = cmp_mat, all_rxns = all_rxns, subjects = subjects, norm_kos = "", ko_net = "", all_taxa = spec_codes[,Code], single_spec_cmps = single_spec_cmps, comparison = "mets", met_data = mets))
 
+node_data = mimosa1_results[[5]]
+spec_contribs1a = clean_spec_contribs(spec_contribs1, node_data, threshold = consist_threshold, varShare = F, return_all = T)
+spec_contribs2a = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold, varShare = F, return_all = T)
+
+contrib_list_cmps = clean_spec_contribs(spec_contribs1, node_data, threshold = consist_threshold)[,ContribPair]
+contrib_list_mets = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold)[,ContribPair]
+
 #Correlations
 species_melt = melt(species, id.var = "OTU", variable.name = "Sample")
 setnames(species_melt, "OTU", "Species")
@@ -122,7 +164,7 @@ spec_met_corrs[,hasGene:=ifelse(GeneNum > 0, 1, 0)]
 contribs = merge(contribs, network_links, by.x = c("compound", "Species"), by.y = c("compound", "OTU"), all.x = T)
     #contribs[is.na(variable) & VarShare != 0]
     
-node_data = mimosa1_results[[5]]
+
 consist_mets = node_data[QValPos < consist_threshold, compound]
 contrast_mets = node_data[QValNeg < consist_threshold, compound]
 
@@ -144,15 +186,19 @@ contribs[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compoun
 contribs[,VarShareMagnitude:=abs(V1)/sum(abs(V1)), by=compound]
     
 true_consist_mets = contribs[Species=="Inflow" & PosVarShare < (1-varShare_threshold_met), compound]
-true_contrast_mets = contribs[Species=="Inflow" & PosVarShare > (1-varShare_threshold_met), compound]
+true_contrast_mets = contribs[Species=="Inflow" & PosVarShare >= (1-varShare_threshold_met), compound] #true_contrast just being not microbially determined
+contribs[Species=="Inflow" & PosVarShare > 0.5, compound]
     
 contribs[Species=="Inflow", table(VarShare <(1-varShare_threshold))]
 contribs[Species=="Inflow", table(PosVarShare <(1-varShare_threshold))]
-contribs[Species=="Inflow", table(PosVarShare <(1-varShare_threshold_met))]
+contribs[Species=="Inflow", table(PosVarShare < (1-varShare_threshold_met))] #Inflow is less than 0.9 -microbial
     
 
+
 consist_mets_compare = list(mimosa1 = consist_mets,
-                                m2agora = m2agora_mets, m2agora_rank = m2agora_mets_rank, correlation = corr_mets, correlation_gene = corr_mets_gene, true_consist = true_consist_mets)
+                                m2agora = m2agora_mets, m2agora_rank = m2agora_mets_rank, 
+                            correlation = corr_mets, correlation_gene = corr_mets_gene, 
+                            true_consist = true_consist_mets)
     
 contrast_mets_compare = list(mimosa1 = contrast_mets, 
                                 m2agora = m2agora_contrast_mets, m2rank = m2agora_contrast_mets_rank, correlation = corr_mets, correlation_gene = corr_mets_gene, true_contrast = true_contrast_mets)
@@ -165,32 +211,95 @@ contrast_mets_compare = list(mimosa1 = contrast_mets,
 compare_met_dat = get_overlaps(consist_mets_compare)
     # plot4 = ssvFeatureEuler(consist_mets_compare[c("mimosa1", "m2agora_edit", "correlation", "correlation_gene", "true_consist")])
     
-    compare_grid_met = get_overlaps_grid(consist_mets_compare, all_features = mets[,compound], melt = T)
-    compare_grid_met2 = get_overlaps_grid(consist_mets_compare, all_features = mets[,compound], melt = F)
-    compare_grid_met2[,table(true_consist, correlation)]
-    compare_grid_met2[,table(true_consist, correlation_gene)]
+compare_grid_met = get_overlaps_grid(consist_mets_compare, all_features = mets[,compound], melt = T)
+compare_grid_met2 = get_overlaps_grid(consist_mets_compare, all_features = mets[,compound], melt = F, include_zero_features = T)
+compare_grid_met2[,table(correlation, true_consist)]
+compare_grid_met2[,table(correlation_gene, true_consist)]
     
-    
-    feature_order = compare_grid_met[Method=="true_consist"][order(value), ID]
-    compare_grid_met[,ID:=factor(ID, levels = feature_order)]
+compare_grid_met2[,table(m2agora, true_consist)]
+compare_grid_met2[,table(m2agora_rank, true_consist)]
 
-    contrib_list_cmps = clean_spec_contribs(spec_contribs1, node_data, threshold = consist_threshold)[,ContribPair]
-    contrib_list_mets = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold)[,ContribPair]
+compare_grid_met2[ID %in% mimosa2_results1[[2]][,compound],table(m2agora, true_consist)]
+compare_grid_met2[ID %in% mimosa2_rank1[[2]][,compound],table(m2agora_rank, true_consist)]
 
+compare_grid_met2 = merge(compare_grid_met2, mimosa2_results1[[2]][,list(compound, Rsq, PVal, Slope)], by.x = "ID", by.y="compound", all.x = T)
+compare_grid_met2 = merge(compare_grid_met2, mimosa2_rank1[[2]][,list(compound, Rsq, PVal, Slope)], by.x = "ID", by.y="compound", all.x = T)
+setnames(compare_grid_met2, c("Rsq.x", "PVal.x", "Slope.x", "Rsq.y", "PVal.y", "Slope.y"), c("m2Rsq", "m2Pval", "m2Slope", "m2rRsq", "m2rPval", "m2rSlope"))
+compare_grid_met2[,m2PosRsq:=ifelse(m2Slope > 0, m2Rsq, 0)]
+compare_grid_met2[,m2rPosRsq:=ifelse(m2rSlope > 0, m2rRsq, 0)]
+corr_dat = spec_met_corrs[,min(Qval), by=compound] #Most signif corr
+corr_gene_dat = spec_met_corrs[,min(Qval[hasGene==T]), by=compound] #Most signif corr with gene
+compare_grid_met2 = merge(compare_grid_met2, corr_dat, by.x = "ID", by.y = "compound", all.x = T)
+compare_grid_met2 = merge(compare_grid_met2, corr_gene_dat, by.x = "ID", by.y = "compound", all.x = T)
+setnames(compare_grid_met2, c("V1.x", "V1.y"), c("Corr_min_qval", "Corr_min_qval_gene"))
+compare_grid_met2 = merge(compare_grid_met2, node_data[,list(compound, Correlation)], by.x = "ID", by.y = "compound", all.x = T)
+setnames(compare_grid_met2, "Correlation", "M1Cor")
+compare_grid_met2[,M1PosCor:=ifelse(M1Cor > 0, M1Cor, 0)]
+### Finish this, apply to hmp!!
+# roc_m2pos = compare_grid_met2[,roc(true_consist, m2PosRsq)]
+# roc_m2rPos = compare_grid_met2[,roc(true_consist, m2rPosRsq)]
+# roc_m2 = compare_grid_met2[,roc(true_consist, m2Rsq)]
+# roc_m2r = compare_grid_met2[,roc(true_consist, m2rRsq)]
+# consist_met_dat = coords(roc_m2pos, x = "all", ret = c("recall", "precision"))
+#met_set = intersect(mets_melt[,unique(compound)], contribs[,unique(compound)])
+met_set = mets_melt[,unique(compound)]
+compare_grid_met2 = compare_grid_met2[ID %in% met_set]
+
+for (j in names(compare_grid_met2)){
+    set(compare_grid_met2,which(is.na(compare_grid_met2[[j]])),j,0)
+}
+
+compare_grid_met2[,table(true_consist, m2PosRsq > 0.1)]
+  
+roc_met_tab = data.table()
+roc_met_plots = data.table()
+roc_met_plots2 = data.table()
+roc_met_results = list()
+prec_recall_met = data.table()
+roc_smooth_met = list()
+met_options = c("m2PosRsq", "m2rPosRsq", "m2Rsq", "m2rRsq", "M1Cor", "M1PosCor", "Corr_min_qval", "Corr_min_qval_gene")
+for(j in 1:length(met_options)){
+    roc_met_results[[j]] = roc(compare_grid_met2[,true_consist], compare_grid_met2[,get(met_options[j])])
+    roc_smooth_met[[j]] = smooth(roc_met_results[[j]])
+    roc_met_tab = rbind(roc_met_tab, data.table(Metric = met_options[j], AUC = roc_met_results[[j]]$auc), fill = T)
+    roc_met_plots = rbind(roc_met_plots, data.table(Sens = roc_met_results[[j]]$sensitivities, Spec = roc_met_results[[j]]$specificities, Metric = met_options[j]), fill = T)
+    roc_met_plots2 = rbind(roc_met_plots2, data.table(Sens = roc_smooth_met[[j]]$sensitivities, Spec = roc_smooth_met[[j]]$specificities, Metric = met_options[j]), fill = T)
+    recall_dat = coords(roc_met_results[[j]], x = "all", ret = c("recall", "precision"))
+    prec_recall_met = rbind(prec_recall_met, data.table(Recall = recall_dat["recall",], Precision = recall_dat["precision",], Metric = met_options[j]), fill = T)
+}
+plot6 = ggplot(roc_met_tab, aes(x=Metric, y = AUC)) + geom_bar(stat = "identity") + scale_y_continuous(expand = c(0,0), limits = c(0,1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+plot7 = ggplot(roc_met_plots, aes(x=1-Spec, y = Sens, color = Metric)) + geom_line() + xlim(0, 1)
+plot7a = ggplot(roc_met_plots2, aes(x=1-Spec, y = Sens, color = Metric)) + geom_line() + xlim(0, 1)
+plot8 = ggplot(prec_recall_met, aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,1), expand = c(0,0))
+
+plot8a = ggplot(prec_recall_met[Metric %in% c("Corr_min_qval", "M1PosCor", "m2PosRsq", "m2rPosRsq")], aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,0.5), expand = c(0,0)) ## Plot1
+
+
+
+feature_order = compare_grid_met[Method=="true_consist"][order(value), ID]
+compare_grid_met[,ID:=factor(ID, levels = feature_order)]
+
+
+mimosa2_results1$varShares = mimosa2_results1$varShares[Species != "Residual"]
+mimosa2_rank1$varShares = mimosa2_rank1$varShares[Species != "Residual"]
     mimosa2_results1$varShares[,ContribPair:=paste0(compound, "_", Species)]
     mimosa2_results1$varShares[,PosVarShare:=ifelse(VarShare > 0, VarShare/sum(VarShare[VarShare > 0], na.rm=T),0), by=compound]
+    mimosa2_results1$varShares[,VarShareMagnitude:=abs(VarShare)/sum(abs(VarShare)), by=compound]
     mimosa2_rank1$varShares[,ContribPair:=paste0(compound, "_", Species)]
     mimosa2_rank1$varShares[,PosVarShare:=ifelse(VarShare > 0, VarShare/sum(VarShare[VarShare > 0], na.rm=T),0), by=compound]
+    mimosa2_rank1$varShares[,VarShareMagnitude:=abs(VarShare)/sum(abs(VarShare)), by=compound]
 
     mimosa2_contribs = mimosa2_results1$varShares[VarShare > varShare_threshold & Slope > 0 & Species != "Residual", ContribPair]
     mimosa2_contribs_scaled = mimosa2_results1$varShares[PosVarShare > varShare_threshold_met & Slope > 0 & Species != "Residual", ContribPair]
+    mimosa2_contribs_abs_scaled = mimosa2_results1$varShares[VarShareMagnitude > varShare_threshold & Slope > 0 & Species != "Residual", ContribPair]
     mimosa2_contribs_rank = mimosa2_rank1$varShares[VarShare > varShare_threshold & Slope > 0 & Species != "Residual", ContribPair]
     mimosa2_contribs_scaled_rank = mimosa2_rank1$varShares[PosVarShare > varShare_threshold_met & Slope > 0 & Species != "Residual", ContribPair]
+    mimosa2_contribs_abs_scaled_rank = mimosa2_rank1$varShares[VarShareMagnitude > varShare_threshold & Slope > 0 & Species != "Residual", ContribPair]
 
     corr_list = spec_met_corrs[Qval < corr_threshold, paste0(compound, "_", Species)]
     corr_list_gene = spec_met_corrs[Qval < corr_threshold & hasGene==1, paste0(compound, "_", Species)]
     contribs[,ContribPair:=paste0(compound, "_", Species)]
-    true_contribs = contribs[VarShare > varShare_threshold & Species != "Inflow", ContribPair]
+    true_contribs = contribs[VarShare > true_contrib_threshold & Species != "Inflow", ContribPair]
     #try stricter true def also
     
     spec_met_corrs[,ContribPair:=paste0(compound, "_", Species)]
@@ -199,54 +308,52 @@ compare_met_dat = get_overlaps(consist_mets_compare)
     
     contribs[,PosVarShare:=ifelse(V1 > 0, V1/sum(V1[V1 > 0], na.rm=T),0), by=compound]
     contribs[,VarShareMagnitude:=abs(V1)/sum(abs(V1)), by=compound]
-    true_contribs_scaled = contribs[PosVarShare > varShare_threshold_met & Species != "Inflow", ContribPair]
+    true_contribs_scaled = contribs[PosVarShare > true_contrib_threshold & Species != "Inflow", ContribPair]
     
 
     contribs_compare = list(mimosa1 = contrib_list_cmps, mimosa1_mets = contrib_list_mets,
                             mimosa2 = mimosa2_contribs, mimosa2_scale = mimosa2_contribs_scaled, 
                             mimosa2_rank = mimosa2_contribs_rank, mimosa2_rank_scale = mimosa2_contribs_scaled_rank, 
+                            mimosa2_abs_scale = mimosa2_contribs_abs_scaled, mimosa2_rank_abs_scale = mimosa2_contribs_abs_scaled_rank,
                             correlation = corr_list, correlation_gene = corr_list_gene, 
                             trueContribs = true_contribs_scaled)
-    compare_grid2 = get_overlaps_grid(contribs_compare, all_features = contribs[,ContribPair], melt = F)
+    
+    pair_set = contribs[compound %in% met_set & Species != "Inflow", ContribPair]
+    compare_grid2 = get_overlaps_grid(contribs_compare, all_features = pair_set, melt = F, include_zero_features = T)
     compare_grid2[trueContribs==1 & rowSums(compare_grid2[,2:ncol(compare_grid2), with=F])==1]
     
-    # plot6 = ssvFeatureEuler(contribs_compare)+ annotate("text", x = rep(1.75, length(contribs_compare)), y = seq(3.5, 4.9, by = 1.4/(length(contribs_compare)-1)), label = paste0(names(contribs_compare), " ", sapply(contribs_compare, length)))
-    # plot5a = ssvFeatureEuler(contribs_compare[c("mimosa1", "mimosa2", "mimosa2_edit_scale", "correlation", "correlation_gene", "trueContribs")])
-    # plot5a = ssvFeatureEuler(contribs_compare[c("mimosa1_nr", "mimosa2_noRev", "mimosa2_edit_scale", "correlation", "correlation_gene", "trueContribs")])
-    # 
     compare_dat = get_overlaps(contribs_compare)
     compare_grid = get_overlaps_grid(contribs_compare, all_features = contribs[,ContribPair], melt = T)
     feature_order = compare_grid[Method=="trueContribs"][order(value), ID]
     compare_grid[,ID:=factor(ID, levels = feature_order)]
     plot_grid = ggplot(compare_grid, aes(x=ID, y = Method, fill = factor(value))) + geom_tile()
     
-    compare_grid2 = get_overlaps_grid(contribs_compare, all_features = contribs[,ContribPair], melt = F)
-    compare_grid2[trueContribs==1 & rowSums(compare_grid2[,2:ncol(compare_grid2), with=F])==1]
-    
     compare_grid2[,table(trueContribs, mimosa2)]
     compare_grid2[,table(trueContribs, mimosa2_rank)]
     compare_grid2[,table(trueContribs, mimosa2_scale)]
     compare_grid2[,table(trueContribs, mimosa2_rank_scale)]
+    compare_grid2[,table(trueContribs, mimosa2_abs_scale)]
+    compare_grid2[,table(trueContribs, mimosa2_rank_abs_scale)]
 
     #compare_grid2[,table(trueContribs, mimosa2_edit_scale)]
     compare_grid2[,prop.table(table(trueContribs, mimosa1), 2)]
     compare_grid2[,prop.table(table(trueContribs, correlation), 2)]
     compare_grid2[,prop.table(table(trueContribs, correlation_gene), 2)]
     sens_spec_table = data.table()
-    for(j in c("mimosa2","mimosa2_scale", "mimosa2_rank", "mimosa2_rank_scale", "mimosa1", "correlation", "correlation_gene")){
+    for(j in c("mimosa2","mimosa2_scale", "mimosa2_rank", "mimosa2_rank_scale","mimosa2_abs_scale","mimosa2_rank_abs_scale", "mimosa1", "correlation", "correlation_gene")){
       results_tab = data.table(Metric = j, Sensitivity = compare_grid2[trueContribs==1, sum(get(j)==1)/length(get(j))], 
                                Specificity = compare_grid2[trueContribs==0, sum(get(j)==0)/length(get(j))], 
                                Precision = compare_grid2[get(j)==1, sum(trueContribs==1)/length(trueContribs)])
       sens_spec_table = rbind(sens_spec_table, results_tab)
     }
     
-    spec_contribs1a = clean_spec_contribs(spec_contribs1, node_data, threshold = consist_threshold, varShare = F, return_all = T)
-    spec_contribs2a = clean_spec_contribs(spec_contribs2, node_data, threshold = consist_threshold, varShare = F, return_all = T)
+    mimosa2_results1$varShares[,VarSharePosMet:=ifelse(Slope > 0, VarShare, 0)]
+    mimosa2_rank1$varShares[,VarSharePosMet:=ifelse(Slope > 0, VarShare, 0)]
 
-    compare_grid3 = merge(contribs[,list(compound, Species, ContribPair, VarShare, PosVarShare)], mimosa2_results1$varShares[,list(ContribPair, VarShare, PosVarShare)], by = "ContribPair", all = T)
-    setnames(compare_grid3, c("VarShare.x", "PosVarShare.x", "VarShare.y", "PosVarShare.y"), c("TrueVarShare", "TruePosVarShare", "M2VarShare", "M2PosVarShare"))
-    compare_grid3 = merge(compare_grid3, mimosa2_rank1$varShares[,list(ContribPair, VarShare, PosVarShare)], by = "ContribPair", all = T)
-    setnames(compare_grid3, c("VarShare", "PosVarShare"), c("M2Rank_VarShare", "M2Rank_PosVarShare"))
+    compare_grid3 = merge(contribs[,list(compound, Species, ContribPair, VarShare, PosVarShare)], mimosa2_results1$varShares[,list(ContribPair, VarShare, PosVarShare, VarShareMagnitude, VarSharePosMet)], by = "ContribPair", all = T)
+    setnames(compare_grid3, c("VarShare.x", "PosVarShare.x", "VarShare.y", "PosVarShare.y", "VarShareMagnitude", "VarSharePosMet"), c("TrueVarShare", "TruePosVarShare", "M2VarShare", "M2PosVarShare", "M2VarShareMagnitude", "M2VarSharePosMet"))
+    compare_grid3 = merge(compare_grid3, mimosa2_rank1$varShares[,list(ContribPair, VarShare, PosVarShare, VarShareMagnitude, VarSharePosMet)], by = "ContribPair", all = T)
+    setnames(compare_grid3, c("VarShare", "PosVarShare", "VarShareMagnitude", "VarSharePosMet"), c("M2Rank_VarShare", "M2Rank_PosVarShare", "M2Rank_VarShareMagnitude", "M2Rank_VarSharePosMet"))
     compare_grid3 = merge(compare_grid3, spec_contribs1a[,list(ContribPair, Cor2)], by = "ContribPair", all = T)
     setnames(compare_grid3, "Cor2", "M1_Corr")
     compare_grid3 = compare_grid3[Species != "Inflow"]
@@ -254,8 +361,15 @@ compare_met_dat = get_overlaps(consist_mets_compare)
     compare_grid3 = merge(compare_grid3, spec_met_corrs[,list(ContribPair, AbsCor, AbsCorGene)], by = "ContribPair", all = T)
     compare_grid3 = merge(compare_grid3, spec_contribs2a[,list(ContribPair, Cor2)], by="ContribPair", all = T)
     setnames(compare_grid3, "Cor2", "M1_MetCorr")
+    compare_grid3 = compare_grid3[!is.na(AbsCor)] 
+    compare_grid3 = compare_grid3[!is.na(compound) & !is.na(Species)]
+    for (j in names(compare_grid3)[6:ncol(compare_grid3)]){
+      set(compare_grid3,which(is.na(compare_grid3[[j]])),j,0)
+    }
+
     #compare_grid3 = merge(compare_grid3, spec_contribs2_nr[,list(ContribPair, Cor2)], by="ContribPair", all = T)
     #setnames(compare_grid3, "Cor2", "M1_noRev_Corr")
+#    write.table(compare_grid3, file = "results/hmp_compare_grid.txt", quote=F, row.names = F, sep = "\t")
     
     roc_tab = data.table()
     roc_plots = data.table()
@@ -278,37 +392,213 @@ compare_met_dat = get_overlaps(consist_mets_compare)
       }
     }
     plot6 = ggplot(roc_tab, aes(x=Metric, y = AUC)) + geom_bar(stat = "identity") + scale_y_continuous(expand = c(0,0), limits = c(0,1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-    plot7 = ggplot(roc_plots, aes(x=1-Spec, y = Sens, color = Metric)) + geom_line() + xlim(0, 0.25)
+    plot7 = ggplot(roc_plots, aes(x=1-Spec, y = Sens, color = Metric)) + geom_line() + xlim(0, 0.75)
     plot8 = ggplot(prec_recall, aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,1), expand = c(0,0))
     plot8a = ggplot(prec_recall[Metric %in% c("AbsCor", "AbsCorGene", "M1_MetCorr", "M2PosVarShare", "M2Rank_PosVarShare", "M2VarShare")], aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2", "MIMOSA2 rank", "MIMOSA2 raw var share"))
     
-    plot8b = ggplot(prec_recall[Metric %in% c("AbsCor", "AbsCorGene", "M1_MetCorr", "M2PosVarShare", "M2Rank_PosVarShare")], aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2", "MIMOSA2 rank"))
+    plot8b = ggplot(prec_recall[Metric %in% c("AbsCor", "AbsCorGene", "M1_MetCorr", "M2VarShare", "M2Rank_VarShare")], aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2", "MIMOSA2 rank"))
+    plot8c = ggplot(prec_recall[Metric %in% c("AbsCor", "AbsCorGene", "M1_MetCorr", "M2VarSharePosMet", "M2Rank_VarSharePosMet")], aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2", "MIMOSA2 rank"))
     
-    compare_grid3[,table(BinaryContribPos, M2Edit_PosVarShare > 0.1)]
+    compare_grid3[,table(BinaryContribPos, M2PosVarShare > 0.1)]
     file_id = gsub(".txt", "", basename(species_file))
     sens_spec_table[,Dataset:=file_id]
     write.table(sens_spec_table, file = paste0("results/fixed/", file_id, "sensSpec.txt"), quote=F, row.names = F, sep = "\t")
     
-sens_spec_table_plot = sens_spec_table
-sens_spec_table2 = fread("~/Google Drive File Stream/My Drive/Genome_Sciences/MIMOSA2Data/HMP_test577_HMP_noise_specAbundssensSpec.txt")
-sens_spec_table_plot = rbind(sens_spec_table_plot, sens_spec_table2)
-sens_spec_table_plot = melt(sens_spec_table_plot, id.var = c("Metric", "Dataset"), variable.name = "Result")
-sens_spec_table_plot[,Dataset2:=ifelse(Dataset == "HMP", "Dataset 2", "Dataset 1")]
-sens_spec_plot = ggplot(sens_spec_table_plot[Metric %in% c("correlation", "correlation_gene", "mimosa1_nr", "mimosa2_noRev_scaled")], aes(x=Metric, y = value, shape = Dataset, fill = Metric)) + 
-  geom_bar(stat = "identity", position = "dodge") + facet_grid(Dataset2~Result)+ 
-  scale_fill_brewer(palette = "Set1", name = "Method", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2"),
+    ### Also get p-values
+    compare_grid3 = merge(compare_grid3, spec_met_corrs[,list(ContribPair, Qval, hasGene)], by = "ContribPair", all.x = T)
+    setnames(compare_grid3, "Qval", "CorrQval")
+
+    
+    #Only really fair to compare for metabolites ID'd by mimosa2 as confident microbial metabolites
+    comp_list = unique(contribs[,list(compound, ContribPair)])
+    compare_grid2 = merge(compare_grid2, comp_list, by.x = "ID", by.y = "ContribPair", all.x = T, all.y = F)
+    compare_grid2b = compare_grid2[compound %in% union(m2agora_mets, m2agora_mets_rank)]
+    compare_grid3b = compare_grid3[compound %in% union(m2agora_mets, m2agora_mets_rank)]
+    
+    sens_spec_table2 = data.table()
+    for(j in c("mimosa2","mimosa2_scale", "mimosa2_rank", "mimosa2_rank_scale","mimosa2_abs_scale","mimosa2_rank_abs_scale", "mimosa1", "correlation", "correlation_gene")){
+      results_tab = data.table(Metric = j, Sensitivity = compare_grid2b[trueContribs==1, sum(get(j)==1)/length(get(j))], 
+                               Specificity = compare_grid2b[trueContribs==0, sum(get(j)==0)/length(get(j))], 
+                               Precision = compare_grid2b[get(j)==1, sum(trueContribs==1)/length(trueContribs)])
+      sens_spec_table2 = rbind(sens_spec_table2, results_tab)
+    }
+    roc_tab_2 = data.table()
+    roc_plots_2 = data.table()
+    roc_plots2_2 = data.table()
+    roc_results_2 = list()
+    prec_recall_2 = data.table()
+    prec_recall2_2 = data.table()
+    roc_smooth_2 = list()
+    for(j in 1:(length(names(compare_grid3b))-5)){
+      if(names(compare_grid3b)[j+5] != "BinaryContribPos"){
+        roc_results_2[[j]] = roc(compare_grid3b[,BinaryContribPos], compare_grid3b[,get(names(compare_grid3b)[j+5])])
+        #roc_smooth_2[[j]] = smooth(roc_results_2[[j]])
+        roc_tab_2 = rbind(roc_tab_2, data.table(Metric = names(compare_grid3b)[j+5], AUC = roc_results_2[[j]]$auc))
+        roc_plots_2 = rbind(roc_plots_2, data.table(Sens = roc_results_2[[j]]$sensitivities, Spec = roc_results_2[[j]]$specificities, Metric = names(compare_grid3b)[j+5]))
+        #roc_plots2_2 = rbind(roc_plots2_2, data.table(Sens = roc_smooth_2[[j]]$sensitivities, Spec = roc_smooth_2[[j]]$specificities, Metric = names(compare_grid3b)[j+5]))
+        recall_dat = coords(roc_results_2[[j]], x = "all", ret = c("recall", "precision"))
+        #recall_dat2 = coords(roc_smooth[[j]], x = "all")
+        prec_recall_2 = rbind(prec_recall_2, data.table(Recall = recall_dat["recall",], Precision = recall_dat["precision",], Metric = names(compare_grid3b)[j+5]))
+        #prec_recall2_2 = rbind(prec_recall2_2, data.table(Sens = roc_smooth_2[[j]]$sensitivities, Spec = roc_smooth_2[[j]]$specificities, Metric = names(compare_grid3b)[j+5]))
+      }
+    }
+    plot6 = ggplot(roc_tab_2, aes(x=Metric, y = AUC)) + geom_bar(stat = "identity") + scale_y_continuous(expand = c(0,0), limits = c(0,1)) + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+    plot7 = ggplot(roc_plots_2, aes(x=1-Spec, y = Sens, color = Metric)) + geom_line() + xlim(0, 0.75)
+    plot8 = ggplot(prec_recall_2, aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,1), expand = c(0,0))
+    plot8a = ggplot(prec_recall[Metric %in% c("AbsCor", "AbsCorGene", "M1_MetCorr", "M2PosVarShare", "M2Rank_PosVarShare", "M2VarShare")], aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2", "MIMOSA2 rank", "MIMOSA2 raw var share"))
+    
+    plot8b = ggplot(prec_recall_2[Metric %in% c("AbsCor", "AbsCorGene", "M1_MetCorr", "M2VarShare", "M2Rank_VarShare")], aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2", "MIMOSA2 rank"))
+    plot8c = ggplot(prec_recall_2[Metric %in% c("AbsCor", "AbsCorGene", "M1_MetCorr", "M2VarSharePosMet", "M2Rank_VarSharePosMet")], aes(x=Recall, y = Precision, color = Metric)) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence",  "MIMOSA2", "MIMOSA2 rank")) #"MIMOSA1",
+
+#Total number of contributors = 63
+compare_grid3[,sum(BinaryContribPos)]
+#30% precision=19 contributors
+compare_grid3[order()]
+
+#cutoff of qval = 0.01 for correlations gives about 30% recall, so we'll stick with that 
+    
+    
+thresholds = c(10e-6, 10e-5, 10e-4, 10e-3, 0.05, 10e-2)    
+threshold_results = data.table(SignifCutoff = thresholds)
+for(k in 1:length(thresholds)){
+  #Calculate prec and recall for contribs for mimosa2 rank, and corr methods
+  threshold_results[k, CorrPrecision:=compare_grid3[,sum(CorrQval < thresholds[k] & BinaryContribPos==1)/sum(CorrQval < thresholds[k])]]
+  threshold_results[k, CorrRecall:=compare_grid3[,sum(CorrQval < thresholds[k] & BinaryContribPos==1)/sum(BinaryContribPos)]]
+}
+
+save(compare_grid2, compare_grid2b, compare_grid3, compare_grid3b, prec_recall, prec_recall_2, sens_spec_table, sens_spec_table2, file = "results/ten_spec_env3_contrib_results.rda")    
+# sens_spec_table_plot = sens_spec_table
+# sens_spec_table2 = fread("~/Google Drive File Stream/My Drive/Genome_Sciences/MIMOSA2Data/HMP_test577_HMP_noise_specAbundssensSpec.txt")
+# sens_spec_table_plot = rbind(sens_spec_table_plot, sens_spec_table2)
+# sens_spec_table_plot = melt(sens_spec_table_plot, id.var = c("Metric", "Dataset"), variable.name = "Result")
+# sens_spec_table_plot[,Dataset2:=ifelse(Dataset == "HMP", "Dataset 2", "Dataset 1")]
+# sens_spec_plot = ggplot(sens_spec_table_plot[Metric %in% c("correlation", "correlation_gene", "mimosa1_nr", "mimosa2_noRev_scaled")], aes(x=Metric, y = value, shape = Dataset, fill = Metric)) + 
+#   geom_bar(stat = "identity", position = "dodge") + facet_grid(Dataset2~Result)+ 
+#   scale_fill_brewer(palette = "Set1", name = "Method", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA1", "MIMOSA2"),
+#                     guide = guide_legend(nrow = 2)) +
+#   scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), 
+#                                                                             strip.background = element_blank(), legend.position = "bottom")
+# 
+# sens_spec_plot2 = ggplot(sens_spec_table_plot[Metric %in% c("correlation", "mimosa1_nr", "mimosa2_noRev_scaled") & Result=="Precision"], aes(x=Metric, y = value, shape = Dataset, fill = Metric)) + 
+#   geom_bar(stat = "identity", position = "dodge") + facet_grid(~Dataset2)+ 
+#   scale_fill_manual(values = brewer.pal(4, "Set1")[c(1,2,4)], name = "Method", labels = c("Correlation", "MIMOSA1", "MIMOSA2"),
+#                     guide = guide_legend()) +
+#   scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), 
+#                                                                             strip.background = element_blank(), legend.position = "right", legend.title = element_blank()) + ylab("Precision")
+# 
+# save_plot(sens_spec_plot, file = "simDatasets_compare_sensSpec.png", base_width = 6.5, base_height = 5)
+# 
+
+```
+
+Final figures
+
+```{r}
+load("results/ten_spec_env3_contrib_results.rda")
+load("results/hmp_contrib_results.rda")
+
+#Make sure thresholds are consistent
+consist_threshold = 0.05
+corr_threshold = 0.01
+varShare_threshold = 0.03
+#varShare_threshold_met = 0.1
+#pval_threshold_met = 0.1
+true_contrib_threshold = 0.1
+
+compare_grid3[,BinaryM2:=ifelse(M2VarSharePosMet > varShare_threshold, 1, 0)]
+compare_grid3[,BinaryM2Rank:=ifelse(M2Rank_VarSharePosMet > varShare_threshold, 1, 0)]
+compare_grid3[,BinaryCorr:=ifelse(CorrQval < corr_threshold, 1, 0)]
+compare_grid3[,BinaryCorrGene:=ifelse(CorrQval < corr_threshold & hasGene==1, 1, 0)]
+
+hmp_compare_grid3[,BinaryM2:=ifelse(M2VarSharePosMet > varShare_threshold, 1, 0)]
+hmp_compare_grid3[,BinaryM2Rank:=ifelse(M2Rank_VarSharePosMet > varShare_threshold, 1, 0)]
+hmp_compare_grid3[,BinaryCorr:=ifelse(CorrQval < corr_threshold, 1, 0)]
+hmp_compare_grid3[,BinaryCorrGene:=ifelse(CorrQval < corr_threshold & hasGene==1, 1, 0)]
+
+compare_grid3b[,BinaryM2:=ifelse(M2VarSharePosMet > varShare_threshold, 1, 0)]
+compare_grid3b[,BinaryM2Rank:=ifelse(M2Rank_VarSharePosMet > varShare_threshold, 1, 0)]
+compare_grid3b[,BinaryCorr:=ifelse(CorrQval < corr_threshold, 1, 0)]
+compare_grid3b[,BinaryCorrGene:=ifelse(CorrQval < corr_threshold & hasGene==1, 1, 0)]
+
+hmp_compare_grid3b[,BinaryM2:=ifelse(M2VarSharePosMet > varShare_threshold, 1, 0)]
+hmp_compare_grid3b[,BinaryM2Rank:=ifelse(M2Rank_VarSharePosMet > varShare_threshold, 1, 0)]
+hmp_compare_grid3b[,BinaryCorr:=ifelse(CorrQval < corr_threshold, 1, 0)]
+hmp_compare_grid3b[,BinaryCorrGene:=ifelse(CorrQval < corr_threshold & hasGene==1, 1, 0)]
+
+m_settings = c("BinaryM2", "BinaryM2Rank", "BinaryCorr", "BinaryCorrGene")
+final_sens_spec = data.table()
+for(j in m_settings){
+      results_tab = data.table(Metric = j, Dataset = "Dataset 1", Sensitivity = compare_grid3[BinaryContribPos==1, sum(get(j)==1)/length(get(j))], 
+                               Specificity = compare_grid3[BinaryContribPos==0, sum(get(j)==0)/length(get(j))], 
+                               Precision = compare_grid3[get(j)==1, sum(BinaryContribPos==1)/length(BinaryContribPos)])
+      results_tab2 = data.table(Metric = j, Dataset = "Dataset 2", Sensitivity = hmp_compare_grid3[BinaryContribPos==1, sum(get(j)==1)/length(get(j))], 
+                               Specificity = hmp_compare_grid3[BinaryContribPos==0, sum(get(j)==0)/length(get(j))], 
+                               Precision = hmp_compare_grid3[get(j)==1, sum(BinaryContribPos==1)/length(BinaryContribPos)])
+      final_sens_spec = rbind(final_sens_spec, results_tab, results_tab2)
+}
+
+final_sens_spec_plot_s1 = melt(final_sens_spec, id.var = c("Metric", "Dataset"), variable.name = "Result")
+sens_spec_plot_s1 = ggplot(final_sens_spec_plot_s1, aes(x=Metric, y = value, shape = Dataset, fill = Metric)) +
+  geom_bar(stat = "identity", position = "dodge") + facet_grid(Dataset~Result)+
+  scale_fill_brewer(palette = "Set1", name = "Method", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA2-OLS", "MIMOSA2-rank"),
                     guide = guide_legend(nrow = 2)) +
-  scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), 
-                                                                            strip.background = element_blank(), legend.position = "bottom")
+  scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), strip.background = element_blank(), legend.position = "bottom")
 
-sens_spec_plot2 = ggplot(sens_spec_table_plot[Metric %in% c("correlation", "mimosa1_nr", "mimosa2_noRev_scaled") & Result=="Precision"], aes(x=Metric, y = value, shape = Dataset, fill = Metric)) + 
-  geom_bar(stat = "identity", position = "dodge") + facet_grid(~Dataset2)+ 
-  scale_fill_manual(values = brewer.pal(4, "Set1")[c(1,2,4)], name = "Method", labels = c("Correlation", "MIMOSA1", "MIMOSA2"),
-                    guide = guide_legend()) +
-  scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), 
-                                                                            strip.background = element_blank(), legend.position = "right", legend.title = element_blank()) + ylab("Precision")
+final_sens_spec2 = data.table()
+for(j in m_settings){
+      results_tab = data.table(Metric = j, Dataset = "Dataset 1", Sensitivity = compare_grid3b[BinaryContribPos==1, sum(get(j)==1)/length(get(j))], 
+                               Specificity = compare_grid3b[BinaryContribPos==0, sum(get(j)==0)/length(get(j))], 
+                               Precision = compare_grid3b[get(j)==1, sum(BinaryContribPos==1)/length(BinaryContribPos)])
+      results_tab2 = data.table(Metric = j, Dataset = "Dataset 2", Sensitivity = hmp_compare_grid3b[BinaryContribPos==1, sum(get(j)==1)/length(get(j))], 
+                               Specificity = hmp_compare_grid3b[BinaryContribPos==0, sum(get(j)==0)/length(get(j))], 
+                               Precision = hmp_compare_grid3b[get(j)==1, sum(BinaryContribPos==1)/length(BinaryContribPos)])
+      final_sens_spec2 = rbind(final_sens_spec2, results_tab, results_tab2)
+}
 
-save_plot(sens_spec_plot, file = "simDatasets_compare_sensSpec.png", base_width = 6.5, base_height = 5)
+final_sens_spec_plot = melt(final_sens_spec2, id.var = c("Metric", "Dataset"), variable.name = "Result")
+sens_spec_plot = ggplot(final_sens_spec_plot, aes(x=Metric, y = value, shape = Dataset, fill = Metric)) +
+  geom_bar(stat = "identity", position = "dodge") + facet_grid(Dataset~Result)+
+  scale_fill_brewer(palette = "Set1", name = "Method", labels = c("Correlation", "Correlation w/ reaction presence", "MIMOSA2-OLS", "MIMOSA2-rank"),
+                    guide = guide_legend(nrow = 2)) +
+  scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(axis.ticks.x = element_blank(), axis.text.x = element_blank(), strip.background = element_blank(), legend.position = "bottom")
+
+prec_recall[,Dataset:="Dataset 1"]
+prec_recall_2[,Dataset:="Dataset 1"]
+hmp_prec_recall[,Dataset:="Dataset 2"]
+hmp_prec_recall_2[,Dataset:="Dataset 2"]
+
+prec_recall_main = rbind(prec_recall_2, hmp_prec_recall_2, fill = T)
+prec_recall_main = prec_recall_main[Metric %in% c("M2VarSharePosMet", "M2Rank_VarSharePosMet", "AbsCor", "AbsCorGene")]
+prec_recall_main[,Metric:=factor(Metric, levels = c("AbsCor", "AbsCorGene", "M2VarSharePosMet", "M2Rank_VarSharePosMet"))]
+prec_recall_plot = ggplot(prec_recall_main, aes(x=Recall, y = Precision, color = Metric)) + facet_grid(Dataset~.) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence",  "MIMOSA2-OLS", "MIMOSA2-rank")) + theme(strip.background = element_blank()) #"MIMOSA1",
+
+prec_recall_s1 = rbind(prec_recall, hmp_prec_recall, fill = T)
+prec_recall_s1 = prec_recall_s1[Metric %in% c("M2VarSharePosMet", "M2Rank_VarSharePosMet", "AbsCor", "AbsCorGene")]
+prec_recall_s1[,Metric:=factor(Metric, levels = c("AbsCor", "AbsCorGene", "M2VarSharePosMet", "M2Rank_VarSharePosMet"))]
+prec_recall_plot_s1 = ggplot(prec_recall_s1, aes(x=Recall, y = Precision, color = Metric)) + facet_grid(Dataset~.) + geom_line() + scale_x_continuous(limits = c(0,0.75), expand = c(0,0)) + scale_color_brewer(palette = "Set1", labels = c("Correlation", "Correlation w/ reaction presence",  "MIMOSA2-OLS", "MIMOSA2-rank")) + theme(strip.background = element_blank(), legend.position = "bottom") #"MIMOSA1",
 
 
 ```
+
+Info plot on the two datasets
+
+```{r}
+dataset_dat = data.table("Dataset 1" = c(ten_spec_dat[[1]][,length(unique(OTU))], ten_spec_dat[[2]][,length(unique(compound))], ncol(ten_spec_dat[[1]])-1), 
+                         "Dataset 2" = c(hmp_dat[[1]][,length(unique(OTU))], hmp_dat[[2]][,length(unique(compound))], ncol(hmp_dat[[1]])-1), 
+                         Stats = c("Species", "Metabolites", "Samples"))
+dataset_dat = melt(dataset_dat, id.var = "Stats", variable.name = "Dataset")
+dataset_dat[,Stats:=factor(Stats, levels = c("Samples", "Species", "Metabolites"))]
+fig_4a = ggplot(dataset_dat, aes(x = Stats, y = value, fill = Dataset)) + geom_bar(stat = "identity", position = "dodge") + scale_fill_brewer(palette = "Dark2")  +
+  scale_x_discrete(name = "") + scale_y_continuous(expand = c(0,0)) + theme(legend.title = element_blank(), legend.position = "bottom", legend.direction = "horizontal", axis.ticks.x = element_blank())+ ylab("") #+ coord_flip() 
+save_plot(fig_4a, file = "results/sim_datasets_summary.png")
+```
+
+Assemble all panels for simulation figure
+```{r}
+fig4 = plot_grid(fig_4a + theme(axis.text = element_text(size=10), legend.text = element_text(size = 10)), sens_spec_plot, prec_recall_plot + guides(color = F)+ theme(plot.margin = margin(0.2, 0.2, 0.35, 0.1, "inches")), labels = c("A", "B", "C"), nrow = 1, rel_widths = c(1.3, 2.5, 1.5))
+save_plot(fig4, file = "paper/Figure4_simulations.png", base_width = 12, base_height = 4.5)
+
+fig_s2 = plot_grid(sens_spec_plot_s1, prec_recall_plot_s1 + guides(color = F), nrow = 1, labels = c("A", "B"), rel_widths = c(2.5, 1.5))
+save_plot(fig_s2, file = "paper/FigureS2_simulations_allmets.png", base_width = 8.5, base_height = 4)
+```
+

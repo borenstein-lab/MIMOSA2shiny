@@ -43,15 +43,15 @@ network_mapping_tooltip = "A higher threshold will result in fewer taxa more lik
 sim_title = "Minimum similarity threshold (for mapping ASVs only)"
 gapfill_option = "Gap-fill model for each species using x program"
 algorithm_header = "Algorithm settings"
-algorithm_description = "Select the regression method for comparing metabolite concentrations with community metabolic potential (CMP) scores."
-algorithm_tooltip = "Rank-based regression is recommended and is more robust and sensitive; OLS regression is much faster. See the documentation for more details."
+algorithm_description = "Select the regression estimation method for comparing metabolite concentrations with community metabolic potential (CMP) scores."
+algorithm_tooltip = "Rank-based estimation is recommended and is more robust and sensitive; OLS estimation is faster. See the documentation for more details."
 stat_title = "Metabolite statistic to analyze"
 stat_choices = c("Variance (analytically calculated)") #, "Differential abundance (Wilcoxon rank-sum, permutation-based)", "Paired-sample differential abundance (paired Wilcoxon rank-sum, permutation based)")
-regression_title = "CMP-Metabolite model type"
-regression_choices = c("Rank-based regression", "Least-squares (OLS) regression")
+regression_title = "CMP-Metabolite regression type"
+regression_choices = c("Rank-based estimation", "Least-squares (OLS) estimation")
 
 skip_contribs_option = "Skip taxonomic contribution analysis; only perform CMP-metabolite comparisons"
-skip_contribs_tooltip = "Taxonomic contribution analysis can be slow when rank-based regression is selected."
+skip_contribs_tooltip = "Taxonomic contribution analysis can be slow when rank-based estimation is selected."
 
 result_table_description = "Each row of the table below summarizes the MIMOSA2 results for a given metabolite, including the overall concordance between metabolic potential and concentration, and the contributing taxa. 
 Mouse over the names of each column of the table for a more detailed description. Specific plots can be downloaded using the buttons below the table."
