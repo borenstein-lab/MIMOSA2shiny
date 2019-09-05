@@ -507,7 +507,8 @@ server <- function(input, output, session) {
             tags$style(
               type="text/css",
               "#downloadAll  {background-color: #3CBCDB}"
-            ) 
+            ),
+	    tags$script(HTML("$.fn.dataTable.ext.errMode = 'throw';")) 
             
 
           # ),
