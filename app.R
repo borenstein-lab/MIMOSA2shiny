@@ -270,7 +270,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       
     if(configTable[V1 == "compare_only", V2 != TRUE]){
       incProgress(1/10, detail = "Making metabolite contribution plots")
-      comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
+      comp_list = var_shares[!is.na(VarShare)][VarShare != 0, unique(as.character(compound))]
       comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
       all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual", sort(as.character(unique(Species)))] 
       #alphabetical order please
@@ -420,7 +420,7 @@ server <- function(input, output, session) {
         save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0("www/analysisResults/", analysisID, "/contributionHeatmapPlotSelected.pdf"), 
                   base_width = 10, base_height = 8)
       }
-      download_all_zip("allResults.zip", example_data = F)
+      download_all_zip(paste0("www/analysisResults/", analysisID, "/allResults.zip"), example_data = F)
     }
   }
   
@@ -678,7 +678,7 @@ server <- function(input, output, session) {
       if("example_data" %in% names(datasetInput())){
         "example_allResults.zip"
       } else {
-        paste0("www/analysisResults/", analysisID, "allResults.zip")
+        "allResults.zip"
       }
     },
     content = function(file){
