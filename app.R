@@ -5,7 +5,7 @@ library(shiny)
 library(shinyjs)
 #logjs(sessionInfo())
 
-library(mimosa) #, lib.loc ="/data/shiny-server/r-packages/")
+library(mimosa, lib.loc ="/data/shiny-server/r-packages/")
 library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(readr)
 library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
@@ -420,7 +420,7 @@ server <- function(input, output, session) {
         save_plot(plot_summary_contributions(plotData, include_zeros = T, remove_resid_rescale = F), filename = paste0("www/analysisResults/", analysisID, "/contributionHeatmapPlotSelected.pdf"), 
                   base_width = 10, base_height = 8)
       }
-      download_all_zip("allResults.zip", example_data = F)
+      download_all_zip(paste0("www/analysisResults/", analysisID, "/allResults.zip"), example_data = F)
     }
   }
   
@@ -678,7 +678,7 @@ server <- function(input, output, session) {
       if("example_data" %in% names(datasetInput())){
         "example_allResults.zip"
       } else {
-        paste0("www/analysisResults/", analysisID, "allResults.zip")
+        "allResults.zip"
       }
     },
     content = function(file){
