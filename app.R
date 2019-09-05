@@ -5,7 +5,7 @@ library(shiny)
 library(shinyjs)
 #logjs(sessionInfo())
 
-library(mimosa) #, lib.loc ="/data/shiny-server/r-packages/")
+library(mimosa, lib.loc ="/data/shiny-server/r-packages/")
 library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(readr)
 library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
