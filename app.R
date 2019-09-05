@@ -270,7 +270,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       
     if(configTable[V1 == "compare_only", V2 != TRUE]){
       incProgress(1/10, detail = "Making metabolite contribution plots")
-      comp_list = var_shares[!is.na(VarShare), unique(as.character(compound))]
+      comp_list = var_shares[!is.na(VarShare)][VarShare != 0, unique(as.character(compound))]
       comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
       all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual", sort(as.character(unique(Species)))] 
       #alphabetical order please
