@@ -538,7 +538,7 @@ server <- function(input, output, session) {
                 type="text/css",
                 "#downloadAll  {background-color: #3CBCDB}"
               ), width = 12, align = "center")),
-          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile())))),
+          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("analysisResults/", analysisResultsFile()), target = "_blank"))),
           p(get_text("result_table_description")),
           fluidRow( # Big table
             DT::dataTableOutput("allMetaboliteInfo"), width="100%"
