@@ -9,7 +9,7 @@ library(mimosa, lib.loc ="/data/shiny-server/r-packages/")
 library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(readr)
 library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
-library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
+#library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
 library(cowplot)
 library(RColorBrewer)
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=300*1024^2, 
@@ -867,11 +867,11 @@ server <- function(input, output, session) {
     }
 
     return(DT::datatable(
-      tableData2[order(`Compound ID`)], escape = F, options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
+      tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
       container = tooltip_table))
     #return(DT::datatable(tableData[order(m2R, decreasing = T),list(compound, Rsq, PVal, Slope, Intercept)], 
      #                    options = list(lengthMenu = c(5, 10), pageLength = 5)))
-  })
+  }, server = F)
   output$downloadComparePlots = downloadHandler(
     filename = function() {
       "CMP_Metabolite_Compare.zip"
