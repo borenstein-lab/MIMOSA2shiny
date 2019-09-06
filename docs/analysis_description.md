@@ -11,15 +11,22 @@ MIMOSA2 summarizes paired microbiome-metabolome datasets to support mechanistic 
 
 **2) Which specific microbial taxa appear to be responsible for differences in the concentrations of each metabolite across samples?**
 
-MIMOSA2 uses a 4-step workflow, described below, to answer these questions. Each step is illustrated for a toy metabolite dataset in the figure below. A more technical explanation of the method can be found in the [MIMOSA2 manuscript](link).
+MIMOSA2 uses a 4-step workflow, described below, to answer these questions. A more technical explanation of the method can be found in the [MIMOSA2 manuscript](link).
 
-![example MIMOSA2](toyExampleTitlesRank.png "Example MIMOSA2 Process")
 
 ---
 **1) Construct a community metabolic model consisting of the set of metabolic reactions that each community member taxon is predicted to be capable of performing.**
 
 MIMOSA2 can map various types of microbiome data to various types of reference data (from either KEGG or collections of genome-scale metabolic reconstructions) to link microbiome taxa to metabolic reactions. The various options are illustrated in the flow
 chart below. The final product of this step is a table consisting of a set of metabolic reactions predicted to be linked to each taxon in the microbiome dataset.
+
+![model building](FigureS1_modelBuilding.png "Metabolic network construction methods")
+
+---
+
+![example MIMOSA2](toyExampleTitlesRank.png "Example MIMOSA2 Process")
+Steps 2, 3, and 4 are shown here for a single toy example metabolite M, which is produced by Taxa 1 and 2 and utilized by Taxon 3. In this six-sample dataset, shifts in the amount of uptake by 
+Taxon 3 can explain the largest share of the observed variance.
 
 
 ---
@@ -40,7 +47,7 @@ regression model to test whether CMP scores are significantly predictive of vari
 **4) Decompose the overall model fit from step 3 into the contributions from each taxon, 
 identifying specific taxa that explain variation in each metabolite.**
 
-Finally, MIMOSA2 analyzes the model fits from step 3 to attribute the variation in a metabolite explained by CMP scores is attributable to each contributing taxon. The sum of the contributions of all taxa is equal to the unadjusted R-squared of the 
+Finally, MIMOSA2 analyzes the model fits from step 3 to calculate the amount of variation in a metabolite explained by CMP scores that is attributable to each contributing taxon. The sum of the contributions of all taxa is equal to the unadjusted R-squared of the 
 regression model from step 3. In other words, a microbe's contribution to a metabolite is equal to the share of the total variation in that metabolite that is explained by that microbe's metabolic potential. For metabolites that are significantly associated with predicted metabolic potential, the taxa with the largest contributions 
 are hypothesized to be the main drivers of differences in the levels of that metabolite across samples. See [the manuscript](manuscript_link) for more details on how these 
 contributions are calculated. 

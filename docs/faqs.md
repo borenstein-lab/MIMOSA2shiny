@@ -83,6 +83,6 @@ slightly less likely (*** stat) to represent a true taxon-metabolite link than c
 represent true relationships but should be interpreted more cautiously than positively correlated metabolites. 
 
 <h4 id="thresholds">What cutoff(s) should I use to identify microbial metabolites and contributing taxa?</h4>
-
+* Include precision-recall plot for HMP data here*
 
 

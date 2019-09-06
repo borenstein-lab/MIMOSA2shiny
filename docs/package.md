@@ -13,19 +13,89 @@ The easiest way to run a MIMOSA2 analysis is via the web application. However, y
 mimosa2 can be easily installed from GitHub using the `devtools` package:
 
 ```R
-devtools::install_github("borenstein-lab/mimosa2")
+devtools::install_github("borenstein-lab/mimosa2", dependencies = T)
 ``` 
+If you want to analyze ASV data, you will also need to have the program *vsearch* installed. Visit the [vsearch website](https://github.com/torognes/vsearch) to download and install.
 
-<!- You can test that the package has been installed correctly by running the test suite:
+## Generating or downloading preprocessed reference data
+
+Before running a MIMOSA2 analysis, the reference data you would like to use for the analysis needs to be downloaded and/or generated. MIMOSA2 relies on two separate types of reference data: 
+
+1) Reference data to link ASVs to reference taxa (not necessary if you have metagenomic KO annotation data)
+2) Gene and reaction sets for reference taxa
+
+The figure below illustrates all the possible combinations of input and reference data formats. You can set up all of them or just a subset for your analysis.
+
+![reference chart](FigureS1_modelBuilding.png "Reference Flow Chart")
+
+Several of these are available from the [Downloads](download.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). More info on doing so is provided below in the [Regenerating Processed Reference Data section](package.html#processRefs)
+
+## Run a full MIMOSA2 analysis
+
+Once you have downloaded and set up the relevant reference databases, you can run a full MIMOSA2 analysis simply by providing a "configuration table" containing all of the relevant settings for the analysis to the `run_mimosa2` function.
+The table below lists the various fields that you can provide in your configuration table. Required fields are in bold.
+
+| Field | Description | Possible values |
+|------|----------|---------|
+|**file1** | Microbiome file path | Valid file path|
+|**file2** | Metabolomics file path | Valid file path|
+|**database_choices_** | Taxonomic abundance file type| One of: "Sequence variants (ASVs)", "Greengenes 13_5 or 13_8 OTUs", "SILVA 132 OTUs", "Metagenome: Total KO abundances", "Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)" |
+|**source_choices** | Ref model option | One of: "PICRUSt KO genomes and KEGG metabolic model", "AGORA genomes and models", "RefSeq/EMBL_GEMs genomes and models" |
+|simThreshold | If 16S rRNA ASVs are provided, threshold for mapping them to a reference database | Value from 0 to 1 (default 0.99)|
+|netAdd | File path to network modifications file | Valid file path|
+|met_type | Whether metabolite data is provided as KEGG compound IDs or metabolite names | T or F |
+|met_transform | Whether a log transform should be applied to metabolite data| T or F |
+|rankBased | Whether to use rank-based regression for comparing CMP scores and metabolites| T or F |
+|**kegg_prefix** | File path to processed generic KEGG network - product of the generate_preprocessed_networks function above database files| Valid file path|
+|**data_prefix** | File path to other reference databases | Valid file path|
+|vsearch_path | File path to vsearch executable | Valid path|
+
+Notes: 
+- **kegg_prefix** is only required when using KEGG-based models.
+
+Some example configuration tables:
+
+- [An ASV-based analysis using EMBL_GEMS models and rank-based regression](link) 
+- [A metagenome-based analysis using KEGG and OLS regression](link2)
+
+You can also download the contribution table used to run any analysis on the MIMOSA2 web server, which allows anyone to later reproduce the same analysis in an R session.
+
+Once you have downloaded the necessary reference data, installed MIMOSA2 and vsearch, and created a configuration table, it is easy to run a full MIMOSA2 analysis. Save it as a text document, for example "configuration_table1.txt", and run the following in an R session or script: 
 
 ```R
-devtools::test("mimosa2")
+mimosa_results = run_mimosa2("configuration_table1.txt")
 ```
--->
 
-## Generating preprocessed reference data
+The run_mimosa2 function returns a list of data tables that is identical to the set of results provided by the web application. More details about the results are provided on the [Results](results.html) page.
 
-In order to run a MIMOSA2 analysis, the first step is to format the reference data you would like to use as needed for the analysis. 
+If you want to generate plots of metabolic potential and taxonomic contributors for each metabolite, similar to the web app, use the `make_plots` and `with_plots` arguments for run_mimosa2:
+
+```R
+mimosa_results_make_plots = run_mimosa2("configuration_table1.txt", make_plots = T, save_plots = T)
+```
+
+In this case lists of plots will also be returned. If `save_plots` is true, the function will save all plots in a folder named "mimosa2results", which it will create in its current working directory.
+
+## Run individual components of a MIMOSA2 analysis
+
+## Other utility functions
+
+- `format_humann2_contributions`
+
+- `map_to_kegg`
+
+- plot functions
+
+<h4 id="processRefs">Processing Reference Data for Compatibility with MIMOSA2</h4>
+
+Just document the process here, raw scripts ok
+- Seq DBs: scripts
+You can also generate your own version of the AGORA or RefSeq databases using the package function `download_ribosomal_ref_seqs`, which uses the [biomartR](https://ropensci.github.io/biomartr/) package to download the relevant list of accessions from NCBI. 
+
+- OTU-DB mapping files
+
+- OTU-specific KEGG models
+
 
 #### Download and reformat metabolic reconstructions
 To do so, the first step is to download the reference dataset you would like to use from the appropriate source. The source database options are:
@@ -48,67 +118,7 @@ generate_preprocessed_networks("embl_gems", dat_path = file_path_to_raw_models, 
 
 (In the function call above, you would replace `file_path_to_raw_models` and `file_path_for_output` with your corresponding file paths.) 
 
-#### Download reference ribosomal sequence data (ASVs)
-Next, if you intend to use MIMOSA to analyze ASV data, you will need to download ribosomal sequences linked to each model. 
-
-For AGORA v1.0.2 and the 2019 version of embl_gems, you can do so using the package function `download_ribosomal_ref_seqs`, which uses the [biomartR](https://ropensci.github.io/biomartr/) package to download the relevant list of accessions from NCBI. 
-
-```R
-download_ribosomal_ref_seqs("AGORA")
-
-```
-To use GreenGenes and KEGG, you can simply download the GreenGenes representative OTU sequence file from the [QIIME2 website](https://docs.qiime2.org/2019.4/data-resources/#marker-gene-reference-databases).
-
-Additionally, to use an ASV table as input, you will need to make sure you have [vsearch](https://github.com/torognes/vsearch) installed. 
-
-[Preprocessed reference data for the metabolic reconstruction databases can also be downloaded from the [Downloads page](downloads.html). ]
-
-#### Download OTU-model mapping files
-If you would like to link GreenGenes or SILVA reference OTUs to AGORA or embl_gems models, you can skip downloading the sequence data and instead download our pre-generated mappings between these databases from the [Downloads page](downloads.html).
+To use GreenGenes and KEGG, you can simply download the [GreenGenes representative OTU sequence files](http://greengenes.secondgenome.com/?prefix=downloads/greengenes_database/gg_13_5/).
 
 
-## Run a full MIMOSA2 analysis
 
-Once you have downloaded and set up the relevant reference databases, you can run a full MIMOSA2 analysis simply by providing a "configuration table" containing all of the relevant settings for the analysis to the `run_mimosa2` function.
-The table below lists the various fields that you can provide in your configuration table. Required fields are in bold.
-
-| Field | Description | Possible values |
-|------|----------|---------|
-|**file1** | Microbiome file path | Valid file path|
-|**file2** | Metabolomics file path | Valid file path|
-|**database_choices_** | Taxonomic abundance file type| One of: "Sequence variants (ASVs)", "Greengenes 13_5 or 13_8 OTUs", "SILVA 132 OTUs", "Metagenome: Total KO abundances", "Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)" |
-|**source_choices** | Ref model option | One of: "PICRUSt KO genomes and KEGG metabolic model", "AGORA genomes and models", "RefSeq/EMBL_GEMs genomes and models" |
-|simThreshold | If 16S rRNA ASVs are provided, threshold for mapping them to a reference database | Value from 0 to 1 (default 0.99)|
-|netAdd | File path to network modifications file | Valid file path|
-|met_type | Whether metabolite data is provided as KEGG compound IDs or metabolite names | T or F |
-|met_transform | Whether a log transform should be applied to metabolite data| T or F |
-|rankBased | Whether to use rank-based regression for comparing CMP scores and metabolites| T or F |
-|**kegg_prefix** | File path to processed generic KEGG network - product of the generate_preprocessed_networks function above database files| Valid file path|
-|**data_prefix** | File path to other reference databases | Valid file path|
-|vsearch_path | File path to vsearch executable | Valid file path|
-
-Notes: 
-- **kegg_prefix** is only required when using KEGG-based models.
-
-Some example configuration tables:
-
-- [An ASV-based analysis using EMBL_GEMS models and rank-based regression](link) 
-- [A metagenome-based analysis using KEGG and OLS regression](link2)
-
-You can also download the contribution table used to run any analysis on the MIMOSA2 web server, which allows anyone to later reproduce the same analysis in an R session.
-
-Once you have created a configuration table, it is easy to run a full MIMOSA2 analysis. Save it as a text document, for example "configuration_table1.txt", and run the following in an R session or script: 
-
-```R
-mimosa_results = run_mimosa2("configuration_table1.txt")
-```
-
-## Run individual components of a MIMOSA2 analysis
-
-## Other utility functions
-
-- `format_humann2_contributions`
-
-- `map_to_kegg`
-
-- plot functions

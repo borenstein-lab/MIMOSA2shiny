@@ -5,7 +5,7 @@ library(shiny)
 library(shinyjs)
 #logjs(sessionInfo())
 
-library(mimosa, lib.loc ="/data/shiny-server/r-packages/")
+library(mimosa) #, lib.loc ="/data/shiny-server/r-packages/")
 library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
 library(readr)
 library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
@@ -161,7 +161,9 @@ run_pipeline = function(input_data, configTable, analysisID){
     print(input_data$netAdd)
     network_results = build_metabolic_model(species, configTable, netAdd = input_data$netAdd) #, input_data$netAdd) #input_data$geneAdd, 
     network = network_results[[1]]
-    species = network_results[[2]] #Allow for modifying this for AGORA
+    species = network_results[[2]] 
+    print(network)
+    #Allow for modifying this for AGORA
     # if(!is.null(input_data$metagenome) & configTable[V1=="database", V2!=get_text("database_choices")[4]]){
     #   #If we are doing a comparison of the species network and the metagenome network
     #   #Metagenome data
@@ -401,7 +403,7 @@ server <- function(input, output, session) {
   save_output_files = function(){
     if(is.list(datasetInput())){
       write.table(datasetInput()$analysisSummary, file = paste0("www/analysisResults/", analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
-      write.table(datasetInput()$configs, file = paste0("www/analysisResults/", analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F)
+      write.table(datasetInput()$configs, file = paste0("www/analysisResults/", analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F, col.names = F)
       
       if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)) write.table(datasetInput()$varShares, file = paste0("www/analysisResults/", analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
       write.table(datasetInput()$newSpecies, file = paste0("www/analysisResults/", analysisID, "/mappedTaxaData.txt"), row.names = F, sep = "\t", quote=F)
@@ -764,8 +766,8 @@ server <- function(input, output, session) {
   
   output$allMetaboliteInfo = DT::renderDT({
     #print(datasetInput())
-    print(datasetInput()$modelData)
-    print(names(datasetInput()$modelData))
+    # print(datasetInput()$modelData)
+    # print(names(datasetInput()$modelData))
     if(typeof(datasetInput())=="character"){
       stop(datasetInput())
     }
@@ -784,7 +786,7 @@ server <- function(input, output, session) {
     tableData[,Slope:=round(Slope, 3)]
     tableData[,Intercept:=round(Intercept, 3)]
     tableData[,metName:=sapply(compound, met_names)]
-    tableData2 = tableData[,list(compound, metName, Rsq, PVal, Slope, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+    tableData2 = tableData[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
     tableData2[,compound:=factor(compound, levels = compound_order)]
     print(tableData2)
     #good_comps = list.files(path = getwd(), pattern = analysisID)
@@ -809,7 +811,7 @@ server <- function(input, output, session) {
           return(img_uri("blank_plot.png"))
         }
         })]
-      tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, ContribPlot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+      tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, Plot, ContribPlot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
       setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Contribution Plot", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns",  "Intercept"))
       tooltip_table = htmltools::withTags(table(
         class = 'display',
@@ -827,9 +829,12 @@ server <- function(input, output, session) {
             th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[11]),
             th("Intercept", title = get_text("results_table_titles")[13])
           ))))
+      final_table = DT::datatable(
+        tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
+        container = tooltip_table)
     } else {
       if(datasetInput()$configs[V1=="database", V2==get_text("database_choices")[4]]){ #Skip species
-        tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+        tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
         setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Top Producing Genes/Rxns","Top Utilizing Genes/Rxns", "Intercept"))
         tooltip_table = htmltools::withTags(table(
           class = 'display',
@@ -846,8 +851,12 @@ server <- function(input, output, session) {
               th("Top Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
               th("Intercept", title = get_text("results_table_titles")[13])
             ))))
+        final_table = DT::datatable(
+          tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Genes/Rxns", "Top Utilizing Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
+          container = tooltip_table)
+        
       } else {
-        tableData2 = tableData2[,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+        tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
         setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"))
         tooltip_table = htmltools::withTags(table(
           class = 'display',
@@ -864,15 +873,18 @@ server <- function(input, output, session) {
               th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[11]),
               th("Intercept", title = get_text("results_table_titles")[13])
             ))))
+        final_table = DT::datatable(
+          tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
+          container = tooltip_table)
+        
       }
     }
 
-    return(DT::datatable(
-      tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
-      container = tooltip_table))
+    return(final_table)
     #return(DT::datatable(tableData[order(m2R, decreasing = T),list(compound, Rsq, PVal, Slope, Intercept)], 
      #                    options = list(lengthMenu = c(5, 10), pageLength = 5)))
   }, server = F)
+  
   output$downloadComparePlots = downloadHandler(
     filename = function() {
       "CMP_Metabolite_Compare.zip"
