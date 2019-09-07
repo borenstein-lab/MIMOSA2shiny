@@ -1,0 +1,11 @@
+file1	taxa_metagenome.txt
+file2	metabolites.txt
+file1_type	Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)
+ref_choices	PICRUSt KO genomes and KEGG metabolic model
+netAdd	network_KO_additions.txt
+logTransform	T
+metType KEGG Compound IDs
+data_prefix	~/Documents/MIMOSA2shiny/data/
+vsearch_path	~/Documents/MIMOSA2shiny/bin/vsearch
+rankBased	F
+signifThreshold	1

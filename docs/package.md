@@ -28,35 +28,34 @@ The figure below illustrates all the possible combinations of input and referenc
 
 ![reference chart](FigureS1_modelBuilding.png "Reference Flow Chart")
 
-Several of these are available from the [Downloads](download.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). More info on doing so is provided below in the [Regenerating Processed Reference Data section](package.html#processRefs)
+Several of these are available from the [Downloads](download.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). More information on doing so is provided below in the section on [Regenerating Processed Reference Data](package.html#processRefs).
 
 ## Run a full MIMOSA2 analysis
 
 Once you have downloaded and set up the relevant reference databases, you can run a full MIMOSA2 analysis simply by providing a "configuration table" containing all of the relevant settings for the analysis to the `run_mimosa2` function.
-The table below lists the various fields that you can provide in your configuration table. Required fields are in bold.
+The table below lists the various fields that you can provide in your configuration table. Required fields are in bold. The fields or rows of the table can be specified in any order.
 
 | Field | Description | Possible values |
 |------|----------|---------|
 |**file1** | Microbiome file path | Valid file path|
 |**file2** | Metabolomics file path | Valid file path|
-|**database_choices_** | Taxonomic abundance file type| One of: "Sequence variants (ASVs)", "Greengenes 13_5 or 13_8 OTUs", "SILVA 132 OTUs", "Metagenome: Total KO abundances", "Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)" |
-|**source_choices** | Ref model option | One of: "PICRUSt KO genomes and KEGG metabolic model", "AGORA genomes and models", "RefSeq/EMBL_GEMs genomes and models" |
+|**file1_type** | Taxonomic abundance file type| One of: "Sequence variants (ASVs)", "Greengenes 13_5 or 13_8 OTUs", "SILVA 132 OTUs", "Metagenome: Total KO abundances", "Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)" |
+|**ref_choices** | Ref model option | One of: "PICRUSt KO genomes and KEGG metabolic model", "AGORA genomes and models", "RefSeq/EMBL_GEMs genomes and models" |
 |simThreshold | If 16S rRNA ASVs are provided, threshold for mapping them to a reference database | Value from 0 to 1 (default 0.99)|
 |netAdd | File path to network modifications file | Valid file path|
-|met_type | Whether metabolite data is provided as KEGG compound IDs or metabolite names | T or F |
-|met_transform | Whether a log transform should be applied to metabolite data| T or F |
+|metType | Whether metabolite data is provided as KEGG compound IDs or metabolite names (assumes KEGG if not provided) | One of: "KEGG Compound IDs", "Metabolite names (search for matching ID)" |
+|signifThreshold | Taxonomic contributors to metabolites will only be evaluated for metabolites with a model fit p-value below this threshold | Value from 0 to 1 (default 0.2)|
+|compare_only | Skip the taxonomic contribution analysis, only build the model and compare CMP scores and metabolites | T or F|
+|logTransform | Whether a log transform should be applied to metabolite data| T or F |
 |rankBased | Whether to use rank-based regression for comparing CMP scores and metabolites| T or F |
-|**kegg_prefix** | File path to processed generic KEGG network - product of the generate_preprocessed_networks function above database files| Valid file path|
-|**data_prefix** | File path to other reference databases | Valid file path|
-|vsearch_path | File path to vsearch executable | Valid path|
+|**data_prefix** | File path to reference databases (see below for required files)| Valid file path|
+|vsearch_path | File path to vsearch executable | Valid path (when not provided, MIMOSA2 assumes vsearch is in the executable path)|
 
-Notes: 
-- **kegg_prefix** is only required when using KEGG-based models.
+Some example configuration tables are linked below:
 
-Some example configuration tables:
-
-- [An ASV-based analysis using EMBL_GEMS models and rank-based regression](link) 
-- [A metagenome-based analysis using KEGG and OLS regression](link2)
+- [An ASV-based analysis using EMBL_GEMS models and rank-based regression](config_example1.txt) 
+- [A stratified metagenome-based analysis using KEGG and OLS regression, with a custom network modification](config_example2.txt)
+- [A GreenGenes OTU table mapped to AGORA models](config_example3.txt)
 
 You can also download the contribution table used to run any analysis on the MIMOSA2 web server, which allows anyone to later reproduce the same analysis in an R session.
 
@@ -84,7 +83,7 @@ In this case lists of plots will also be returned. If `save_plots` is true, the 
 
 - `map_to_kegg`
 
-- plot functions
+- `plot_summary_contributions`: Make a heatmap
 
 <h4 id="processRefs">Processing Reference Data for Compatibility with MIMOSA2</h4>
 

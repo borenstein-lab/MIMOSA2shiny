@@ -24,9 +24,10 @@ chart below. The final product of this step is a table consisting of a set of me
 
 ---
 
-![example MIMOSA2](toyExampleTitlesRank.png "Example MIMOSA2 Process")
-Steps 2, 3, and 4 are shown here for a single toy example metabolite M, which is produced by Taxa 1 and 2 and utilized by Taxon 3. In this six-sample dataset, shifts in the amount of uptake by 
+Steps 2, 3, and 4 are shown below for a single toy example metabolite M, which is produced by Taxa 1 and 2 and utilized by Taxon 3. In this six-sample dataset, shifts in the amount of uptake by 
 Taxon 3 can explain the largest share of the observed variance.
+
+![example MIMOSA2](toyExampleTitlesRank.png "Example MIMOSA2 Process")
 
 
 ---

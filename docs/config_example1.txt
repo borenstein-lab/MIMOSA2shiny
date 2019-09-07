@@ -1,0 +1,10 @@
+file1	ASVs.txt
+file2	metabolites.txt
+ref_choices	RefSeq/EMBL_GEMs genomes and models
+file1_type	Sequence variants (ASVs)
+simThreshold	0.99
+data_prefix	~/MIMOSA2/data/
+vsearch_path	vsearch
+rank_based	T
+metType	KEGG Compound IDs
+signifThreshold	1
