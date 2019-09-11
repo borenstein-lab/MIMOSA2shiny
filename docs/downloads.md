@@ -18,7 +18,7 @@ See the [R package tutorial](package.html) for an overview of all workflows.
 - 16S rRNA ASVs to KEGG - see Note
 - Greengenes OTUs to KEGG - see Note
 
-To analyze metagenomic data with the KEGG workflow, you must have a KEGG license to download the necessary files, or you can run your analysis using the [web app](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/)
+Note: To use a KEGG-based workflow, you must have a KEGG license to download the necessary files, or you can run your analysis using the [web app.](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/)
 
 Individual processed data files are described and linked below:
 

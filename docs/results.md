@@ -32,7 +32,7 @@ You can download all results and plots produced by the analysis using the blue "
 - **Model Summaries:** A table describing the fit between metabolic potential scores and metabolite measurements for each compound. Includes the model coefficients, significance based on a drop-in-deviance test, and R-squared value.
 
 - **Contribution Results:** A table describing the contribution of each taxon to the overall model fit for each metabolite. In other words, the fraction of the variation in each metabolite explained by this taxon, according to the
-overall community model. *Note:* For analyses using rank-based regression, in order to reduce computation time, MIMOSA2 will only calculate taxonomic contributors for metabolites with a model p-value less than 0.1.
+overall community model. Contribution results are only included for metabolites with a model p-value less than 0.1.
 
 - **Mapped Taxa Abundances:** The processed taxa abundances, after mapping to the selected reference database -- for PICRUSt and KEGG, these are Greengenes OTUs; for AGORA and RefSeq, these are counts assigned to each reference genome.
 

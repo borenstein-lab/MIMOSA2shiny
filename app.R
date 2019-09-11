@@ -1,11 +1,10 @@
-#.libPaths(c("/data/shiny-server/r-packages/", "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")) #, "/data/shiny-server/app_specific_r_packages/"))
+
 library(shiny)
 library(shinyjs, lib.loc = "../r-packages/")
 library(ggplot2, lib.loc = "../r-packages/")
 library(cowplot, lib.loc = "../r-packages/")
 library(data.table, lib.loc = "../r-packages/")
 library(ggpubr, lib.loc = "../r-packages/")
-#library(MetaboAnalystR, lib.loc = "/data/shiny-server/r-packages/")
 library(mimosa, lib.loc ="../r-packages/")
 library(readr, lib.loc = "../r-packages/")
 library(RColorBrewer, lib.loc = "../r-packages/")
