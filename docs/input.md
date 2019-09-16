@@ -33,7 +33,7 @@ If you provide ASV data, you can also control how strictly your sequence variant
 2) **Greengenes 13_5 or 13_8 OTUs:** 16S rRNA data assigned to closed-reference Greengenes OTUs (e.g. by QIIME1 or vsearch). 
 <a href="test_gg.txt" target="_blank">Example (with Greengenes OTUs) </a>
 
-3) **SILVA v132 OTUs:** 16S rRNA data assigned to closed-reference SILVA OTUs. **not currently compatible with all metabolic model database options
+3) **SILVA v132 OTUs:** 16S rRNA data assigned to closed-reference SILVA OTUs. Note: SILVA OTUs are not currently compatible with the KEGG metabolic network database option.
 <a href="test_silva.txt" target="_blank">Example (with SILVA OTUs) </a>
 
 4) **No 16S rRNA data; use metagenome data only**: If this option is selected, a metagenome abundance table must be provided (see below). You also must select 

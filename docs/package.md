@@ -24,11 +24,22 @@ Before running a MIMOSA2 analysis, the reference data you would like to use for 
 1) Reference data to link ASVs to reference taxa (not necessary if you have metagenomic KO annotation data)
 2) Gene and reaction sets for reference taxa
 
-The figure below illustrates all the possible combinations of input and reference data formats. You can set up all of them or just a subset for your analysis.
+The figure below illustrates all the possible combinations of input and reference data formats. You can set up all of them or just a subset for a specific analysis.
 
 ![reference chart](FigureS1_modelBuilding.png "Reference Flow Chart")
 
 Several of these are available from the [Downloads](download.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). More information on doing so is provided below in the section on [Regenerating Processed Reference Data](package.html#processRefs).
+If you are planning to run a workflow that uses freely available data, the `download_reference_data` function will obtain the necessary data and format it as expected by the main MIMOSA2 analysis. This function takes two arguments, which correspond to two rows in the configuration table for a MIMOSA2 analysis (below).
+
+```R
+download_reference_data("Sequence variants (ASVs)", "AGORA genomes and models")
+
+download_reference_data("Greengenes 13_5 or 13_8 OTUs", "RefSeq/EMBL_GEMs genomes and models")
+
+```
+You can use the `save_to` argument to customize where these files are saved, but if you change this you will need to modify the `data_prefix` argument when running your MIMOSA2 analysis (see below).
+
+If you would like to run an analysis using KEGG, you need to have a KEGG license and to download 3 files from the KEGG FTP server: annotated pathway reactions (filename reaction_mapformula.lst), reaction annotations (filename reaction), and reaction-KO links (filename ko_reaction.list). Then you can provide those files as input to the `generate_preprocessed_networks` function to set up the reference database for MIMOSA2.
 
 ## Run a full MIMOSA2 analysis
 
@@ -87,21 +98,15 @@ In this case lists of plots will also be returned. If `save_plots` is true, the 
 
 <h4 id="processRefs">Processing Reference Data for Compatibility with MIMOSA2</h4>
 
-Just document the process here, raw scripts ok
-- Seq DBs: scripts
 You can also generate your own version of the AGORA or RefSeq databases using the package function `download_ribosomal_ref_seqs`, which uses the [biomartR](https://ropensci.github.io/biomartr/) package to download the relevant list of accessions from NCBI. 
 
-- OTU-DB mapping files
-
-- OTU-specific KEGG models
-
-
+<!---
 #### Download and reformat metabolic reconstructions
-To do so, the first step is to download the reference dataset you would like to use from the appropriate source. The source database options are:
+If you do not wish to use the precomputed files provided above (i.e. to use a new version of a database), you can generate a reference database set up for MIMOSA2 yourself. 
 
-- [AGORA](link)
-- [embl_gems](link)
-- PICRUSt_KEGG ([PICRUSt1 pre-calculated files], plus KEGG FTP downloads): KEGG network with GreenGenes OTUs and PICRUSt 1
+- [AGORA](www.vmh.life)
+- [embl_gems](www.github.com/cdanielmachado/embl_gems/)
+- PICRUSt_KEGG (PICRUSt1 pre-calculated files, plus KEGG FTP downloads): KEGG network with GreenGenes OTUs and PICRUSt 1
 - KEGG (KEGG FTP downloads): KEGG network without taxonomic information, to use with KEGG-annotated metagenomic data
 
 Note that downloading the necessary KEGG FTP files requires a license. 
@@ -117,7 +122,7 @@ generate_preprocessed_networks("embl_gems", dat_path = file_path_to_raw_models, 
 
 (In the function call above, you would replace `file_path_to_raw_models` and `file_path_for_output` with your corresponding file paths.) 
 
-To use GreenGenes and KEGG, you can simply download the [GreenGenes representative OTU sequence files](http://greengenes.secondgenome.com/?prefix=downloads/greengenes_database/gg_13_5/).
+To use GreenGenes and KEGG, you can download the [GreenGenes representative OTU sequence files](http://greengenes.secondgenome.com/?prefix=downloads/greengenes_database/gg_13_5/).
 
 
-
+-->

@@ -156,7 +156,7 @@ run_pipeline = function(input_data, configTable, analysisID){
 	  configTable = check_config_table(configTable, app = T)
 	
     incProgress(2/10, detail = "Building metabolic model")
-    validate(need(!(configTable[V1=="database", V2] %in% get_text("database_choices")[4:5] & 
+    validate(need(!(configTable[V1=="file1_type", V2] %in% get_text("database_choices")[4:5] & 
                                   configTable[V1=="genomeChoices", V2 != get_text("source_choices")[1]]), "Error: Only KEGG metabolic model (network option 1) can be used with KEGG Ortholog data"))
     print(input_data$netAdd)
     network_results = build_metabolic_model(species, configTable, netAdd = input_data$netAdd) #, input_data$netAdd) #input_data$geneAdd, 
@@ -164,7 +164,7 @@ run_pipeline = function(input_data, configTable, analysisID){
     species = network_results[[2]] 
     print(network)
     #Allow for modifying this for AGORA
-    # if(!is.null(input_data$metagenome) & configTable[V1=="database", V2!=get_text("database_choices")[4]]){
+    # if(!is.null(input_data$metagenome) & configTable[V1=="file1_type", V2!=get_text("database_choices")[4]]){
     #   #If we are doing a comparison of the species network and the metagenome network
     #   #Metagenome data
     #   metagenome_network = build_metabolic_model(input_data$metagenome, configTable)
@@ -188,11 +188,11 @@ run_pipeline = function(input_data, configTable, analysisID){
       }
       cat(paste0("Regression type is ", rank_type, "\n"))
     } else rank_based = F
-    if(configTable[V1=="database", V2==get_text("database_choices")[4]]){
+    if(configTable[V1=="file1_type", V2==get_text("database_choices")[4]]){
       no_spec_param = T
       humann2_param = F
       rel_abund_param = T
-    } else if(configTable[V1=="database", V2==get_text("database_choices")[5]]){
+    } else if(configTable[V1=="file1_type", V2==get_text("database_choices")[5]]){
       no_spec_param = F
       humann2_param = T
       rel_abund_param = F
@@ -833,7 +833,7 @@ server <- function(input, output, session) {
         tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
         container = tooltip_table)
     } else {
-      if(datasetInput()$configs[V1=="database", V2==get_text("database_choices")[4]]){ #Skip species
+      if(datasetInput()$configs[V1=="file1_type", V2==get_text("database_choices")[4]]){ #Skip species
         tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
         setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Top Producing Genes/Rxns","Top Utilizing Genes/Rxns", "Intercept"))
         tooltip_table = htmltools::withTags(table(

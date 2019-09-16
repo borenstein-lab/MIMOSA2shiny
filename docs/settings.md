@@ -5,7 +5,7 @@ active: settings
 ---
 # Running a MIMOSA2 Analysis: Setup and Settings
 
-The MIMOSA2 web application is available at https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny
+The MIMOSA2 web application is available at [https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny)
 
 The landing page of the web application is an interface for uploading your data and selecting options for your MIMOSA2 analysis. Each input section and the corresponding
 options are described below:
@@ -26,11 +26,10 @@ If you provide KEGG Ortholog metagenome abundances, these will be directly linke
 ribosomal genes from the genomes of the AGORA collection of metabolic reconstructions (currently consisting of 818 reference strains present in human gut microbiota).
 The metabolic reconstructions for mapped species are then combined into the community metabolic model and used for the analysis.
 
-- RefSeq/EMBL_GEMs genomes and models (Machado et al Nucleic Acids Research 2018): An alternative collection of metabolic reconstructions, corresponding to 
+- RefSeq/EMBL_GEMs genomes and models ([Machado et al Nucleic Acids Research 2018](https://doi.org/10.1093/nar/gky537)): An alternative collection of metabolic reconstructions, corresponding to 
 all 5,587 RefSeq reference genomes and constructed using the CarveMe method. As in the AGORA option, MIMOSA2 maps the 16S rRNA sequences of input taxa 
 against a reference ribosomal database to link microbiome features to reference genomes and metabolic reconstructions.
 
-More in-depth information on these resources is available on the [Reference Data page](downloads.html). 
 
 If you have provided a table of 16S rRNA ASVs, you can select how strictly these sequences are aligned against the reference sequences. The default is a relatively strict minimum threshold (99%). 
 Mappings are pre-computed for reference OTU sequences at a 97% threshold.
@@ -46,7 +45,7 @@ You may find it useful to examine the CMP-Metabolite comparison results with and
 ## Algorithm Settings
 
 Select whether to compare metabolic potential (CMP) and metabolite levels using ordinary least-squares regression (OLS) or rank-based regression. 
-We generally recommend rank-based regression as it can detect metabolite relationships more robustly and sensitively across a wider variety of data distributions (see the manuscript). However, 
+We generally recommend rank-based regression as it can detect metabolite relationships more robustly and sensitively across a wider variety of data distributions. However, 
 for rank-based regression, the contributions of individual taxa to the model fit are calculated using a permutation-based approach, which greatly increases the analysis runtime. Therefore, when this option is selected, 
 MIMOSA2 will only calculate taxonomic contributors for metabolites with a model p-value less than 0.1 (rather than all metabolites). You also have the option to skip 
 the contribution analysis and just compare metabolites with metabolic potential.
