@@ -1,22 +1,18 @@
-#.libPaths(c("/data/shiny-server/r-packages/", "/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")) #, "/data/shiny-server/app_specific_r_packages/"))
-#library(Rcpp, lib.loc = "/data/shiny-server/r-packages/")
-#library(Cairo, lib.loc = "/data/shiny-server/r-packages/")
-library(shiny)
-library(shinyjs)
-#logjs(sessionInfo())
 
-library(mimosa) #, lib.loc ="/data/shiny-server/r-packages/")
-library(data.table) #, lib.loc ="/data/shiny-server/R/x86_64-redhat-linux-gnu-library/3.2/")
-library(readr)
-library(ggplot2) #, lib.loc = "/data/shiny-server/r-packages")
-#library(viridis) #, lib.loc = "/data/shiny-server/r-packages")
-library(cowplot)
-library(RColorBrewer)
+library(shiny)
+library(shinyjs, lib.loc = "../r-packages/")
+library(ggplot2, lib.loc = "../r-packages/")
+library(cowplot, lib.loc = "../r-packages/")
+library(data.table, lib.loc = "../r-packages/")
+library(ggpubr, lib.loc = "../r-packages/")
+library(mimosa, lib.loc ="../r-packages/")
+library(readr, lib.loc = "../r-packages/")
+library(RColorBrewer, lib.loc = "../r-packages/")
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=300*1024^2, 
         show.error.locations=TRUE, shiny.trace = F)
 theme_set(theme_cowplot() + theme(text = element_text(family = 'Helvetica')))
-library(shinyBS)
-library(ggpubr)
+library(shinyBS, lib.loc = "../r-packages/")
+#library(ggpubr)
 
 microbiome_data_upload = function(){
   fluidPage(
@@ -392,7 +388,7 @@ server <- function(input, output, session) {
     } else {
       print(list.files(path = analysisID))
       file_ids = paste0("www/analysisResults/", analysisID, "/", list.files(path = paste0("www/analysisResults/", analysisID)))
-      file_ids = file_ids[file_ids != "allResults.zip"] # In case this already exists
+      file_ids = file_ids[!grepl(".zip", file_ids, fixed = T)] # In case this already exists
     }
     print(file_ids)
     
@@ -509,8 +505,8 @@ server <- function(input, output, session) {
             tags$style(
               type="text/css",
               "#downloadAll  {background-color: #3CBCDB}"
-            ),
-	    tags$script(HTML("$.fn.dataTable.ext.errMode = 'throw';")) 
+            )#,
+	    #tags$script(HTML("$.fn.dataTable.ext.errMode = 'throw';")) 
             
 
           # ),
@@ -538,7 +534,7 @@ server <- function(input, output, session) {
                 type="text/css",
                 "#downloadAll  {background-color: #3CBCDB}"
               ), width = 12, align = "center")),
-          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("analysisResults/", analysisResultsFile()), target = "_blank"))),
+          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("analysisResults/", analysisResultsFile())))),
           p(get_text("result_table_description")),
           fluidRow( # Big table
             DT::dataTableOutput("allMetaboliteInfo"), width="100%"
