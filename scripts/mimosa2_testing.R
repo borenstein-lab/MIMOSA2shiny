@@ -4,10 +4,10 @@ library(ggplot2)
 library(mimosa)
 library(RColorBrewer)
 library(pROC)
-datadir = "~/Documents/GS_server/PROJECTS/MORE_METABOLOMICS_CN/RESULTS/AGORA/"
-homedir =  "~/Documents/GS_server/PROJECTS/MORE_METABOLOMICS_CN/"
-datadir2 = "../../../MetabolSpeciesContribs/microbiome-metabolome-evaluation/"
-source("../../../MetabolSpeciesContribs/microbiome-metabolome-evaluation/FBA_functions.R")
+datadir = ""
+homedir =  ""
+datadir2 = "microbiome-metabolome-evaluation/"
+source("microbiome-metabolome-evaluation/FBA_functions.R")
 load(paste0(datadir, "TenSpecVary_relAbund_chemostat_fixRevRxns_mimosa_pieces.rda"))
 media_file = paste0(homedir, "DATA/GutMedia/FaithMedia_AGORA_F_final.csv")
 dictionary_file = paste0(homedir, "DATA/Dictionary_AGORA_complete.csv")
