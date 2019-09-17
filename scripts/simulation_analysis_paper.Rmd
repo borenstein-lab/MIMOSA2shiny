@@ -33,7 +33,7 @@ if(datasetID == "ten_spec"){
   
   hmp_dat = process_abundances("data/testData/sim_data/HMP_test577_HMP_noise_specAbunds.txt", "data/testData/sim_data/HMP_test577_HMP_noise_metAbunds.txt", fluxes_file = "data/testData/sim_data/HMP_test577_HMP_noise_metFluxesFinal.txt", simulated = T)
   config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "revRxns"), 
-                          V2 = c(get_text("database_choices")[2], get_text("source_choices")[2], get_text("met_type_choices")[1], "data/KEGGfiles/", "/net/borenstein/vol1/DATA_REFERENCE/MIMOSA2_REFDATA/", "bin/vsearch", T))
+                          V2 = c(get_text("database_choices")[2], get_text("source_choices")[2], get_text("met_type_choices")[1], "data/KEGGfiles/", "MIMOSA2_REFDATA/", "bin/vsearch", T))
 
 }
 
