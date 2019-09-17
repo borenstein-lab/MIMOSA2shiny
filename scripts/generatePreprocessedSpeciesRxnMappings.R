@@ -1,6 +1,6 @@
 ##### Make processed species-reaction mappings for both AGORA, PICRUSt, RefSeq/CarveMe
 library(data.table)
-library(mimosa) #, lib = "/data/shiny-server/r-packages/")
+library(mimosa) 
 
 args = commandArgs(trailingOnly = T)
 database = args[1]
