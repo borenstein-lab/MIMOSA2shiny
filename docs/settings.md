@@ -7,8 +7,7 @@ active: settings
 
 The MIMOSA2 web application is available at [https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny)
 
-The landing page of the web application is an interface for uploading your data and selecting options for your MIMOSA2 analysis. Each input section and the corresponding
-options are described below:
+The main web application page is an interface for uploading data and selecting options for your MIMOSA2 analysis. The various sections and options are described below:
 
 ## Microbiome Data
 Select your microbiome data format, and upload the corresponding data file. You can provide taxonomic abundances, function abundances, or both, in several formats. 
@@ -17,16 +16,16 @@ See [Input Data](input.html) for more information.
 ## Metabolic Model Options
 Select what metabolic database you would like to use to link your microbiome and metabolite data. Several options are available:
 
-- KEGG metabolic model: As in the original version of MIMOSA, this option uses pre-computed KEGG Ortholog inferences 
+- *KEGG metabolic model* ([Kanehisa and Goto Nucleic Acids Research 2000](https://doi.org/10.1093/nar/28.1.27)): As in the original version of MIMOSA, this option uses pre-computed KEGG Ortholog inferences 
 and a generic KEGG metabolic model to link taxa to metabolites. If you provide a taxonomic abundance table, the input taxa will first be mapped to Greengenes OTUs, and the pre-computed PICRUSt KO predictions for each OTU will be used 
 as the basis for the community metabolic model. 
 If you provide KEGG Ortholog metagenome abundances, these will be directly linked to reactions and metabolites.
 
-- AGORA genomes and models (Magnusdottir et al Nature Biotech 2016): For this option, the 16S rRNA sequences of provided microbiome taxa (either from Greengenes/SILVA, or the ASV sequences themselves) are mapped to 
+- *AGORA genomes and models* ([Magnusdottir et al Nature Biotech 2016](https://doi.org/10.1038/nbt.3703)): For this option, the 16S rRNA sequences of provided microbiome taxa (either from Greengenes/SILVA, or the ASV sequences themselves) are mapped to 
 ribosomal genes from the genomes of the AGORA collection of metabolic reconstructions (currently consisting of 818 reference strains present in human gut microbiota).
-The metabolic reconstructions for mapped species are then combined into the community metabolic model and used for the analysis.
+The metabolic reconstructions for mapped species are then combined into the community metabolic model and used for the analysis. MIMOSA2 currently uses reconstructions from AGORA version 1.0.2.
 
-- RefSeq/EMBL_GEMs genomes and models ([Machado et al Nucleic Acids Research 2018](https://doi.org/10.1093/nar/gky537)): An alternative collection of metabolic reconstructions, corresponding to 
+- *RefSeq/EMBL_GEMs genomes and models* ([Machado et al Nucleic Acids Research 2018](https://doi.org/10.1093/nar/gky537)): An alternative collection of metabolic reconstructions, corresponding to 
 all 5,587 RefSeq reference genomes and constructed using the CarveMe method. As in the AGORA option, MIMOSA2 maps the 16S rRNA sequences of input taxa 
 against a reference ribosomal database to link microbiome features to reference genomes and metabolic reconstructions.
 
@@ -54,4 +53,6 @@ Rank-based regression is provided using the Rfit package in R. The general idea 
 Other non-linear models may be provided as options in the future.
 
 ## Run MIMOSA
-Once you have selected all options, push this button to run your analysis. Analysis runtime depends on the numbers of samples, microbiome taxa, and metabolites in your dataset. Analyses using OLS regression typically only take a minute or two; analyses using rank-based regression may take ~10 minutes.
+Once you have selected all options, push this button to run your analysis. Analysis runtime depends on the numbers of samples, microbiome taxa, and metabolites in your dataset. Analyses using OLS regression typically only take a minute or two; analyses using rank-based regression may take 5-10 minutes. 
+
+If your connection to the server is lost mid-analysis, it may be due to server load - please try again later. If the analysis finishes but then disconnects while examining the results, you can still download a zipped directory of your results from the server using the provided link.

@@ -5,7 +5,7 @@ active: support
 ---
 # Citation and Contact
 
-The MIMOSA2 manuscript is currently in preparation. Therefore, if you use MIMOSA2, please include the URL [borensteinlab.com/software/mimosa2.html](http://borensteinlab.com/software_MIMOSA2.html) and cite the publication describing MIMOSA v1:
+The MIMOSA2 manuscript is currently in preparation. If you use MIMOSA2 in a publication, please include the URL **[www.borensteinlab.com/software_MIMOSA2.html](http://borensteinlab.com/software_MIMOSA2.html)**, and cite the publication describing MIMOSA v1:
 
 Noecker, C., Eng, A., Srinivasan, S., Theriot, C.M., Young, V.B., Jansson, J.K., Fredricks, D.N., and Borenstein, E. (2016). Metabolic Model-Based Integration of Microbiome Taxonomic and Metabolomic Profiles Elucidates Mechanistic Links between Ecological and Metabolic Variation. mSystems 1, e00013–15, [doi:10.1128/mSystems.00013-15](http://doi.org/10.1128/mSystems.00013-15).
 

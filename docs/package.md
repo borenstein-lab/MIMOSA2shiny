@@ -22,24 +22,26 @@ If you want to analyze ASV data, you will also need to have the program *vsearch
 Before running a MIMOSA2 analysis, the reference data you would like to use for the analysis needs to be downloaded and/or generated. MIMOSA2 relies on two separate types of reference data: 
 
 1) Reference data to link ASVs to reference taxa (not necessary if you have metagenomic KO annotation data)
-2) Gene and reaction sets for reference taxa
 
-The figure below illustrates all the possible combinations of input and reference data formats. You can set up all of them or just a subset for a specific analysis.
+2) Sets of genes and reactions linked to reference taxa
+
+The figure below illustrates all the possible combinations of input and reference data formats. You can set up the reference databases to run all of them or just a subset for a specific analysis.
 
 ![reference chart](FigureS1_modelBuilding.png "Reference Flow Chart")
 
 Several of these are available from the [Downloads](download.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). More information on doing so is provided below in the section on [Regenerating Processed Reference Data](package.html#processRefs).
-If you are planning to run a workflow that uses freely available data, the `download_reference_data` function will obtain the necessary data and format it as expected by the main MIMOSA2 analysis. This function takes two arguments, which correspond to two rows in the configuration table for a MIMOSA2 analysis (below).
+
+If you would like to run a workflow that uses freely available data, the `download_reference_data` function will obtain the necessary data and format it as expected by the main MIMOSA2 analysis. This function takes two arguments, which correspond to the *file1_type* and *ref_choices* options in the configuration table for a MIMOSA2 analysis (below).
 
 ```R
-download_reference_data("Sequence variants (ASVs)", "AGORA genomes and models")
+download_reference_data(seq_db = "Sequence variants (ASVs)", target_db = "AGORA genomes and models")
 
-download_reference_data("Greengenes 13_5 or 13_8 OTUs", "RefSeq/EMBL_GEMs genomes and models")
+download_reference_data(seq_db = "Greengenes 13_5 or 13_8 OTUs", target_db = "RefSeq/EMBL_GEMs genomes and models")
 
 ```
 You can use the `save_to` argument to customize where these files are saved, but if you change this you will need to modify the `data_prefix` argument when running your MIMOSA2 analysis (see below).
 
-If you would like to run an analysis using KEGG, you need to have a KEGG license and to download 3 files from the KEGG FTP server: annotated pathway reactions (filename reaction_mapformula.lst), reaction annotations (filename reaction), and reaction-KO links (filename ko_reaction.list). Then you can provide those files as input to the `generate_preprocessed_networks` function to set up the reference database for MIMOSA2.
+If you would like to run an analysis using KEGG, you need to have a KEGG license and to download 3 files from the KEGG FTP server: annotated pathway reactions (filename *reaction_mapformula.lst*), reaction annotations (filename *reaction*), and reaction-KO links (filename *ko_reaction.list*). Then you can provide those files as input to the `generate_preprocessed_networks` function to set up the reference database for MIMOSA2.
 
 ## Run a full MIMOSA2 analysis
 
@@ -86,6 +88,8 @@ mimosa_results_make_plots = run_mimosa2("configuration_table1.txt", make_plots =
 
 In this case lists of plots will also be returned. If `save_plots` is true, the function will save all plots in a folder named "mimosa2results", which it will create in its current working directory.
 
+<!---
+
 ## Run individual components of a MIMOSA2 analysis
 
 ## Other utility functions
@@ -100,7 +104,6 @@ In this case lists of plots will also be returned. If `save_plots` is true, the 
 
 You can also generate your own version of the AGORA or RefSeq databases using the package function `download_ribosomal_ref_seqs`, which uses the [biomartR](https://ropensci.github.io/biomartr/) package to download the relevant list of accessions from NCBI. 
 
-<!---
 #### Download and reformat metabolic reconstructions
 If you do not wish to use the precomputed files provided above (i.e. to use a new version of a database), you can generate a reference database set up for MIMOSA2 yourself. 
 

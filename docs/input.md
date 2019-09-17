@@ -28,27 +28,24 @@ Microbiome composition data can be provided in 3 different formats:
 
 1) **Sequence variants (ASVs):** 16S rRNA data processed by denoising tools (i.e. qiime2/DADA2/Deblur). In this case, the first column must contain the DNA sequences themselves. 
 If you provide ASV data, you can also control how strictly your sequence variants are mapped to the reference database of 16S rRNA sequences linked to metabolic reconstructions (see [Settings](settings.html)).
-<a href="test_seqs.txt" target="_blank">Example (with sequence variants) </a>
+
+<a href="test_seqs.txt" target="_blank">Example ASV file </a>
 
 2) **Greengenes 13_5 or 13_8 OTUs:** 16S rRNA data assigned to closed-reference Greengenes OTUs (e.g. by QIIME1 or vsearch). 
-<a href="test_gg.txt" target="_blank">Example (with Greengenes OTUs) </a>
 
-3) **SILVA v132 OTUs:** 16S rRNA data assigned to closed-reference SILVA OTUs. Note: SILVA OTUs are not currently compatible with the KEGG metabolic network database option.
-<a href="test_silva.txt" target="_blank">Example (with SILVA OTUs) </a>
+<a href="test_gg.txt" target="_blank">Example Greengenes OTU file </a>
 
-4) **No 16S rRNA data; use metagenome data only**: If this option is selected, a metagenome abundance table must be provided (see below). You also must select 
-"PICRUSt KO genomes and KEGG metabolic model" as the metabolic model option (see [Running a MIMOSA2 analysis](settings.html) for more details).
+3) **SILVA 132 OTUs:** 16S rRNA data assigned to closed-reference SILVA OTUs. Note: SILVA OTUs are not currently compatible with the KEGG metabolic network database option.
 
-<h3>Metagenome abundance table</h3>
+<a href="test_silva.txt" target="_blank">Example SILVA OTU file </a>
 
-A table of functional KEGG Ortholog abundances can be provided instead of *(or in addition to) the taxonomic abundances. This table can take multiple different forms: 
+4) **Metagenome: Total KO abundances**: A table of function abundances, as produced from any metagenomic functional annotation pipeline.
 
-1) **Total KO abundances**: A table of function abundances, as produced from any metagenomic functional annotation pipeline.
-<a href="https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/test_metagenome.txt" target="_blank">Example KO table</a>
+<a href="https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/test_metagenome.txt" target="_blank">Example total KO table</a>
 
-2) **Taxon-stratified KO abundances**: A table of taxon-specific function abundances, which can be produced from HUMAnN2, PICRUSt/PICRUSt2, or similar programs (e.g. kraken). This must be formatted either in the style
+2) **Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)**: A table of taxon-specific function abundances, which can be produced from HUMAnN2, PICRUSt/PICRUSt2, or similar programs (e.g. kraken). This must be formatted either in the style
 of the "metagenome contribution table" produced by PICRUSt version 1 or 2 (see [the PICRUSt2 documentation](https://github.com/picrust/picrust2/wiki/Full-pipeline-script)), or
-in the format of the stratified abundance table produced by HuMAnN2. MIMOSA2 will detect which format is used and process your table accordingly.
+in the format of the stratified abundance table produced by HuMAnN2. MIMOSA2 will detect which format is used and process your table accordingly. For the PICRUSt/PICRUSt2 format, the columns can be in any order, but they must include columns named "Gene", "OTU", "Sample", and "CountContributedByOTU".
  
 <a href="test_stratified_kos.txt" target="_blank">Example HuMAnN2 format</a><br>
 <a href="test_contributions.txt" target="_blank">Example PICRUSt2 format</a>

@@ -59,15 +59,15 @@
         {% else %}
             <h3><a href="results.html#">Results</a></h3>
         {% endif %}
-        {% if page.active == "downloads" %}
-            <h3 class="current" class = "active"><a href="#" class="active">Reference Data</a></h3>
-        {% else %}
-            <h3><a href="downloads.html#">Reference Data</a></h3>
-        {% endif %}
         {% if page.active == "package" %}
             <h3 class="current" class = "active"><a href="#" class="active">R Package Tutorial</a></h3>
         {% else %}
             <h3><a href="package.html#">R Package Tutorial</a></h3>
+        {% endif %}
+        {% if page.active == "downloads" %}
+            <h3 class="current" class = "active"><a href="#" class="active">Reference Data</a></h3>
+        {% else %}
+            <h3><a href="downloads.html#">Reference Data</a></h3>
         {% endif %}
         {% if page.active == "faqs" %}
             <h3 class="current" class = "active"><a href="#" class="active">FAQs</a></h3>
