@@ -2,7 +2,7 @@
 #skip mapping step? 1st
 #process arguments
 library(data.table)
-datadir = "~/Google Drive File Stream/My Drive/Genome_Sciences/MetabolSpeciesContribs/microbiome-metabolome-evaluation/"
+datadir = "microbiome-metabolome-evaluation/"
 species = fread(paste0(datadir, "HMP_test577_HMP_noise_specAbunds.txt"))
 mets = fread(paste0(datadir, "HMP_test577_HMP_noise_metAbunds.txt"))
 setnames(species, "Species", "OTU")

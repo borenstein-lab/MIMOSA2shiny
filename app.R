@@ -365,7 +365,7 @@ ui = fluidPage(
     2) assesses whether metabolite concentrations are consistent with estimated community metabolic potential, and 3) identifies specific taxa and reactions that can
     explain metabolite variation.
       For more information, see the ", 
-      tags$a(tags$b("documentation."), href = "https://cnoecker.github.io/MIMOSA2shiny", target = "_blank"))), id="description", width = 12),
+      tags$a(tags$b("documentation."), href = "https://borenstein-lab.github.io/MIMOSA2shiny", target = "_blank"))), id="description", width = 12),
   tags$style(type = "text/css", "#title { color: #3CB371; horizontal-align: left; width: 100%}"  ),
   mainPanel(
     uiOutput("uploadPage"),

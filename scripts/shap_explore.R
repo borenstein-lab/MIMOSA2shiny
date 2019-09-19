@@ -4,7 +4,7 @@ source("scripts/mimosa2_dev_functions.R")
 orig_config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "metagenome_format"),
                                V2 = c("Greengenes 13_5 or 13_8", "PICRUSt KO genomes and KEGG metabolic model", "KEGG Compound IDs", "data/KEGGfiles/", "data/", "bin/vsearch", F))
 agora_config_table = data.table(V1 = c("database", "genomeChoices","metType", "kegg_prefix", "data_prefix", "vsearch_path", "metagenome_format"), 
-                                V2 = c("Greengenes 13_5 or 13_8", "AGORA genomes and models", "KEGG Compound IDs", "data/KEGGfiles/", "data/", "/usr/local/bin/vsearch", F))
+                                V2 = c("Greengenes 13_5 or 13_8", "AGORA genomes and models", "KEGG Compound IDs", "data/KEGGfiles/", "data/", "bin/vsearch", F))
 
 base_config_table = rbind(orig_config_table, data.table(V1 = "met_transform", V2 = "zscore"))
 base_config_table_a = rbind(agora_config_table, data.table(V1 = "met_transform", V2 = "zscore"))

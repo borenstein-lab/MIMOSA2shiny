@@ -5,9 +5,9 @@ library(mimosa)
 library(cowplot)
 library(pROC)
 
-load("~/Documents/MIMOSA2shiny/results/fixed/metz_unc_otus_good_all.rda")
+load("results/fixed/metz_unc_otus_good_all.rda")
 
-diet_content = fread("~/Google Drive File Stream/My Drive/Genome_Sciences/metzMiceMetabolites/diet_mets_processed_autocl.txt")
+diet_content = fread("data/diet_mets_processed_autocl.txt")
 diet_mets = diet_content[meanUNC_A != 0, KEGG]
 diet_mets = diet_mets[diet_mets %in% mets[,compound]]
 non_diet_mets = mets[!compound %in% diet_mets, compound]
@@ -92,7 +92,7 @@ plot5a = ssvFeatureEuler(contribs_compare[c("mimosa1_mets", "m2kegg_edit", "corr
 compare_dat = get_overlaps(contribs_compare)
 signif_taxa = mimosa2_results_edit_kegg$varShares[VarShare > 0.02, unique(Species)]
 
-taxonomy = fread("~/Google Drive File Stream/My Drive/Genome_Sciences/KEGGfiles/97_otu_taxonomy.txt", header = F)
+taxonomy = fread("KEGGfiles/97_otu_taxonomy.txt", header = F)
 taxonomy[,OTU:=gsub("\t.*", "", V1)]
 taxonomy[,Kingdom:=gsub(".*\t", "", V1)]
 setnames(taxonomy, c("V2", "V3", "V4", "V5", "V6", "V7"), c("Phylum", "Class", "Order", "Family", "Genus", "Species"))
