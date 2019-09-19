@@ -8,10 +8,10 @@ library(ggpubr, lib.loc = "../r-packages/")
 library(mimosa, lib.loc ="../r-packages/")
 library(readr, lib.loc = "../r-packages/")
 library(RColorBrewer, lib.loc = "../r-packages/")
+library(shinyBS, lib.loc = "../r-packages/")
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=300*1024^2, 
         show.error.locations=TRUE, shiny.trace = F)
 theme_set(theme_cowplot() + theme(text = element_text(family = 'Helvetica')))
-library(shinyBS, lib.loc = "../r-packages/")
 #library(ggpubr)
 
 microbiome_data_upload = function(){
@@ -24,7 +24,7 @@ microbiome_data_upload = function(){
   #,tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), width = '100%')
       p(get_text("microbiome_description")),
       fluidRow(
-      column(radioButtons("database", get_text("database_title"), choices = get_text("database_choices"), width="100%"), width = 8),
+      column(radioButtons("file1_type", get_text("database_title"), choices = get_text("database_choices"), width="100%"), width = 8),
       column(tipify(tags$img(src = "help.png", border = 0), title = get_text("microbiome_tooltip"), placement = "right"), width = 4)),
       fluidRow(
       column(fileInput("file1", get_text("microbiome_input_title"),
@@ -89,7 +89,7 @@ network_settings = function(){
        #tags$a(tags$img(src = "help.png", border = 0), href = "https://www.github.com/borenstein-lab/", target = "_blank"), id = "genome", width='100%'),
     p(get_text("network_description")),
     fluidRow(
-      column(radioButtons("genomeChoices", label = get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[1], width="100%"), width = 8),
+      column(radioButtons("ref_choices", label = get_text("source_title"), choices = get_text("source_choices"), selected = get_text("source_choices")[1], width="100%"), width = 8),
       column(tipify(tags$img(src = "help.png", border = 0), title = get_text("network_tooltip"), placement = "right"), width = 4)
     ),
     fluidRow(
@@ -141,7 +141,7 @@ output_settings = function(){
 run_pipeline = function(input_data, configTable, analysisID){
   withProgress(message = "Running MIMOSA!", {
     if(is.character(input_data)){ #Error occurred
-      stop(input_data) #Print error message
+      stop(paste0("Problem reading files: ", input_data)) #Print error message
     }
     #process arguments
     species = input_data$species
@@ -153,7 +153,7 @@ run_pipeline = function(input_data, configTable, analysisID){
 	
     incProgress(2/10, detail = "Building metabolic model")
     validate(need(!(configTable[V1=="file1_type", V2] %in% get_text("database_choices")[4:5] & 
-                                  configTable[V1=="genomeChoices", V2 != get_text("source_choices")[1]]), "Error: Only KEGG metabolic model (network option 1) can be used with KEGG Ortholog data"))
+                                  configTable[V1=="ref_choices", V2 != get_text("source_choices")[1]]), "Error: Only KEGG metabolic model (network option 1) can be used with KEGG Ortholog data"))
     print(input_data$netAdd)
     network_results = build_metabolic_model(species, configTable, netAdd = input_data$netAdd) #, input_data$netAdd) #input_data$geneAdd, 
     network = network_results[[1]]
@@ -326,7 +326,7 @@ run_pipeline = function(input_data, configTable, analysisID){
     } else {
       contrib_legend = NULL
     }
-    if(configTable[V1=="genomeChoices", V2 == get_text("source_choices")[1]]){
+    if(configTable[V1=="ref_choices", V2 == get_text("source_choices")[1]]){
       network_sub = network[Prod %in% cmp_mods[[1]][,compound]|Reac %in% cmp_mods[[1]][,compound]] #Network is in KEGG compounds
     } else {
       network[,KEGGReac:=agora_kegg_mets(Reac)]
@@ -401,13 +401,13 @@ server <- function(input, output, session) {
       write.table(datasetInput()$analysisSummary, file = paste0("www/analysisResults/", analysisID, "/summaryStats.txt"), row.names = F, sep = "\t", quote=F)
       write.table(datasetInput()$configs, file = paste0("www/analysisResults/", analysisID, "/configSettings.txt"), row.names = F, sep = "\t", quote=F, col.names = F)
       
-      if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)) write.table(datasetInput()$varShares, file = paste0("www/analysisResults/", analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
+      if(!input$compare_only & input$file1_type != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)) write.table(datasetInput()$varShares, file = paste0("www/analysisResults/", analysisID, "/contributionResults.txt"), row.names = F, sep = "\t", quote=F)
       write.table(datasetInput()$newSpecies, file = paste0("www/analysisResults/", analysisID, "/mappedTaxaData.txt"), row.names = F, sep = "\t", quote=F)
       write.table(datasetInput()$modelData, file = paste0("www/analysisResults/", analysisID, "/modelResults.txt"), row.names = F, sep = "\t", quote=F)
       write.table(datasetInput()$networkData, file = paste0("www/analysisResults/", analysisID, "/communityNetworkModels.txt"), row.names = F, sep = "\t", quote=F)
       write.table(datasetInput()$CMPScores, file = paste0("www/analysisResults/", analysisID, "/communityMetabolicPotentialScores.txt"), row.names = F, sep = "\t", quote=F)
       
-      if(!input$compare_only & input$database != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)){
+      if(!input$compare_only & input$file1_type != get_text("database_choices")[4] & !is.null(datasetInput()$varShares)){
         plotData = datasetInput()$varShares
         
         tableData = datasetInput()$modelData[!is.na(Slope)]
@@ -469,7 +469,7 @@ server <- function(input, output, session) {
             width = 12, align = "center"
           )), width="100%", tags$style(type = "text/css", "#title { horizontal-align: left; width: 100%}"  )))
     } else {
-      if(input$compare_only == F & !(input$database==get_text("database_choices")[4])){
+      if(input$compare_only == F & !(input$file1_type==get_text("database_choices")[4])){
         if(class(datasetInput()) != "character"){
         fluidPage(
             fluidRow(
@@ -554,11 +554,11 @@ server <- function(input, output, session) {
     }
 
   })
-  observeEvent(input$database, {
-    if(input$database==get_text("database_choices")[1]){
-      #updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[2])
+  observeEvent(input$file1_type, {
+    if(input$file1_type==get_text("database_choices")[1]){
+      #updateRadioButtons(session, "ref_choices", selected = get_text("source_choices")[2])
     } else {
-      #updateRadioButtons(session, "genomeChoices", selected = get_text("source_choices")[1])
+      #updateRadioButtons(session, "ref_choices", selected = get_text("source_choices")[1])
     }
     # if(input$database==get_text("database_choices")[4]){
     #   #updateCheckboxInput(session, "metagenomeOpt", value = T)
@@ -568,8 +568,8 @@ server <- function(input, output, session) {
     #   enable("file1")
     # }
   })
-  observeEvent(input$genomeChoices, {
-    # if(input$genomeChoices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
+  observeEvent(input$ref_choices, {
+    # if(input$ref_choices==get_text("source_choices")[2] & input$database==get_text("database_choices")[1]){ #Only enable mapping threshold if providing sequences
     #   enable("simThreshold")
     # } else {
     #   disable("simThreshold")
@@ -578,12 +578,12 @@ server <- function(input, output, session) {
 
   config_table = reactive({
   	if(is.null(input$exampleButton)|input$exampleButton==0){
-  	    initial_inputs = c("database","genomeChoices",  #"geneAdd", 
+  	    initial_inputs = c("file1_type","ref_choices",  #"geneAdd", 
                        "metType", "simThreshold", "logTransform", "regType", "compare_only") #Check that this is all of them
   	  # if(is.null(input$metagenome)){
   	  #   initial_inputs = initial_inputs[initial_inputs != "metagenome_format"]
   	  # }
-  	  if(input$database != get_text("database_choices")[1]){
+  	  if(input$file1_type != get_text("database_choices")[1]){
   	    initial_inputs = initial_inputs[initial_inputs != "simThreshold"] #Does nothing if we don't have ASV data
   	  } 
       inputs_provided = initial_inputs[which(sapply(initial_inputs, function(x){ !is.null(input[[x]])}))]
@@ -620,6 +620,7 @@ server <- function(input, output, session) {
       names(file_list1) = c("file1","file2", "netAdd") # "geneAddFile", 
       #logjs(config_table())
       print(file_list1)
+      print(config_table())
       input_data = tryCatch(read_mimosa2_files(file_list = file_list1, configTable = config_table()), error = function(e){ return(e$message)})
       tryCatch(run_pipeline(input_data, config_table(), analysisID), error=function(e){ 
         return(paste0(e$message, "\n", paste0(e$call, collapse = " ")))})  #paste0(e$call, "\n", e$message)
