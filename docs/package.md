@@ -29,7 +29,7 @@ The figure below illustrates all the possible combinations of input and referenc
 
 ![reference chart](FigureS1_modelBuilding.png "Reference Flow Chart")
 
-Several of these are available from the [Downloads](download.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). More information on doing so is provided below in the section on [Regenerating Processed Reference Data](package.html#processRefs).
+Several of these are available from the [Downloads](download.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). 
 
 If you would like to run a workflow that uses freely available data, the `download_reference_data` function will obtain the necessary data and format it as expected by the main MIMOSA2 analysis. This function takes two arguments, which correspond to the *file1_type* and *ref_choices* options in the configuration table for a MIMOSA2 analysis (below).
 
