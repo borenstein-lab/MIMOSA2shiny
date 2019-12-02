@@ -7,7 +7,7 @@ library(data.table, lib.loc = "../r-packages/")
 library(ggpubr, lib.loc = "../r-packages/")
 library(mimosa, lib.loc ="../r-packages/")
 library(readr, lib.loc = "../r-packages/")
-library(RColorBrewer, lib.loc = "../r-packages/")
+library(RColorBrewer , lib.loc = "../r-packages/")
 library(shinyBS, lib.loc = "../r-packages/")
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=300*1024^2, 
         show.error.locations=TRUE, shiny.trace = F)
@@ -258,7 +258,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       var_shares[,Species:=as.character(Species)]
       var_shares[,MetaboliteName:=met_names(as.character(compound))]
       var_shares[is.na(MetaboliteName), MetaboliteName:=compound]
-      var_shares = var_shares[,list(compound, MetaboliteName, Rsq, VarDisp, ModelPVal, Slope, Intercept, Species, VarShare, PosVarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
+      var_shares = var_shares[,list(compound, MetaboliteName, Rsq, VarDisp, ModelPVal, ModelPValFDRAdj, Slope, Intercept, Species, VarShare, PosVarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
     }
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
@@ -607,7 +607,7 @@ server <- function(input, output, session) {
       values_provided = c(values_provided, input$file1$name, input$file2$name, ifelse(is.null(input$netAdd), NA, normalizePath(input$netAdd$name)))
       return(data.table(V1 = inputs_provided, V2 = values_provided))
   	} else {
-  		return(fread("data/exampleData/configs_example.txt", header = T))
+  		return(fread("data/exampleData/configs_example.txt", header = F))
   	}
   })
   
@@ -779,11 +779,12 @@ server <- function(input, output, session) {
     print(head(tableData[,Slope]))
     #tableData[,m2R:=ifelse(Slope < 0, -1*sqrt(Rsq), sqrt(Rsq))]
     tableData[,PVal:=round(PVal, 5)]
+    tableData[,FDRAdj:=round(FDRAdj, 5)]
     tableData[,Rsq:=round(Rsq, 3)]
     tableData[,Slope:=round(Slope, 3)]
     tableData[,Intercept:=round(Intercept, 3)]
     tableData[,metName:=sapply(compound, met_names)]
-    tableData2 = tableData[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+    tableData2 = tableData[Rsq != 0,list(compound, metName, Rsq, PVal, FDRAdj, Slope, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
     tableData2[,compound:=factor(compound, levels = compound_order)]
     print(tableData2)
     #good_comps = list.files(path = getwd(), pattern = analysisID)
@@ -808,8 +809,8 @@ server <- function(input, output, session) {
           return(img_uri("blank_plot.png"))
         }
         })]
-      tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, Plot, ContribPlot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
-      setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Contribution Plot", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns",  "Intercept"))
+      tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, FDRAdj, Slope, Plot, ContribPlot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+      setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "FDR-Corrected P-value", "Slope", "Comparison Plot", "Contribution Plot", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns",  "Intercept"))
       tooltip_table = htmltools::withTags(table(
         class = 'display',
         thead(
@@ -819,20 +820,21 @@ server <- function(input, output, session) {
             th('Name', title = get_text("results_table_titles")[3]),
             th('R-squared', title = get_text("results_table_titles")[4]),
             th('P-value', title = get_text("results_table_titles")[5]),
-            th('Slope', title = get_text("results_table_titles")[6]),
-            th('Comparison Plot', title = get_text("results_table_titles")[7]),
-            th('Contribution Plot', title = get_text("results_table_titles")[8]),
-            th("Top Producing Taxa and Genes/Rxns", title = get_text("results_table_titles")[9]),
-            th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[11]),
-            th("Intercept", title = get_text("results_table_titles")[13])
+            th('FDR-adjusted P-value', title = get_text("results_table_titles")[6]),
+            th('Slope', title = get_text("results_table_titles")[7]),
+            th('Comparison Plot', title = get_text("results_table_titles")[8]),
+            th('Contribution Plot', title = get_text("results_table_titles")[9]),
+            th("Top Producing Taxa and Genes/Rxns", title = get_text("results_table_titles")[10]),
+            th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[12]),
+            th("Intercept", title = get_text("results_table_titles")[14])
           ))))
       final_table = DT::datatable(
-        tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
+        tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "FDR-Corrected P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
         container = tooltip_table)
     } else {
       if(datasetInput()$configs[V1=="file1_type", V2==get_text("database_choices")[4]]){ #Skip species
-        tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
-        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Top Producing Genes/Rxns","Top Utilizing Genes/Rxns", "Intercept"))
+        tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, FDRAdj, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "FDR-Corrected P-value", "Slope", "Comparison Plot", "Top Producing Genes/Rxns","Top Utilizing Genes/Rxns", "Intercept"))
         tooltip_table = htmltools::withTags(table(
           class = 'display',
           thead(
@@ -842,19 +844,20 @@ server <- function(input, output, session) {
               th('Name', title = get_text("results_table_titles")[3]),
               th('R-squared', title = get_text("results_table_titles")[4]),
               th('P-value', title = get_text("results_table_titles")[5]),
-              th('Slope', title = get_text("results_table_titles")[6]),
-              th('Comparison Plot', title = get_text("results_table_titles")[7]),
-              th("Top Producing Genes/Rxns", title = get_text("results_table_titles")[9]),
-              th("Top Utilizing Genes/Rxns", title = get_text("results_table_titles")[11]),
-              th("Intercept", title = get_text("results_table_titles")[13])
+              th('FDR-adjusted P-value', title = get_text("results_table_titles")[6]),
+              th('Slope', title = get_text("results_table_titles")[7]),
+              th('Comparison Plot', title = get_text("results_table_titles")[8]),
+              th("Top Producing Genes/Rxns", title = get_text("results_table_titles")[10]),
+              th("Top Utilizing Genes/Rxns", title = get_text("results_table_titles")[12]),
+              th("Intercept", title = get_text("results_table_titles")[14])
             ))))
         final_table = DT::datatable(
-          tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Genes/Rxns", "Top Utilizing Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
+          tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "FDR-Corrected P-value", "Slope", "Top Producing Genes/Rxns", "Top Utilizing Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
           container = tooltip_table)
         
       } else {
-        tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
-        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "Slope", "Comparison Plot", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"))
+        tableData2 = tableData2[Rsq != 0,list(compound, metName, Rsq, PVal, FDRAdj, Slope, Plot, TopSynthSpecGenes, TopDegSpecGenes, Intercept)]
+        setnames(tableData2, c("Compound ID", "Name", "R-squared", "P-value", "FDR-Corrected P-value", "Slope", "Comparison Plot", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"))
         tooltip_table = htmltools::withTags(table(
           class = 'display',
           thead(
@@ -864,14 +867,15 @@ server <- function(input, output, session) {
               th('Name', title = get_text("results_table_titles")[3]),
               th('R-squared', title = get_text("results_table_titles")[4]),
               th('P-value', title = get_text("results_table_titles")[5]),
-              th('Slope', title = get_text("results_table_titles")[6]),
-              th('Comparison Plot', title = get_text("results_table_titles")[7]),
-              th("Top Producing Taxa and Genes/Rxns", title = get_text("results_table_titles")[9]),
-              th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[11]),
-              th("Intercept", title = get_text("results_table_titles")[13])
+              th('FDR-adjusted P-value', title = get_text("results_table_titles")[6]),
+              th('Slope', title = get_text("results_table_titles")[7]),
+              th('Comparison Plot', title = get_text("results_table_titles")[8]),
+              th("Top Producing Taxa and Genes/Rxns", title = get_text("results_table_titles")[10]),
+              th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[12]),
+              th("Intercept", title = get_text("results_table_titles")[14])
             ))))
         final_table = DT::datatable(
-          tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
+          tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "FDR-adjusted P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
           container = tooltip_table)
         
       }

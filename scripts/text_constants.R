@@ -62,6 +62,7 @@ results_table_titles = c('Metabolites are ordered by CMP-Metabolite model fit an
                          'Metabolite Name',
                          'CMP-Metabolite Model R-squared',
                          'CMP-Metabolite Model P-value',
+                         'CMP-Metabolite Model FDR-corrected P-value (Benjamini-Hochberg)',
                          'CMP-Metabolite Model Slope',
                          'CMP scores versus metabolite concentrations - use the button below the table to download. R-squared is annotated in the top right corner.', # Points are plotted in red if the association is significant (p < 0.01), or blue if not.
                          "Taxa contribution plot - use the button below the table to download. Taxa color legend is shown below this table.",

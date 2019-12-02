@@ -1,15 +1,13 @@
-V1	V2
-analysisID	CXVED08049
-database	Greengenes 13_5 or 13_8 OTUs
-genomeChoices	AGORA genomes and models
+analysisID	JKGYD02121
+file1_type	Greengenes 13_5 or 13_8 OTUs
+ref_choices	AGORA genomes and models
 metType	KEGG Compound IDs
 met_transform	logplus
-regType	Rank-based regression
+regType	Rank-based estimation
 compare_only	FALSE
 rankBased	TRUE
 rank_type	rfit
-metagenome	FALSE
-metagenome_format	FALSE
-contribType	FALSE
-netAdd	FALSE
+file1	Dataset2_otu_table.txt
+file2	Dataset2_mets.txt
+netAdd	NA
 simThreshold	FALSE

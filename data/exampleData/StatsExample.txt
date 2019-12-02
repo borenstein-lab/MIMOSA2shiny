@@ -1,11 +1,12 @@
 Stat	Value
 Sample size with complete data	70
-Original number of taxa	171
-Number of mapped taxa	71
+Original number of taxa (or KOs for unstratified metagenome)	171
+Number of mapped taxa (or KOs for unstratified metagenome)	71
 Original number of metabolites	96
 Number of metabolites in network model	55
 Number of metabolites with CMP scores	38
-Number of metabolites with nonzero model fits	38
+Number of metabolites with successful model fits	34
 Number of significant (p <0.1) metabolites	15
+Number of significant (p <0.1) metabolites with positive model slope	7
 Number of metabolites with analyzed taxa contributors	15
-Number of contributing taxa	27
+Number of contributing taxa	25
