@@ -25,7 +25,7 @@ You can download all results and plots produced by the analysis using the blue "
 |Number of metabolites in network model | Number of metabolites in the provided dataset that were present in the community model |
 |Number of metabolites with CMP scores | Number of metabolites in the provided dataset with varying CMP scores (a metabolite may be in the model but not have any varying CMP scores if all of its linked reactions are fully reversible) |
 |Number of metabolites with successful model fits | Number of metabolites for which a regression solution was found. |
-Number of significant (p <0.1) metabolites with positive model slope | Number of metabolites with a significant CMP-metabolite model in the expected direction. |
+Number of significant (p <0.1) metabolites with positive model slope | Number of putatively microbiome-governed metabolites: those with a significant CMP-metabolite model in the expected direction. |
 |Number of significant (p <0.1) metabolites | Number of metabolites with a significant CMP-metabolite model (positive or negative). |
 |Number of metabolites with analyzed taxa contributors | Number of metabolites whose taxonomic contributors were analyzed (typically all metabolites with a model p < 0.1) |
 |Number of contributing taxa | Number of taxa with nonzero contributions to variation in any metabolite. |

@@ -1,5 +1,5 @@
 ---
-title: What does MIMOSA2 do?
+title: What does MIMOSA2 do? Description and Terminology
 layout: default
 active: analysis_description
 ---
@@ -7,11 +7,11 @@ active: analysis_description
 
 MIMOSA2 summarizes paired microbiome-metabolome datasets to support mechanistic interpretation and hypothesis generation. It answers 2 main questions:
 
-**1) Do the concentrations of metabolites in my dataset vary consistently with what we would expect from what is known about the capabilities of the associated microbiomes?**
+**1) Do the metabolite levels in my dataset vary consistently with what we would expect from what is known about the capabilities of the associated microbiomes? Which metabolites appear to be microbiome-governed?**
 
-**2) Which specific microbial taxa appear to be responsible for differences in the concentrations of each metabolite across samples?**
+**2) Which specific microbial taxa appear to be responsible for differences in the amounts of each metabolite across samples?**
 
-MIMOSA2 uses a 4-step workflow, described below, to answer these questions. A more technical explanation of the method can be found in the [MIMOSA2 manuscript](link).
+MIMOSA2 uses a 4-step workflow, described below, to answer these questions. A more technical explanation of the method can be found in the [MIMOSA2 manuscript](manuscript_link).
 
 
 ---
@@ -38,19 +38,19 @@ MIMOSA2's metabolic potential scores are a normalized linear combination of the 
 for each metabolite and each taxon in each sample. MIMOSA2 also records and reports the particular synthesis or utilization reactions that formed the basis of the metabolic potential scores for each taxon.
 
 ---
-**3) Compare total community-level metabolic potential (CMP) scores with metabolite concentrations across all samples, 
-and use a regression model to assess whether CMP scores are significantly predictive of concentrations.**
+**3) Compare total community-level metabolic potential (CMP) scores with metabolite measurements across all samples, 
+and use a regression model to assess whether CMP scores are significantly predictive of metabolite levels.**
 
-MIMOSA2 compares community metabolic potential scores (CMP, the sum of metabolic potential scores across all taxa for a metabolite) with the concentrations of that metabolite, using a 
-regression model to test whether CMP scores are significantly predictive of variation in metabolite concentrations.
+MIMOSA2 compares community metabolic potential scores (CMP, the sum of metabolic potential scores across all taxa for a metabolite) with the measurements of that metabolite, using a 
+regression model to test whether CMP scores are significantly predictive of variation in metabolite levels. Metabolites with a significant positive association between CMP scores and metabolite levels are considered *putatively microbiome-governed*.
 
 ---
 **4) Decompose the overall model fit from step 3 into the contributions from each taxon, 
 identifying specific taxa that explain variation in each metabolite.**
 
 Finally, MIMOSA2 analyzes the model fits from step 3 to calculate the amount of variation in a metabolite explained by CMP scores that is attributable to each contributing taxon. The sum of the contributions of all taxa is equal to the unadjusted R-squared of the 
-regression model from step 3. In other words, a microbe's contribution to a metabolite is equal to the share of the total variation in that metabolite that is explained by that microbe's metabolic potential. For metabolites that are significantly associated with predicted metabolic potential, the taxa with the largest contributions 
-are hypothesized to be the main drivers of differences in the levels of that metabolite across samples. See [the manuscript](manuscript_link) for more details on how these 
+regression model from step 3. In other words, a microbe's contribution to a metabolite is equal to the share of the total variation in that metabolite that is explained by that microbe's metabolic potential. For metabolites that are putatively microbiome-governed, the taxa with the largest contributions 
+are hypothesized to be the main drivers of differences in the levels of that metabolite across samples. These contributions can be either positive (a taxon increases the variability of a metabolite) or negative (a taxon mitigates the variability). See the [FAQ](faqs.html) for more on the interpretation of contribution values, and [the manuscript](manuscript_link) for more details on how these 
 contributions are calculated. 
 
 

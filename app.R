@@ -7,7 +7,7 @@ library(data.table, lib.loc = "../r-packages/")
 library(ggpubr, lib.loc = "../r-packages/")
 library(mimosa, lib.loc ="../r-packages/")
 library(readr, lib.loc = "../r-packages/")
-library(RColorBrewer , lib.loc = "../r-packages/")
+library(RColorBrewer, lib.loc = "../r-packages/")
 library(shinyBS, lib.loc = "../r-packages/")
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=300*1024^2, 
         show.error.locations=TRUE, shiny.trace = F)
@@ -258,7 +258,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       var_shares[,Species:=as.character(Species)]
       var_shares[,MetaboliteName:=met_names(as.character(compound))]
       var_shares[is.na(MetaboliteName), MetaboliteName:=compound]
-      var_shares = var_shares[,list(compound, MetaboliteName, Rsq, VarDisp, ModelPVal, ModelPValFDRAdj, Slope, Intercept, Species, VarShare, PosVarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
+      var_shares = var_shares[,list(compound, MetaboliteName, Rsq, VarDisp, ModelPVal, ModelPValFDRAdj, Slope, Intercept, Species, VarShare, NumSynthGenes, SynthGenes, NumDegGenes, DegGenes)]
     }
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting

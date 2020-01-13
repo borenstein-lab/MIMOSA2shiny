@@ -52,7 +52,7 @@ in the format of the stratified abundance table produced by HuMAnN2. MIMOSA2 wil
 
 <h2 id="function">Metabolomics Data</h2>
 
-<h3>Metabolite concentration table</h3>
+<h3>Metabolite table</h3>
 
 MIMOSA only analyzes metabolite features that can be assigned a KEGG compound identification. Compounds can be either be provided directly as KEGG IDs, 
 or as metabolite names, which are mapped to KEGG IDs using [MetaboAnalystR](https://www.metaboanalyst.ca/). 

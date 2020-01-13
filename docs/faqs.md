@@ -14,6 +14,9 @@ active: faqs
 
 - [What about metabolomics features that have not been assigned a compound identification?](faqs.html#noID)
 
+- [How should I normalize my metabolomics data, or will MIMOSA2 normalize it for me?](faqs.html#normalization)
+
+
 ### Functionality and Analysis Options
 
 - [How is MIMOSA2 different from MIMOSA1?](faqs.html#mimosa1)
@@ -27,6 +30,8 @@ active: faqs
 ### Results Interpretation
 
 - [What does it mean for a metabolite to be negatively predicted by metabolic potential (negative slope)?](faqs.html#negatives)
+
+- [What does it mean for a taxon to have a negative contribution value?](faqs.html#negativeTaxa)
 
 - [What cutoff(s) should I use to identify microbial metabolites and contributing taxa?](faqs.html#thresholds)
 
@@ -46,6 +51,10 @@ predicting changes in unknown metabolites.
 <h4 id="noID">What about metabolomics features that have not been assigned a compound identification?</h4>
 Currently, we can't do anything about them. You can assign a putative identification and see if MIMOSA2 is able to significantly link them with microbiome data.
 
+<h4 id="normalization">How should I normalize my metabolomics data, or will MIMOSA2 normalize it for me?</h4>
+MIMOSA2 assumes you have already normalized your metabolite data appropriately for the assay and study design with which it was collected. In particular,
+MIMOSA2 assumes that you have quantitative measurements for each individual metabolite feature - i.e. differing measurement values or intensities between samples are proportional with underlying differences in metabolite concentrations. MIMOSA2 will optionally log-transform your data, 
+which may improve model fit. 
 
 ### Functionality and Analysis Options
 
@@ -76,10 +85,14 @@ will not be able to run any MIMOSA2 analyses locally unless you have access to f
 ### Results Interpretation
 
 <h4 id="negatives">What does it mean for a metabolite to be negatively predicted by metabolic potential (negative slope)?</h4>
-"Negatively predicted" metabolites can be interpreted several different ways. Possible reasons for a negative correlation between a metabolite's concentration and metabolic potential include incorrectly annotated or missing reactions,
+"Negatively predicted" metabolites can be interpreted several different ways. Possible reasons for a negative correlation between a metabolite's levels and its metabolic potential include incorrectly annotated or missing reactions,
 and effects beyond direct metabolic reactions such as growth promotion or toxicity. In simulations and in a simple validation dataset, we have found that taxonomic contributors to a model with a negative slope are 
 slightly less likely to represent a true taxon-metabolite link than contributors to a model with a positive slope. Contributors identified for negatively correlated metabolites *could* therefore 
 represent true relationships, but should be interpreted more cautiously than positively correlated metabolites. 
+
+<h4 id="negativeTaxa">What does it mean for a taxon to have a negative contribution value?</h4>
+The contribution values produced by MIMOSA2 are a measure of each taxon's importance in explaining variance in measurements of that metabolite. The taxa with the largest contribution values, positive or negative, can be considered the largest potential influencers. A positive contribution value indicates that if that taxon were removed, the metabolite would be less variable 
+than is actually observed. A negative contribution value indicates that if that taxon were removed, the metabolite is predicted to be more variable than is actually observed. This means that the negatively-contributing taxon is somehow compensating for or mitigating the predicted metabolic effects of other taxa.
 
 <h4 id="thresholds">What cutoff(s) should I use to identify microbial metabolites and contributing taxa?</h4>
 This will depend on analysis goals, study design, and microbiome properties. We typically classify "putative microbe-influenced metabolites" as those predicted with a positive slope and a p-value less than 0.1. The largest taxonomic contributors to variation in those metabolites are considered their "potential taxonomic contributors", typically any taxon with a contribution to variance greater than 1%.
