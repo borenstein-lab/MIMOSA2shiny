@@ -7,7 +7,7 @@ library(data.table, lib.loc = "../r-packages/")
 library(ggpubr, lib.loc = "../r-packages/")
 library(mimosa, lib.loc ="../r-packages/")
 library(readr, lib.loc = "../r-packages/")
-library(RColorBrewer, lib.loc = "../r-packages/")
+library(RColorBrewer) #, lib.loc = "../r-packages/")
 library(shinyBS, lib.loc = "../r-packages/")
 options(datatable.webSafeMode = TRUE, scipen = 20000, stringsAsFactors = F, shiny.usecairo = F, shiny.maxRequestSize=300*1024^2, 
         show.error.locations=TRUE, shiny.trace = F)
@@ -168,7 +168,7 @@ run_pipeline = function(input_data, configTable, analysisID){
     if(configTable[V1=="metType", V2 ==get_text("met_type_choices")[2]]){
       mets = map_to_kegg(mets)
     }
-    incProgress(1/10, detail = "Calculating metabolic potential and fitting metabolite concentration models")
+    incProgress(1/10, detail = "Calculating metabolic potential and fitting metabolite models")
     #Get CMP scores
     if("rxnEdit" %in% configTable[,V1]){
       rxn_param = T
@@ -362,7 +362,7 @@ ui = fluidPage(
   titlePanel("MIMOSA2", windowTitle = "MIMOSA2"),
   mainPanel(fluidPage(
     p("MIMOSA2 is a tool for metabolic model-based evaluation of paired microbiome and metabolomics datasets. MIMOSA2 1) constructs community metabolic models, 
-    2) assesses whether metabolite concentrations are consistent with estimated community metabolic potential, and 3) identifies specific taxa and reactions that can
+    2) assesses whether metabolite measurements are consistent with estimated community metabolic potential, and 3) identifies specific taxa and reactions that can
     explain metabolite variation.
       For more information, see the ", 
       tags$a(tags$b("documentation."), href = "https://borenstein-lab.github.io/MIMOSA2shiny", target = "_blank"))), id="description", width = 12),
