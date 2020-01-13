@@ -25,9 +25,9 @@ met_type_choices = c("KEGG Compound IDs", "Metabolite names (search for matching
 selected_met_type = "KEGG Compound IDs"
 metabolome_upload_title = "Upload metabolite abundance file"
 metabolome_tooltip = "If KEGG IDs are not provided, MIMOSA2 will try to map compound names to KEGG IDs using MetaboAnalystR"
-metabolome_description = "Upload a metabolite concentration table and select its metabolite ID format."
+metabolome_description = "Upload a metabolite data table and select its metabolite ID format."
 metabolome_norm_description = "Log transform metabolite values"
-metabolome_transform_tooltip = "See the documentation for recommendations on whether to transform your data."
+metabolome_transform_tooltip = "Transforming your data may improve model fit."
 
 network_header = "Metabolic model settings"
 source_title = "Gene content and metabolic model source"
@@ -43,7 +43,7 @@ network_mapping_tooltip = "A higher threshold will result in fewer taxa more lik
 sim_title = "Minimum similarity threshold (for mapping ASVs only)"
 gapfill_option = "Gap-fill model for each species using x program"
 algorithm_header = "Algorithm settings"
-algorithm_description = "Select the regression estimation method for comparing metabolite concentrations with community metabolic potential (CMP) scores."
+algorithm_description = "Select the regression estimation method for comparing metabolite levels with community metabolic potential (CMP) scores."
 algorithm_tooltip = "Rank-based estimation is recommended and is more robust and sensitive; OLS estimation is faster. See the documentation for more details."
 stat_title = "Metabolite statistic to analyze"
 stat_choices = c("Variance (analytically calculated)") #, "Differential abundance (Wilcoxon rank-sum, permutation-based)", "Paired-sample differential abundance (paired Wilcoxon rank-sum, permutation based)")
@@ -53,7 +53,7 @@ regression_choices = c("Rank-based estimation", "Least-squares (OLS) estimation"
 skip_contribs_option = "Skip taxonomic contribution analysis; only perform CMP-metabolite comparisons"
 skip_contribs_tooltip = "Taxonomic contribution analysis can be slow when rank-based estimation is selected."
 
-result_table_description = "Each row of the table below summarizes the MIMOSA2 results for a given metabolite, including the overall concordance between metabolic potential and concentration, and the contributing taxa. 
+result_table_description = "Each row of the table below summarizes the MIMOSA2 results for a given metabolite, including the overall concordance between metabolic potential and measured abundances, and the contributing taxa. 
 Mouse over the names of each column of the table for a more detailed description. Specific plots can be downloaded using the buttons below the table."
 
 find_results_description = "After this session terminates, a zipped directory of all results files can be downloaded from the following link for 30 days:\n"
@@ -64,7 +64,7 @@ results_table_titles = c('Metabolites are ordered by CMP-Metabolite model fit an
                          'CMP-Metabolite Model P-value',
                          'CMP-Metabolite Model FDR-corrected P-value (Benjamini-Hochberg)',
                          'CMP-Metabolite Model Slope',
-                         'CMP scores versus metabolite concentrations - use the button below the table to download. R-squared is annotated in the top right corner.', # Points are plotted in red if the association is significant (p < 0.01), or blue if not.
+                         'CMP scores versus metabolite levels - use the button below the table to download. R-squared is annotated in the top right corner.', # Points are plotted in red if the association is significant (p < 0.01), or blue if not.
                          "Taxa contribution plot - use the button below the table to download. Taxa color legend is shown below this table.",
                          "Top taxa and genes/reactions producing this compound (for AGORA or embl_gems models, see http://bigg.ucsd.edu for reaction annotations)",
                          "Taxa linked to reactions producing this compound",
