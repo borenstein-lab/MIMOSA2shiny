@@ -483,7 +483,7 @@ server <- function(input, output, session) {
                 downloadButton("downloadCMPs", "Community Metabolic Potential Scores", class = "downloadButton"),
                 downloadButton("downloadSettings", "Record of Configuration Settings", class = "downloadButton"),
                 tags$style(type='text/css', ".downloadButton { float: left; font-size: 14px; margin: 2px; margin-bottom: 3px; }"), width = 12, align = "center")),
-            p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("analysisResults/", analysisResultsFile()), target = "_blank"))),
+            p(strong(get_text("find_results_description"), a(paste0(get_text("app_url"), "analysisResults/", analysisResultsFile()), href = paste0("analysisResults/", analysisResultsFile()), target = "_blank"))),
             p(get_text("result_table_description")),
             fluidRow( # Big table
               DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -534,7 +534,7 @@ server <- function(input, output, session) {
                 type="text/css",
                 "#downloadAll  {background-color: #3CBCDB}"
               ), width = 12, align = "center")),
-          p(strong(get_text("find_results_description"), a(paste0("http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/analysisResults/", analysisResultsFile()), href = paste0("analysisResults/", analysisResultsFile())))),
+          p(strong(get_text("find_results_description"), a(paste0(get_text("app_url"), "analysisResults/", analysisResultsFile()), href = paste0("analysisResults/", analysisResultsFile())))),
           p(get_text("result_table_description")),
           fluidRow( # Big table
             DT::dataTableOutput("allMetaboliteInfo"), width="100%"
@@ -874,8 +874,9 @@ server <- function(input, output, session) {
               th("Top Utilizing Taxa and Genes/Rxns", title = get_text("results_table_titles")[12]),
               th("Intercept", title = get_text("results_table_titles")[14])
             ))))
+        print(names(tableData2))        
         final_table = DT::datatable(
-          tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "FDR-adjusted P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
+          tableData2[order(`Compound ID`)], escape = c("Name", "Compound ID", "R-squared", "P-value", "FDR-Corrected P-value", "Slope", "Top Producing Taxa and Genes/Rxns", "Top Utilizing Taxa and Genes/Rxns", "Intercept"), options = list(lengthMenu = c(5, 10), pageLength = 5, rowCallback = DT::JS("function(r,d) {$(r).attr('overflow', 'hidden').attr('height', '217px')}")), filter = "top", 
           container = tooltip_table)
         
       }

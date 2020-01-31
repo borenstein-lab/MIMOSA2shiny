@@ -7,6 +7,8 @@ print(path_to_mimosa2)
 file_out = paste0(path_to_mimosa2, "/R/sysdata.rda")
 
 load(file_out)
+app_url = "http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/"
+
 microbiome_header = "Microbiome data"
 database_title = "Microbiome data format"
 database_choices = c("Sequence variants (ASVs)", "Greengenes 13_5 or 13_8 OTUs", "SILVA 132 OTUs", "Metagenome: Total KO abundances", "Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)")
@@ -71,6 +73,8 @@ results_table_titles = c('Metabolites are ordered by CMP-Metabolite model fit an
                          "Top taxa and genes/reactions utilizing this compound (for AGORA or embl_gems models, see http://bigg.ucsd.edu for reaction annotations)",
                          "Taxa linked to reactions utilizing this compound",
                          "CMP-Metabolite Model Intercept")
+
+
 
 ### Replace previous sysdata
 all_dat = ls()
