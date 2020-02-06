@@ -70,7 +70,7 @@ Some example configuration tables are linked below:
 - [A stratified metagenome-based analysis using KEGG and OLS regression, with a custom network modification](config_example2.txt)
 - [A GreenGenes OTU table mapped to AGORA models](config_example3.txt)
 
-You can also download the contribution table used to run any analysis on the MIMOSA2 web server, which allows anyone to later reproduce the same analysis in an R session.
+You can also download the configuration table used to run any analysis on the MIMOSA2 web server, which allows anyone to later reproduce the same analysis in an R session.
 
 Once you have downloaded the necessary reference data, installed MIMOSA2 and vsearch, and created a configuration table, it is easy to run a full MIMOSA2 analysis. Save it as a text document, for example "configuration_table1.txt", and run the following in an R session or script: 
 
