@@ -1,4 +1,4 @@
-file1	ASVs.txt
+file1	gg_OTUs.txt
 file2	metabolites.txt
 ref_choices	"AGORA genomes and models"
 file1Type	"Greengenes 13_5 or 13_8 OTUs"
