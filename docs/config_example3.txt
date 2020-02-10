@@ -1,9 +1,8 @@
 file1	ASVs.txt
 file2	metabolites.txt
-ref_choices	RefSeq/EMBL_GEMs genomes and models
-file1Type	Sequence variants (ASVs)
-simThreshold	0.99
+ref_choices	"AGORA genomes and models"
+file1Type	"Greengenes 13_5 or 13_8 OTUs"
 data_prefix	~/Documents/MIMOSA2shiny/data/
 vsearch_path	~/Documents/MIMOSA2shiny/bin/vsearch
 metType	KEGG Compound IDs
-signifThreshold	1
+signifThreshold	0.05

@@ -24,9 +24,11 @@ If you want to analyze ASV data, you will also need to have the program *vsearch
 If you want to test your installation, you can run: 
 
 ```R
-
+test_m2_analysis()
 
 ```
+
+This will only test the package installation, not the setup of your reference data (see below).
 
 ## Generating or downloading preprocessed reference data
 
@@ -53,6 +55,13 @@ download_reference_data(seq_db = "Greengenes 13_5 or 13_8 OTUs", target_db = "Re
 You can use the `save_to` argument to customize where these files are saved, but if you change this you will need to modify the `data_prefix` argument when running your MIMOSA2 analysis (see below). The result of this function should be to produce a directory called "data" containing a sub-directory called either "AGORA" or "embl_gems", which contains mapping data as well as a further subdirectory called "RxnNetworks" containing metabolic reference data for each taxon.
 
 If you would like to run an analysis using KEGG, you need to have a KEGG license and to download 3 files from the KEGG FTP server: annotated pathway reactions (filename *reaction_mapformula.lst*), reaction annotations (filename *reaction*), and reaction-KO links (filename *ko_reaction.list*). Then you can provide those files as input to the `generate_preprocessed_networks` function to set up the reference database for MIMOSA2.
+
+To test that your reference databases are formatted and set up as expected by the package for a particular analysis, you can use `check_ref_data`, for example:
+
+```R
+check_ref_data(seq_db = "Sequence variants (ASVs)", target_db = "PICRUSt KO genomes and KEGG metabolic model")
+
+```
 
 ## Run a full MIMOSA2 analysis
 
@@ -82,6 +91,7 @@ Some example configuration tables are linked below:
 - [A GreenGenes OTU table mapped to AGORA models](config_example3.txt)
 
 You can also download the configuration table used to run any analysis on the MIMOSA2 web server, which allows anyone to later reproduce the same analysis in an R session.
+
 
 Once you have downloaded the necessary reference data, installed MIMOSA2 and vsearch, and created a configuration table, it is easy to run a full MIMOSA2 analysis. Save it as a text document, for example "configuration_table1.txt", and run the following in an R session or script: 
 
