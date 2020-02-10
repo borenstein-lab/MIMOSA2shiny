@@ -14,8 +14,19 @@ mimosa2 can be easily installed from GitHub using the `devtools` package:
 
 ```R
 devtools::install_github("borenstein-lab/mimosa2", dependencies = T)
+library(mimosa)
 ``` 
+
+If you see some warnings when loading the package, this is normal. 
+
 If you want to analyze ASV data, you will also need to have the program *vsearch* installed. Visit the [vsearch website](https://github.com/torognes/vsearch) to download and install.
+
+If you want to test your installation, you can run: 
+
+```R
+
+
+```
 
 ## Generating or downloading preprocessed reference data
 
@@ -39,7 +50,7 @@ download_reference_data(seq_db = "Sequence variants (ASVs)", target_db = "AGORA 
 download_reference_data(seq_db = "Greengenes 13_5 or 13_8 OTUs", target_db = "RefSeq/EMBL_GEMs genomes and models")
 
 ```
-You can use the `save_to` argument to customize where these files are saved, but if you change this you will need to modify the `data_prefix` argument when running your MIMOSA2 analysis (see below).
+You can use the `save_to` argument to customize where these files are saved, but if you change this you will need to modify the `data_prefix` argument when running your MIMOSA2 analysis (see below). The result of this function should be to produce a directory called "data" containing a sub-directory called either "AGORA" or "embl_gems", which contains mapping data as well as a further subdirectory called "RxnNetworks" containing metabolic reference data for each taxon.
 
 If you would like to run an analysis using KEGG, you need to have a KEGG license and to download 3 files from the KEGG FTP server: annotated pathway reactions (filename *reaction_mapformula.lst*), reaction annotations (filename *reaction*), and reaction-KO links (filename *ko_reaction.list*). Then you can provide those files as input to the `generate_preprocessed_networks` function to set up the reference database for MIMOSA2.
 
@@ -54,14 +65,14 @@ The table below lists the various fields that you can provide in your configurat
 |**file2** | Metabolomics file path | Valid file path|
 |**file1_type** | Taxonomic abundance file type| One of: "Sequence variants (ASVs)", "Greengenes 13_5 or 13_8 OTUs", "SILVA 132 OTUs", "Metagenome: Total KO abundances", "Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)" |
 |**ref_choices** | Ref model option | One of: "PICRUSt KO genomes and KEGG metabolic model", "AGORA genomes and models", "RefSeq/EMBL_GEMs genomes and models" |
+|**data_prefix** | File path to reference databases (see below for required files)| Valid file path|
 |simThreshold | If 16S rRNA ASVs are provided, threshold for mapping them to a reference database | Value from 0 to 1 (default 0.99)|
 |netAdd | File path to network modifications file | Valid file path|
-|metType | Whether metabolite data is provided as KEGG compound IDs or metabolite names (assumes KEGG if not provided) | One of: "KEGG Compound IDs", "Metabolite names (search for matching ID)" |
+|metType | Whether metabolite data is provided as KEGG compound IDs or metabolite names (assumes KEGG if not provided) | One of: "KEGG Compound IDs", "Metabolite names (search for matching ID)" (default "KEGG Compound IDs") |
 |signifThreshold | Taxonomic contributors to metabolites will only be evaluated for metabolites with a model fit p-value below this threshold | Value from 0 to 1 (default 0.2)|
-|compare_only | Skip the taxonomic contribution analysis, only build the model and compare CMP scores and metabolites | T or F|
-|logTransform | Whether a log transform should be applied to metabolite data| T or F |
-|rankBased | Whether to use rank-based regression for comparing CMP scores and metabolites| T or F |
-|**data_prefix** | File path to reference databases (see below for required files)| Valid file path|
+|compare_only | Skip the taxonomic contribution analysis, only build the model and compare CMP scores and metabolites | T or F (default F)|
+|logTransform | Whether a log transform should be applied to metabolite data| T or F (default F)|
+|rankBased | Whether to use rank-based regression for comparing CMP scores and metabolites| T or F (default T)|
 |vsearch_path | File path to vsearch executable | Valid path (when not provided, MIMOSA2 assumes vsearch is in the executable path)|
 
 Some example configuration tables are linked below:
@@ -80,13 +91,20 @@ mimosa_results = run_mimosa2("configuration_table1.txt")
 
 The run_mimosa2 function returns a list of data tables that is identical to the set of results provided by the web application. More details about the results are provided on the [Results](results.html) page.
 
-If you want to generate plots of metabolic potential and taxonomic contributors for each metabolite, similar to the web app, use the `make_plots` and `with_plots` arguments for run_mimosa2:
+If you want to generate plots of metabolic potential and taxonomic contributors for each metabolite, similar to the web app, use the `make_plots` and `save_plots` arguments for run_mimosa2. 
 
 ```R
 mimosa_results_make_plots = run_mimosa2("configuration_table1.txt", make_plots = T, save_plots = T)
 ```
 
-In this case lists of plots will also be returned. If `save_plots` is true, the function will save all plots in a folder named "mimosa2results", which it will create in its current working directory.
+In this case lists of plots will also be returned. If `save_plots` is true, the function will save all plots in a folder in the current working directory.
+
+If you want to run MIMOSA2 using microbiome and metabolite data frames in an existing R session, you can use the `species` and `mets` arguments (below). Note that this means that the analysis will skip several initial data filters and quality checks that would otherwise be performed when importing the data.
+
+```R
+mimosa_results = run_mimosa2("configuration_table1.txt", species = my_otu_table, mets = my_met_table)
+```
+
 
 <!---
 

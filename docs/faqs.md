@@ -91,7 +91,7 @@ slightly less likely to represent a true taxon-metabolite link than contributors
 represent true relationships, but should be interpreted more cautiously than positively correlated metabolites. 
 
 <h4 id="negativeTaxa">What does it mean for a taxon to have a negative contribution value?</h4>
-The contribution values produced by MIMOSA2 are a measure of each taxon's importance in explaining variance in measurements of that metabolite. The taxa with the largest contribution values, positive or negative, can be considered the largest potential influencers. A positive contribution value indicates that if that taxon were removed, the metabolite would be less variable 
+The contribution values produced by MIMOSA2 are a measure of each taxon's importance in explaining variance in measurements of a specific metabolite. The taxa with the largest contribution values, positive or negative, can be considered the largest potential influencers. A positive contribution value indicates that if that taxon were removed, the metabolite would be less variable 
 than is actually observed. A negative contribution value indicates that if that taxon were removed, the metabolite is predicted to be more variable than is actually observed. This means that the negatively-contributing taxon is somehow compensating for or mitigating the predicted metabolic effects of other taxa.
 
 <h4 id="thresholds">What cutoff(s) should I use to identify microbial metabolites and contributing taxa?</h4>

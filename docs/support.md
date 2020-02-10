@@ -11,6 +11,8 @@ Noecker, C., Eng, A., Srinivasan, S., Theriot, C.M., Young, V.B., Jansson, J.K.,
 
 MIMOSA2 uses several other R packages, bioinformatics tools, and databases. Depending on the settings for your MIMOSA2 analysis, you may also need to cite the following:
 
+- [Rfit](https://journal.r-project.org/archive/2012-2/RJournal_2012-2_Kloke+McKean.pdf): Kloke, J.D. and Mckean, J.W. (2012), Rfit: Rank-based estimation for linear models, The R Journal, 4, 57--64.
+
 - [vsearch](https://github.com/torognes/vsearch): Rognes, T., Flouri, T., Nichols, B., Quince, C., and Mahé, F. (2016). VSEARCH: a versatile open source tool for metagenomics. PeerJ 4, e2584.
 
 - [PICRUSt](https://picrust.github.io/picrust/): Langille, M.G.I., Zaneveld, J., Caporaso, J.G., McDonald, D., Knights, D., Reyes, J.A., Clemente, J.C., Burkepile, D.E., Vega Thurber, R.L., Knight, R., et al. (2013). Predictive functional profiling of microbial communities using 16S rRNA marker gene sequences. Nat Biotech 31, 814–821.
@@ -23,7 +25,6 @@ MIMOSA2 uses several other R packages, bioinformatics tools, and databases. Depe
 
 - [KEGG](https://www.genome.jp/kegg/): Kanehisa, M., and Goto, S. (2000). KEGG: kyoto encyclopedia of genes and genomes. Nucleic Acids Research 28, 27–30.
 
-- [Rfit](https://journal.r-project.org/archive/2012-2/RJournal_2012-2_Kloke+McKean.pdf): Kloke, J.D. and Mckean, J.W. (2012), Rfit: Rank-based estimation for linear models, The R Journal, 4, 57--64.
 
 For questions about MIMOSA2, please email elbo [at] tauex.tau.ac.il  .
 
