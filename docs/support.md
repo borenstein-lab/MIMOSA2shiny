@@ -26,7 +26,9 @@ MIMOSA2 uses several other R packages, bioinformatics tools, and databases. Depe
 - [KEGG](https://www.genome.jp/kegg/): Kanehisa, M., and Goto, S. (2000). KEGG: kyoto encyclopedia of genes and genomes. Nucleic Acids Research 28, 27–30.
 
 
-For questions about MIMOSA2, please email elbo [at] tauex.tau.ac.il  .
+For questions about MIMOSA2, please email elbo [at] tauex.tau.ac.il  . 
+
+If you find a bug or problem with the web application, please open a GitHub issue at [www.github.com/borenstein-lab/MIMOSA2shiny](http://www.github.com/borenstein-lab/MIMOSA2shiny). If you encounter a problem with the R package, please open an issue at [www.github.com/borenstein-lab/mimosa2](http://www.github.com/borenstein-lab/mimosa2).
 
 <!---
 Noecker, C. and E. Borenstein. MIMOSA2: A metabolic network-based tool for linking microbiome and metabolomics data. In prep, 2019.

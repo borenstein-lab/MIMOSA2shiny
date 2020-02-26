@@ -27,6 +27,8 @@ active: faqs
 
 - [I don't have a KEGG license. Can I still use the KEGG-based analysis?](faqs.html#keggLicense)
 
+- [My data won't upload or my analysis using the web application is taking too long. What is wrong and what are my options?](faqs.html#webRuntime)
+
 ### Results Interpretation
 
 - [What does it mean for a metabolite to be negatively predicted by metabolic potential (negative slope)?](faqs.html#negatives)
@@ -81,6 +83,12 @@ number of metabolites present in the model can differ widely between the differe
 <h4 id="keggLicense">I don't have a KEGG license. Can I still use the KEGG-based analysis?</h4>
 Yes. An advantage of running MIMOSA2 via the web server is that you can run analyses using KEGG on our server. The web server only provides a subset of the community metabolic network to download, so you
 will not be able to run any MIMOSA2 analyses locally unless you have access to files from the KEGG FTP database.
+
+<h4 id="webRuntime">My data won't upload or my analysis using the web application is taking too long. What is wrong and what are my options?</h4>
+The app has a maximum file upload size of 300 MB. In particular, a stratified microbiome table with many samples can reach this limit relatively easily. If you reach this limit, or if you are able to upload your data but find the web app is slow or unresponsive, 
+we recommend you filter low-abundance and rare taxa from your microbiome dataset to decrease file size. MIMOSA2 automatically filters taxa with both low abundance and low prevalence, as these are very unlikely to be identified as key contributors. Alternatively,
+you can run your analysis locally using the [R package](package.html) instead of the web app. 
+
 
 ### Results Interpretation
 

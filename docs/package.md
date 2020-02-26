@@ -21,11 +21,10 @@ If you see some warnings when loading the package, this is normal.
 
 If you want to analyze ASV data, you will also need to have the program *vsearch* installed. Visit the [vsearch website](https://github.com/torognes/vsearch) to download and install.
 
-If you want to test your installation, you can run: 
+If you want to test your installation (including optionally access to vsearch), you can run: 
 
 ```R
-test_m2_analysis()
-
+test_m2_analysis(test_vsearch = T)
 ```
 
 This will only test the package installation, not the setup of your reference data (see below).
@@ -50,7 +49,6 @@ If you would like to run a workflow that uses freely available data, the `downlo
 download_reference_data(seq_db = "Sequence variants (ASVs)", target_db = "AGORA genomes and models")
 
 download_reference_data(seq_db = "Greengenes 13_5 or 13_8 OTUs", target_db = "RefSeq/EMBL_GEMs genomes and models")
-
 ```
 You can use the `save_to` argument to customize where these files are saved, but if you change this you will need to modify the `data_prefix` argument when running your MIMOSA2 analysis (see below). The result of this function should be to produce a directory called "data" containing a sub-directory called either "AGORA" or "embl_gems", which contains mapping data as well as a further subdirectory called "RxnNetworks" containing metabolic reference data for each taxon.
 
@@ -60,7 +58,6 @@ To test that your reference databases are formatted and set up as expected by th
 
 ```R
 check_ref_data(seq_db = "Sequence variants (ASVs)", target_db = "PICRUSt KO genomes and KEGG metabolic model")
-
 ```
 
 ## Run a full MIMOSA2 analysis

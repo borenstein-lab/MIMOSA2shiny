@@ -12,7 +12,7 @@ MIMOSA2 identifies microbial features that may underlie differences in microbial
 - Can differences in microbiome metabolic capabilities explain metabolite variation?
 - Which taxa, genes, and reactions appear to be playing a role in metabolite differences?
 
-MIMOSA2 can be run as either a web application at **[https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/)**, or as a standalone R package available from GitHub. 
+MIMOSA2 can be run as either a web application at **[http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/](http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/)**, or as a standalone R package available from GitHub. 
 
 ### Overview
 

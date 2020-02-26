@@ -5,7 +5,7 @@ active: settings
 ---
 # Running a MIMOSA2 Analysis: Setup and Settings
 
-The MIMOSA2 web application is available at [https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny)
+The MIMOSA2 web application is available at [http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/](http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/)
 
 The main web application page is an interface for uploading data and selecting options for your MIMOSA2 analysis. The various sections and options are described below:
 
