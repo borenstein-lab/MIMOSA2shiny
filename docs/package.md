@@ -54,11 +54,13 @@ You can use the `save_to` argument to customize where these files are saved, but
 
 If you would like to run an analysis using KEGG, you need to have a KEGG license and to download 3 files from the KEGG FTP server: annotated pathway reactions (filename *reaction_mapformula.lst*), reaction annotations (filename *reaction*), and reaction-KO links (filename *ko_reaction.list*). Then you can provide those files as input to the `generate_preprocessed_networks` function to set up the reference database for MIMOSA2.
 
+<!---
 To test that your reference databases are formatted and set up as expected by the package for a particular analysis, you can use `check_ref_data`, for example:
 
 ```R
-check_ref_data(seq_db = "Sequence variants (ASVs)", target_db = "PICRUSt KO genomes and KEGG metabolic model")
+check_ref_data(data_path = my_file_path, seq_db = "Sequence variants (ASVs)", target_db = "PICRUSt KO genomes and KEGG metabolic model")
 ```
+-->
 
 ## Run a full MIMOSA2 analysis
 
