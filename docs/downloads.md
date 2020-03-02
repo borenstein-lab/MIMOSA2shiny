@@ -11,10 +11,10 @@ The methods used to generate these files are described in the MIMOSA2 manuscript
 ## Download all files needed for a specific workflow
 See the [R package tutorial](package.html) for an overview of all workflows. 
 
-- [16S rRNA ASVs to EMBL_GEMS](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/refData/ASV_EMBL.tar.gz)
-- [Greengenes or SILVA OTUs to EMBL_GEMs](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/refData/OTU_EMBL.tar.gz)
-- [16S rRNA ASVs to AGORA](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/refData/ASV_AGORA.tar.gz)
-- [Greengenes or SILVA OTUs to AGORA](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/refData/OTU_AGORA.tar.gz)
+- [16S rRNA ASVs to EMBL_GEMS](http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/refData/ASV_EMBL.tar.gz)
+- [Greengenes or SILVA OTUs to EMBL_GEMs](http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/refData/OTU_EMBL.tar.gz)
+- [16S rRNA ASVs to AGORA](http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/refData/ASV_AGORA.tar.gz)
+- [Greengenes or SILVA OTUs to AGORA](http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/refData/OTU_AGORA.tar.gz)
 - 16S rRNA ASVs to KEGG - see Note
 - Greengenes OTUs to KEGG - see Note
 - Metagenomes to KEGG - see Note
