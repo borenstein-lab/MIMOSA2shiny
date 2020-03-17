@@ -19,7 +19,8 @@ See the [R package tutorial](package.html) for an overview of all workflows.
 - Greengenes OTUs to KEGG - see Note
 - Metagenomes to KEGG - see Note
 
-Note: To use a KEGG-based workflow, you must have a KEGG license to download the necessary files, or you can run your analysis using the [web app.](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/)
+Note: To use a KEGG-based workflow, you must have a KEGG license to download the necessary files, or you can run your analysis using the [web app.](https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/) 
+The specific files and their setup are described in the [R package tutorial](package.html#KEGG). 
 
 You can also download freely available data for a particular workflow with the `download_reference_data` function in MIMOSA2 (see the [R package tutorial](package.html)).
 

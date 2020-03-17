@@ -41,7 +41,7 @@ The figure below illustrates all the possible combinations of input and referenc
 
 ![reference chart](FigureS1_modelBuilding.png "Reference Flow Chart")
 
-Several of these are available from the [Downloads](download.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). 
+Several of these are available from the [Downloads](downloads.html) page. These can also be regenerated using scripts provided in the [MIMOSA2 GitHub repository](https://github.com/cnoecker/MIMOSA2shiny/). 
 
 If you would like to run a workflow that uses freely available data, the `download_reference_data` function will obtain the necessary data and format it as expected by the main MIMOSA2 analysis. This function takes two arguments, which correspond to the *file1_type* and *ref_choices* options in the configuration table for a MIMOSA2 analysis (below).
 
@@ -52,8 +52,13 @@ download_reference_data(seq_db = "Greengenes 13_5 or 13_8 OTUs", target_db = "Re
 ```
 You can use the `save_to` argument to customize where these files are saved, but if you change this you will need to modify the `data_prefix` argument when running your MIMOSA2 analysis (see below). The result of this function should be to produce a directory called "data" containing a sub-directory called either "AGORA" or "embl_gems", which contains mapping data as well as a further subdirectory called "RxnNetworks" containing metabolic reference data for each taxon.
 
-If you would like to run an analysis using KEGG, you need to have a KEGG license and to download 3 files from the KEGG FTP server: annotated pathway reactions (filename *reaction_mapformula.lst*), reaction annotations (filename *reaction*), and reaction-KO links (filename *ko_reaction.list*). Then you can provide those files as input to the `generate_preprocessed_networks` function to set up the reference database for MIMOSA2.
+<h4 id="KEGG">KEGG setup</h4>
+If you would like to run an analysis using KEGG, you need to have a KEGG license and to download 3 files from the KEGG FTP server: annotated pathway reactions (filename *reaction_mapformula.lst*), reaction annotations (filename *reaction*), and reaction-KO links (filename *ko_reaction.list*). Then you can provide those files as input to the `generate_preprocessed_networks` function to set up the reference database for MIMOSA2. For example:
 
+```R
+generate_preprocessed_networks(database = "KEGG", kegg_paths = c("~/Downloads/reaction_mapformula.lst", "~/Downloads/reaction_ko.list", "~/Downloads/reaction"), out_path = "MIMOSA2_analysis/data/KEGG/")
+```
+It is not a problem if this command generates a few warnings.
 <!---
 To test that your reference databases are formatted and set up as expected by the package for a particular analysis, you can use `check_ref_data`, for example:
 
