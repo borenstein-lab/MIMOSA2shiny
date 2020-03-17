@@ -59,6 +59,8 @@ If you would like to run an analysis using KEGG, you need to have a KEGG license
 generate_preprocessed_networks(database = "KEGG", kegg_paths = c("~/Downloads/reaction_mapformula.lst", "~/Downloads/reaction_ko.list", "~/Downloads/reaction"), out_path = "MIMOSA2_analysis/data/KEGG/")
 ```
 It is not a problem if this command generates a few warnings.
+
+
 <!---
 To test that your reference databases are formatted and set up as expected by the package for a particular analysis, you can use `check_ref_data`, for example:
 
