@@ -1,4 +1,4 @@
----
+w---
 title: Input Data for MIMOSA2
 layout: default
 active: input
@@ -41,7 +41,7 @@ If you provide ASV data, you can also control how strictly your sequence variant
 
 4) **Metagenome: Total KO abundances**: A table of function abundances, as produced from any metagenomic functional annotation pipeline.
 
-<a href="https://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/test_metagenome.txt" target="_blank">Example total KO table</a>
+<a href="test_metagenome.txt" target="_blank">Example total KO table</a>
 
 2) **Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)**: A table of taxon-specific function abundances, which can be produced from HUMAnN2, PICRUSt/PICRUSt2, or similar programs (e.g. kraken). This must be formatted either in the style
 of the "metagenome contribution table" produced by PICRUSt version 1 or 2 (see [the PICRUSt2 documentation](https://github.com/picrust/picrust2/wiki/Full-pipeline-script)), or
