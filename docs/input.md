@@ -1,4 +1,4 @@
-w---
+---
 title: Input Data for MIMOSA2
 layout: default
 active: input
