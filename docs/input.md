@@ -1,4 +1,4 @@
-w---
+---
 title: Input Data for MIMOSA2
 layout: default
 active: input
@@ -45,7 +45,7 @@ If you provide ASV data, you can also control how strictly your sequence variant
 
 2) **Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)**: A table of taxon-specific function abundances, which can be produced from HUMAnN2, PICRUSt/PICRUSt2, or similar programs (e.g. kraken). This must be formatted either in the style
 of the "metagenome contribution table" produced by PICRUSt version 1 or 2 (see [the PICRUSt2 documentation](https://github.com/picrust/picrust2/wiki/Full-pipeline-script)), or
-in the format of the stratified abundance table produced by HuMAnN2. MIMOSA2 will detect which format is used and process your table accordingly. For the PICRUSt/PICRUSt2 format, the columns can be in any order, but they must include columns named "Gene", "OTU", "Sample", and "CountContributedByOTU".
+in the format of the stratified abundance table produced by HuMAnN2. MIMOSA2 will detect which format is used and process your table accordingly. For the PICRUSt/PICRUSt2 format, the columns can be in any order, but they must include columns named "Gene", "OTU", "Sample", and "CountContributedByOTU". If you have a metagenome table from HuMAnN2 with abundances of UniRef gene families or EC numbers, you can map it to KOs using the [`humann2_regroup_table`](https://bitbucket.org/biobakery/humann/wiki/Home#markdown-header-humann2_regroup_table) utility function in HuMAnN2. 
  
 <a href="test_stratified_kos.txt" target="_blank">Example HuMAnN2 format</a><br>
 <a href="test_contributions.txt" target="_blank">Example PICRUSt2 format</a>
