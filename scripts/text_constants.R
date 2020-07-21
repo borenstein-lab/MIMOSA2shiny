@@ -7,7 +7,7 @@ print(path_to_mimosa2)
 file_out = paste0(path_to_mimosa2, "/R/sysdata.rda")
 
 load(file_out)
-app_url = "http://elbo-spice.gs.washington.edu/shiny/MIMOSA2shiny/"
+app_url = "http://elbo-spice.cs.tau.ac.il/shiny/MIMOSA2shiny/"
 
 microbiome_header = "Microbiome data"
 database_title = "Microbiome data format"
