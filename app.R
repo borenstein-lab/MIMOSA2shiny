@@ -220,6 +220,7 @@ run_pipeline = function(input_data, configTable, analysisID){
     } else {
       indiv_cmps = get_species_cmp_scores(species, network, normalize = !rxn_param, leave_rxns = rxn_param, manual_agora = F, kos_only = no_spec_param, humann2 = humann2_param, relAbund = rel_abund_param)
       indiv_cmps = indiv_cmps[compound %in% mets[,compound]]
+      if(nrow(indiv_cmps)==0) stop("Error: No overlap between predicted and measured metabolites")
       if(nrow(indiv_cmps[,length(CMP), by=list(compound, Species, Sample)][V1 != 1]) > 0){ #If there is not just 1 value for each data feature we will have problems
         stop("Error calculating CMP scores - duplicates in data")
       }
