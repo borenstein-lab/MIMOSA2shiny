@@ -346,10 +346,10 @@ run_pipeline = function(input_data, configTable, analysisID){
       leg_dat = data.table(V1 = factor(names(contrib_color_palette), levels = c(all_contrib_taxa, "Other"))) #, "Residual"
       setnames(leg_dat, "V1", "Contributing Taxa")
       #print(leg_dat)
-      legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa")# + theme(legend.text = element_text(size = 10))
+      legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa") # + theme(legend.text = element_text(size = 10))
       contrib_legend = tryCatch(get_legend(legend_plot), error = function(){ return(NULL)}) 
       #save(contrib_legend, file = "data/exampleData/example_contrib_legend.rda")
-      if(!is.null(contrib_legend)) save_plot(contrib_legend, file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 4, base_height = 2.5)
+      if(!is.null(contrib_legend)) save_plot(contrib_legend, file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 14, base_height = 10)
     } else {
       contrib_legend = NULL
     }
