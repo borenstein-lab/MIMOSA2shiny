@@ -74,8 +74,9 @@ are included in the model.
 The best choice of reference data depends on the type of microbiome data you have and the environment of your samples. Here are various considerations that can affect the answer to this question: 
 - If you have metagenomic or metatranscriptomic data, currently MIMOSA2 can only utilize the KEGG metabolic network to construct a KEGG metabolic model from your data (this may change in the future). 
 - The AGORA database is a collection of metabolic reconstructions of human gut microbiome species, so if your dataset is from an environment other than the human gut, analyses using that option may not be ideal (and may result in a smaller share of taxa included in the community metabolic model).
-- Similarly, if you provide 16S rRNA ASV data and use the KEGG model option, MIMOSA2 will links ASVs to KOs via the Greengenes database and PICRUSt 1. Greengenes has not been updated in the last few years, so this is another caveat to keep in mind. (Another way to link ASVs to KEGG models would be to make KEGG Ortholog predictions for your data using PICRUSt2,
-which will use a more extensive process and larger database to infer KOs linked to each ASV, and upload the resulting contribution table.)
+- Similarly, if you provide 16S rRNA ASV data and use the KEGG model option, MIMOSA2 will links ASVs to KOs via the Greengenes database and PICRUSt 1. Greengenes has not been updated in the last few years, so this is another caveat to keep in mind. 
+It may be better to instead use [PICRUSt2](https://github.com/picrust/picrust2) to predict KEGG Orthologs for your ASVs,
+which will use a more extensive process and larger database, and then you can upload the resulting contribution table to MIMOSA2.)
 
 If you have 16S rRNA amplicon data, there is no reason not to try using multiple reference options and assess the effect on your results. Your results may change because the number of taxa that can be mapped to a model and the 
 number of metabolites present in the model can differ widely between the different sources.

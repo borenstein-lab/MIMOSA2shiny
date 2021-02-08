@@ -18,7 +18,7 @@ MIMOSA2 uses a 4-step workflow, described below, to answer these questions. A mo
 **1) Construct a community metabolic model consisting of the set of metabolic reactions that each community member taxon is predicted to be capable of performing.**
 
 MIMOSA2 can map various types of microbiome data to various types of reference data (from either KEGG or collections of genome-scale metabolic reconstructions) to link microbiome taxa to metabolic reactions. The various options are illustrated in the flow
-chart below. The final product of this step is a table consisting of a set of metabolic reactions predicted to be linked to each taxon in the microbiome dataset.
+chart below. Note that when 16S rRNA ASVs are provided, the sequences are first mapped to an rRNA sequence database with vsearch and then linked to metabolic models based on the database mapping. The final product of this step is a table consisting of a set of metabolic reactions predicted to be linked to each taxon in the microbiome dataset.
 
 ![model building](FigureS1_modelBuilding.png "Metabolic network construction methods")
 
@@ -54,3 +54,4 @@ are hypothesized to be the main drivers of differences in the levels of that met
 contributions are calculated. 
 
 
+# Terminology
