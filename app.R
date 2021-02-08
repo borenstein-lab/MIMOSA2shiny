@@ -145,10 +145,12 @@ run_pipeline = function(input_data, configTable, analysisID){
     }
     #process arguments
     species = input_data$species
+    #print(species)
+    species[,OTU:=as.character(OTU)]
     mets = input_data$mets
-    print(configTable)
+    #print(configTable)
     configTable[,V2:=as.character(V2)]
-    print(configTable)
+    #print(configTable)
 	  configTable = check_config_table(configTable, app = T)
 	
     incProgress(2/10, detail = "Building metabolic model")
@@ -158,13 +160,29 @@ run_pipeline = function(input_data, configTable, analysisID){
     network_results = build_metabolic_model(species, configTable, netAdd = input_data$netAdd) #, input_data$netAdd) #input_data$geneAdd, 
     network = network_results[[1]]
     species = network_results[[2]] 
-    print(network)
     #Allow for modifying this for AGORA
     # if(!is.null(input_data$metagenome) & configTable[V1=="file1_type", V2!=get_text("database_choices")[4]]){
     #   #If we are doing a comparison of the species network and the metagenome network
     #   #Metagenome data
     #   metagenome_network = build_metabolic_model(input_data$metagenome, configTable)
     # }
+    ## If it's ASVs->greengenes OTUs, read in the taxonomy table and merge
+    if(configTable[V1 == "file1_type", V2==get_text("database_choices")[1]] & configTable[V1 == "ref_choices", V2== get_text("source_choices")[1]] & configTable[V1 == "compare_only", V2==F]){
+      taxonomy = fread("data/picrustGG/99_otu_taxonomy.txt", header = F, col.names = c("OTU", "TaxString"), sep = "\t")
+      taxonomy = taxonomy[OTU %in% species[,OTU]]
+      taxonomy[,TaxStringShort:=gsub(".*; f__", "f__", TaxString)]
+      taxonomy[,NewOTU_ID:=paste0(OTU, "_", TaxStringShort)]
+      species = merge(species, taxonomy[,list(OTU, NewOTU_ID)], by = "OTU", all.x = T)
+      species[,OTU:=NULL]
+      species[,OTU:=NewOTU_ID]
+      species[,NewOTU_ID:=NULL]
+      network = merge(network, taxonomy[,list(OTU, NewOTU_ID)], by = "OTU", all.x = T)
+      network[,OTU:=NULL]
+      network[,OTU:=NewOTU_ID]
+      network[,NewOTU_ID:=NULL]
+      rm(taxonomy)
+    }
+    
     if(configTable[V1=="metType", V2 ==get_text("met_type_choices")[2]]){
       mets = map_to_kegg(mets)
     }
@@ -226,7 +244,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       }
       cmp_mods = fit_cmp_mods(indiv_cmps, mets_melt, rank_based = rank_based, rank_type = rank_type)
     }
-    print(cmp_mods[[1]]) 
+    #print(cmp_mods[[1]]) 
     if(!configTable[V1 == "compare_only", V2==T]){
       incProgress(2/10, detail = "Calculating microbial contributions")
       #Get low-abundance species to remove
@@ -236,7 +254,9 @@ run_pipeline = function(input_data, configTable, analysisID){
         bad_spec = bad_spec[V1 < 0.2 & V2 < 0.1, OTU] #Never higher than 10% and absent in at least 80% of samples
         print(bad_spec)
       } else bad_spec = NULL
+      #print(indiv_cmps)
       var_shares = calculate_var_shares(indiv_cmps, met_table = mets_melt, model_results = cmp_mods, config_table = configTable, species_merge = bad_spec, signif_threshold = 0.1)
+      #print(var_shares)
       ## If nothing significant was analyzed, behave as if compare_only were selected
       if(is.null(var_shares)){
         configTable[V1 == "compare_only", V2:="TRUE"]
@@ -247,10 +267,15 @@ run_pipeline = function(input_data, configTable, analysisID){
       var_shares = NULL
     }
     #Add species/rxn info
+    #print(species)
+    #print(network)
     cmp_summary = get_cmp_summary(species, network, normalize = !rxn_param, manual_agora = F, kos_only = no_spec_param, humann2 = humann2_param, 
                                   met_subset = cmp_mods[[1]][!is.na(Rsq) & Rsq != 0,compound], contrib_sizes = var_shares)
+    #print(cmp_summary)
     cmp_mods[[1]] = merge(cmp_mods[[1]], cmp_summary$CompLevelSummary, by = "compound", all.x = T)
-    print(cmp_mods[[1]])
+    #print(var_shares)
+    #print(cmp_summary$SpeciesLevelSummary[,list(compound, Species)])
+    #print(cmp_mods[[1]])
     if(length(cmp_summary) > 1) var_shares = merge(var_shares, cmp_summary$SpeciesLevelSummary, by = c("compound", "Species"), all.x = T)
     cmp_mods[[1]][,compound:=as.character(compound)]
     indiv_cmps[,compound:=as.character(compound)]
@@ -264,16 +289,17 @@ run_pipeline = function(input_data, configTable, analysisID){
     #shinyjs::logjs(devtools::session_info())
     #Order dataset for plotting
     incProgress(1/10, detail = "Making CMP-Metabolite plots")
-    print(indiv_cmps[compound %in% mets_melt[,compound]])
+    #print(indiv_cmps[compound %in% mets_melt[,compound]])
     CMP_plots = plot_all_cmp_mets(cmp_table = indiv_cmps, met_table = mets_melt, mod_results = cmp_mods[[1]])
       
     if(configTable[V1 == "compare_only", V2 != TRUE]){
       incProgress(1/10, detail = "Making metabolite contribution plots")
+      #print(var_shares)
       comp_list = var_shares[!is.na(VarShare)][VarShare != 0, unique(as.character(compound))]
       comp_list = comp_list[!comp_list %in% var_shares[Species == "Residual" & VarShare == 1, as.character(compound)]]
       all_contrib_taxa = var_shares[compound %in% comp_list & !is.na(VarShare) & Species != "Residual", sort(as.character(unique(Species)))] 
       #alphabetical order please
-      print(all_contrib_taxa)
+      #print(all_contrib_taxa)
       getPalette = colorRampPalette(brewer.pal(12, "Paired"))
       if(var_shares[compound %in% comp_list & Species != "Residual", length(unique(Species[VarShare != 0])), by=compound][,any(V1 > 10)]){
         contrib_color_palette = c("gray", getPalette(length(all_contrib_taxa))) #"black",  #Work with plotting function filters
@@ -282,10 +308,10 @@ run_pipeline = function(input_data, configTable, analysisID){
         contrib_color_palette = getPalette(length(all_contrib_taxa)) #"black", 
         names(contrib_color_palette) = all_contrib_taxa #"Residual",
       }
-      print("Color palette")
-      print(contrib_color_palette)
+      #print("Color palette")
+      #print(contrib_color_palette)
       met_contrib_plots = lapply(comp_list, function(x){
-        print(x)
+        #print(x)
         if(is.na(met_names(x))){
           met_id = x
         } else { met_id = met_names(x)}
@@ -295,18 +321,18 @@ run_pipeline = function(input_data, configTable, analysisID){
       met_contrib_plots = NULL
     }
     incProgress(1/10, detail = "Saving results")
-    print(analysisID)
+    #print(analysisID)
     dir.create(path = paste0("www/analysisResults/", analysisID), showWarnings = T)
     print(dir.exists(analysisID))
     for(i in 1:length(CMP_plots)){
-      print(paste0("www/analysisResults/", analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"))
+      #print(paste0("www/analysisResults/", analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"))
       if(!identical(CMP_plots[[i]], NA)){
         save_plot(CMP_plots[[i]], file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", names(CMP_plots)[i], ".png"), base_width = 2, base_height = 2)
       } 
     }
     if(!configTable[V1 == "compare_only", V2==T]){
       for(i in 1:length(met_contrib_plots)){
-        print(comp_list[i])
+        #print(comp_list[i])
         if(!is.null(met_contrib_plots[[i]])){
           save_plot(met_contrib_plots[[i]] + guides(fill = F), file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", comp_list[i], "_contribs.png"), base_width = 2, base_height = 2)
         }
@@ -314,12 +340,12 @@ run_pipeline = function(input_data, configTable, analysisID){
       # if(!exists("contrib_legend")){ #Get legend from first non-nulll compound
       #   
       # }
-      print("Making legend")
-      print(all_contrib_taxa)
-      print(contrib_color_palette)
+      # print("Making legend")
+      # print(all_contrib_taxa)
+      # print(contrib_color_palette)
       leg_dat = data.table(V1 = factor(names(contrib_color_palette), levels = c(all_contrib_taxa, "Other"))) #, "Residual"
       setnames(leg_dat, "V1", "Contributing Taxa")
-      print(leg_dat)
+      #print(leg_dat)
       legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa")# + theme(legend.text = element_text(size = 10))
       contrib_legend = tryCatch(get_legend(legend_plot), error = function(){ return(NULL)}) 
       #save(contrib_legend, file = "data/exampleData/example_contrib_legend.rda")
@@ -387,11 +413,11 @@ server <- function(input, output, session) {
     if(example_data){
       file_ids = paste0("data/exampleData/", list.files(path = "data/exampleData"))
     } else {
-      print(list.files(path = analysisID))
+      #print(list.files(path = analysisID))
       file_ids = paste0("www/analysisResults/", analysisID, "/", list.files(path = paste0("www/analysisResults/", analysisID)))
       file_ids = file_ids[!grepl(".zip", file_ids, fixed = T)] # In case this already exists
     }
-    print(file_ids)
+    #print(file_ids)
     
     zip(zipfile = file, files = file_ids, flags = "-j")
   }
@@ -591,8 +617,8 @@ server <- function(input, output, session) {
       values_provided = sapply(inputs_provided, function(x){ return(input[[x]])})
   	  inputs_provided = c("analysisID", inputs_provided, "kegg_prefix", "data_prefix", "vsearch_path")
 	    values_provided = c(analysisID, values_provided, "data/KEGGfiles/KEGG_2019/", "data/", "bin/vsearch")    #print(file.exists(input$file1$datapath))
-      print(inputs_provided)
-      print(values_provided)
+      #print(inputs_provided)
+      #print(values_provided)
       if(input$logTransform == T){
         inputs_provided[inputs_provided == "logTransform"] = "met_transform"
         values_provided[inputs_provided == "met_transform"] = "logplus"
