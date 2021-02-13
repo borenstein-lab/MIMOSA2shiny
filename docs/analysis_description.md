@@ -54,4 +54,4 @@ are hypothesized to be the main drivers of differences in the levels of that met
 contributions are calculated. 
 
 
-# Terminology
+<!-- # Terminology -->
