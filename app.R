@@ -145,8 +145,7 @@ run_pipeline = function(input_data, configTable, analysisID){
     }
     #process arguments
     species = input_data$species
-    #print(species)
-    species[,OTU:=as.character(OTU)]
+    if(configTable[V1 == "file1_type", V2] != get_text("database_choices")[4]) species[,OTU:=as.character(OTU)]
     mets = input_data$mets
     #print(configTable)
     configTable[,V2:=as.character(V2)]
