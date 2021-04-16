@@ -648,8 +648,11 @@ server <- function(input, output, session) {
       print(file_list1)
       print(config_table())
       input_data = tryCatch(read_mimosa2_files(file_list = file_list1, configTable = config_table()), error = function(e){ return(e$message)})
-      tryCatch(run_pipeline(input_data, config_table(), analysisID), error=function(e){ 
-        return(paste0(e$message, "\n", paste0(e$call, collapse = " ")))})  #paste0(e$call, "\n", e$message)
+      ## If input data failed, return error message
+      if(class(input_data)=="character") return(input_data) else {
+        tryCatch(run_pipeline(input_data, config_table(), analysisID), error=function(e){ 
+          return(paste0(e$message, "\n", paste0(e$call, collapse = " ")))})  #paste0(e$call, "\n", e$message)
+      }
     } else {
     	#logjs("Reading example data")
     	config = config_table()
