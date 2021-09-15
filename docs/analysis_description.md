@@ -11,7 +11,7 @@ MIMOSA2 summarizes paired microbiome-metabolome datasets to support mechanistic 
 
 **2) Which specific microbial taxa appear to be responsible for differences in the amounts of each metabolite across samples?**
 
-MIMOSA2 uses a 4-step workflow, described below, to answer these questions. A more technical explanation of the method can be found in the [MIMOSA2 manuscript](manuscript_link).
+MIMOSA2 uses a 4-step workflow, described below, to answer these questions. A more technical explanation of the method can be found in the [MIMOSA2 manuscript](https://www.biorxiv.org/content/10.1101/2021.09.14.459910v1).
 
 
 ---
@@ -50,7 +50,7 @@ identifying specific taxa that explain variation in each metabolite.**
 
 Finally, MIMOSA2 analyzes the model fits from step 3 to calculate the amount of variation in a metabolite explained by CMP scores that is attributable to each contributing taxon. The sum of the contributions of all taxa is equal to the unadjusted R-squared of the 
 regression model from step 3. In other words, a microbe's contribution to a metabolite is equal to the share of the total variation in that metabolite that is explained by that microbe's metabolic potential. For metabolites that are putatively microbiome-governed, the taxa with the largest contributions 
-are hypothesized to be the main drivers of differences in the levels of that metabolite across samples. These contributions can be either positive (a taxon increases the variability of a metabolite) or negative (a taxon mitigates the variability). See the [FAQ](faqs.html) for more on the interpretation of contribution values, and [the manuscript](manuscript_link) for more details on how these 
+are hypothesized to be the main drivers of differences in the levels of that metabolite across samples. These contributions can be either positive (a taxon increases the variability of a metabolite) or negative (a taxon mitigates the variability). See the [FAQ](faqs.html) for more on the interpretation of contribution values, and [the manuscript](https://www.biorxiv.org/content/10.1101/2021.09.14.459910v1) for more details on how these 
 contributions are calculated. 
 
 
