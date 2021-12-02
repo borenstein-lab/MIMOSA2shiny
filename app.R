@@ -183,7 +183,9 @@ run_pipeline = function(input_data, configTable, analysisID){
     }
     
     if(configTable[V1=="metType", V2 ==get_text("met_type_choices")[2]]){
-      mets = map_to_kegg(mets)
+      mets = map_hmdb_to_kegg_webchem(mets)
+    } else if(configTable[V1=="metType", V2 == get_text("met_type_choices")[3]]){
+      mets = map_to_kegg_webchem(mets)
     }
     incProgress(1/10, detail = "Calculating metabolic potential and fitting metabolite models")
     #Get CMP scores
@@ -191,7 +193,7 @@ run_pipeline = function(input_data, configTable, analysisID){
       rxn_param = T
       cat("Will refine reaction network\n")
     } else rxn_param = F
-    if("rankBased" %in% configTable[,V1]){
+    if(configTable[V1 == "rankBased", V2 == "TRUE"]){
       rank_based = T
       cat("Will use rank-based/robust regression\n")
       if("rank_type" %in% configTable[,V1]){
@@ -348,7 +350,9 @@ run_pipeline = function(input_data, configTable, analysisID){
       legend_plot = ggplot(leg_dat, aes(fill = `Contributing Taxa`, x=`Contributing Taxa`)) + geom_bar() + scale_fill_manual(values = contrib_color_palette, name = "Contributing Taxa") # + theme(legend.text = element_text(size = 10))
       contrib_legend = tryCatch(get_legend(legend_plot), error = function(){ return(NULL)}) 
       #save(contrib_legend, file = "data/exampleData/example_contrib_legend.rda")
-      if(!is.null(contrib_legend)) save_plot(contrib_legend, file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 14, base_height = 10)
+      if(!is.null(contrib_legend)){
+        save_plot(contrib_legend, file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 14, base_height = 4+(length(all_contrib_taxa)/4))
+      } 
     } else {
       contrib_legend = NULL
     }

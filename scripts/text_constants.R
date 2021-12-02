@@ -23,10 +23,10 @@ metagenome_tooltip = "A table of functional (KEGG KO) abundances is optional. It
 
 metabolome_header = "Metabolome data"
 met_type_title = "Compound ID type"
-met_type_choices = c("KEGG Compound IDs", "Metabolite names (search for matching ID)") #"MetaCyc Compound IDs",
+met_type_choices = c("KEGG Compound IDs", "HMDB Compound IDs (map to KEGG)", "Metabolite names (search for matching ID)") #"MetaCyc Compound IDs",
 selected_met_type = "KEGG Compound IDs"
 metabolome_upload_title = "Upload metabolite abundance file"
-metabolome_tooltip = "If KEGG IDs are not provided, MIMOSA2 will try to map compound names to KEGG IDs using MetaboAnalystR"
+metabolome_tooltip = "If KEGG IDs are not provided, MIMOSA2 will try to map other IDs to KEGG IDs using the webchem package"
 metabolome_description = "Upload a metabolite data table and select its metabolite ID format."
 metabolome_norm_description = "Log transform metabolite values"
 metabolome_transform_tooltip = "Transforming your data may improve model fit."

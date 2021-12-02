@@ -232,7 +232,7 @@ cmp_met_compare_setup = function(m_datasets, config_table, simulated = F, rank_b
   setnames(m_compare_mets, c("V1", "value"), c("CMP", "Met"))
   
   # Run mimosa2
-  m2_results = run_mimosa2(config_table, species = m_datasets[[1]], mets = m_datasets[[2]], compare_only = T)
+  m2_results = run_mimosa2(rbind(config_table, data.table(V1 = "compare_only", V2 = T)), species = m_datasets[[1]], mets = m_datasets[[2]])
 
   m_compare_mets = merge(m_compare_mets, m2_results[[2]], by = "compound", all = T)
   m_compare_mets[,m2_R:=sqrt(Rsq)]
