@@ -5,9 +5,9 @@ active: support
 ---
 # Citation and Contact
 
-The MIMOSA2 manuscript is currently in preparation. If you use MIMOSA2 in a publication, please include the URL **[www.borensteinlab.com/software_MIMOSA2.html](http://borensteinlab.com/software_MIMOSA2.html)**, and cite the publication describing MIMOSA v1:
+If you use MIMOSA2 in a publication, please cite the preprint: 
 
-Noecker, C., Eng, A., Srinivasan, S., Theriot, C.M., Young, V.B., Jansson, J.K., Fredricks, D.N., and Borenstein, E. (2016). Metabolic Model-Based Integration of Microbiome Taxonomic and Metabolomic Profiles Elucidates Mechanistic Links between Ecological and Metabolic Variation. mSystems 1, e00013–15, [doi:10.1128/mSystems.00013-15](http://doi.org/10.1128/mSystems.00013-15).
+Noecker, C., Eng, A., and Borenstein, E. (2021). MIMOSA2: A metabolic network-based tool for inferring mechanism-supported relationships in microbiome-metabolome data. bioRxiv 2021.09.14.459910; doi: [https://doi.org/10.1101/2021.09.14.459910](https://doi.org/10.1101/2021.09.14.459910)
 
 MIMOSA2 uses several other R packages, bioinformatics tools, and databases. Depending on the settings for your MIMOSA2 analysis, you may also need to cite the following:
 
