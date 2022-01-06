@@ -5,9 +5,9 @@ active: support
 ---
 # Citation and Contact
 
-If you use MIMOSA2 in a publication, please cite the preprint: 
+If you use MIMOSA2 in a publication, please cite: 
 
-Noecker, C., Eng, A., and Borenstein, E. (2021). MIMOSA2: A metabolic network-based tool for inferring mechanism-supported relationships in microbiome-metabolome data. bioRxiv 2021.09.14.459910; doi: [https://doi.org/10.1101/2021.09.14.459910](https://doi.org/10.1101/2021.09.14.459910)
+Noecker, C., Eng, A., Muller, E., and Borenstein, E. (2022). MIMOSA2: A metabolic network-based tool for inferring mechanism-supported relationships in microbiome-metabolome data. Bioinformatics btac003. https://doi.org/10.1093/bioinformatics/btac003
 
 MIMOSA2 uses several other R packages, bioinformatics tools, and databases. Depending on the settings for your MIMOSA2 analysis, you may also need to cite the following:
 
