@@ -351,7 +351,8 @@ run_pipeline = function(input_data, configTable, analysisID){
       contrib_legend = tryCatch(get_legend(legend_plot), error = function(){ return(NULL)}) 
       #save(contrib_legend, file = "data/exampleData/example_contrib_legend.rda")
       if(!is.null(contrib_legend)){
-        save_plot(contrib_legend, file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 14, base_height = 4+(length(all_contrib_taxa)/4))
+        save_plot(contrib_legend, file = paste0("www/analysisResults/", analysisID, "/", analysisID, "_", "contribLegend.png"), dpi=120, base_width = 14, 
+		  base_height = min(c(4+(length(all_contrib_taxa)/4), 45)), limitsize = F)
       } 
     } else {
       contrib_legend = NULL
