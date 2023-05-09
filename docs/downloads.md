@@ -24,6 +24,8 @@ The specific files and their setup are described in the [R package tutorial](pac
 
 You can also download freely available data for a particular workflow with the `download_reference_data` function in MIMOSA2 (see the [R package tutorial](package.html)).
 
+If these links don't work, try these backup links to access the [EMBL_GEMS](https://drive.google.com/drive/folders/1iCuiK1DOujAe9TFLW_SVlskqOJUU_quk?usp=share_link) and [AGORA](https://drive.google.com/drive/folders/1HfcOIo1RsLdFgR_zgaNze8kIKpX-n8sd?usp=share_link) databases.
+
 <!---
 Individual processed data files are described and linked below:
 
