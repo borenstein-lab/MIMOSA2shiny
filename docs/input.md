@@ -59,7 +59,7 @@ or as metabolite names, which are mapped to KEGG IDs using [MetaboAnalystR](http
 However, this process is generally improved by a manual curation step, so we encourage you to run the MetaboAnalystR utility yourself at [their website](https://www.metaboanalyst.ca/faces/ModuleView.xhtml). 
 Then you can manually curate the annotations and use the resulting table for MIMOSA2 analysis.
 
-<a href="test_mets.txt" target="_blank">Example metabolites (KEGG IDs) (**Note: the name of the first column must be "KEGG"** </a>
+<a href="test_mets.txt" target="_blank">Example metabolites (KEGG IDs) (**Note: the name of the first column must be "KEGG"**) </a>
 
 <a href="test_mets_names.txt" target="_blank">Example metabolites (metabolite names) </a>
 
