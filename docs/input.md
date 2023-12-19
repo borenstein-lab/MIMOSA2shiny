@@ -40,14 +40,14 @@ If you provide ASV data, you can also control how strictly your sequence variant
 <a href="test_silva.txt" target="_blank">Example SILVA OTU file </a>
 
 4) **Metagenome: Total KO abundances**: A table of function abundances, as produced from any metagenomic functional annotation pipeline.
-
+**Note:** The name of the first column must be "KO". 
 <a href="test_metagenome.txt" target="_blank">Example total KO table</a>
 
-2) **Metagenome: Taxon-stratified KO abundances (HUMAnN2 or PICRUSt/PICRUSt2)**: A table of taxon-specific function abundances, which can be produced from HUMAnN2, PICRUSt/PICRUSt2, or similar programs (e.g. kraken). This must be formatted either in the style
+5) **Metagenome: Taxon-stratified KO abundances (HUMAnN or PICRUSt/PICRUSt2)**: A table of taxon-specific function abundances, which can be produced from HUMAnN, PICRUSt/PICRUSt2, or similar programs (e.g. kraken). This must be formatted either in the style
 of the "metagenome contribution table" produced by PICRUSt version 1 or 2 (see [the PICRUSt2 documentation](https://github.com/picrust/picrust2/wiki/Full-pipeline-script)), or
-in the format of the stratified abundance table produced by HuMAnN2. MIMOSA2 will detect which format is used and process your table accordingly. For the PICRUSt/PICRUSt2 format, the columns can be in any order, but they must include columns named "Gene", "OTU", "Sample", and "CountContributedByOTU". If you have a metagenome table from HuMAnN2 with abundances of UniRef gene families or EC numbers, you can map it to KOs using the [`humann2_regroup_table`](https://bitbucket.org/biobakery/humann/wiki/Home#markdown-header-humann2_regroup_table) utility function in HuMAnN2. 
+in the format of the stratified abundance table produced by HuMAnN. MIMOSA2 will detect which format is used and process your table accordingly. For the PICRUSt/PICRUSt2 format, the columns can be in any order, but they must include columns named "Gene", "OTU", "Sample", and "CountContributedByOTU". If you have a metagenome table from HuMAnN with abundances of UniRef gene families or EC numbers, you can map it to KOs using the [`humann_regroup_table`](https://github.com/biobakery/humann#humann_regroup_table) utility function in HuMAnN. 
  
-<a href="test_stratified_kos.txt" target="_blank">Example HuMAnN2 format</a><br>
+<a href="test_stratified_kos.txt" target="_blank">Example HuMAnN format</a><br>
 <a href="test_contributions.txt" target="_blank">Example PICRUSt2 format</a>
 
 <h2 id="function">Metabolomics Data</h2>
@@ -59,7 +59,7 @@ or as metabolite names, which are mapped to KEGG IDs using [MetaboAnalystR](http
 However, this process is generally improved by a manual curation step, so we encourage you to run the MetaboAnalystR utility yourself at [their website](https://www.metaboanalyst.ca/faces/ModuleView.xhtml). 
 Then you can manually curate the annotations and use the resulting table for MIMOSA2 analysis.
 
-<a href="test_mets.txt" target="_blank">Example metabolites (KEGG IDs) </a>
+<a href="test_mets.txt" target="_blank">Example metabolites (KEGG IDs) (**Note: the name of the first column must be "KEGG"** </a>
 
 <a href="test_mets_names.txt" target="_blank">Example metabolites (metabolite names) </a>
 
